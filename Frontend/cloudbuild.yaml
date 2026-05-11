@@ -1,0 +1,40 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - build
+      - "--tag=gcr.io/$PROJECT_ID/loyalty-frontend:$COMMIT_SHA"
+      - "--tag=gcr.io/$PROJECT_ID/loyalty-frontend:latest"
+      - "--file=Dockerfile"
+      - "--build-arg=BACKEND_URL=https://loyalty-backend-$$REGION-$$PROJECT_ID.a.run.app"
+      - "."
+
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - push
+      - "--all-tags"
+      - "gcr.io/$PROJECT_ID/loyalty-frontend"
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - loyalty-frontend
+      - "--image=gcr.io/$PROJECT_ID/loyalty-frontend:$COMMIT_SHA"
+      - "--platform=managed"
+      - "--region=asia-southeast2"
+      - "--allow-unauthenticated"
+      - "--port=3000"
+      - "--min-instances=0"
+      - "--max-instances=5"
+      - "--memory=512Mi"
+      - "--cpu=1"
+      - "--set-env-vars=NODE_ENV=production,NEXT_TELEMETRY_DISABLED=1"
+      - "--set-secrets=NEXTAUTH_SECRET=nextauth-secret:latest,NEXTAUTH_URL=nextauth-url:latest"
+
+images:
+  - "gcr.io/$PROJECT_ID/loyalty-frontend:$COMMIT_SHA"
+  - "gcr.io/$PROJECT_ID/loyalty-frontend:latest"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
