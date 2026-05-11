@@ -1,0 +1,11 @@
+NPK,Name,Division,Slots,Status
+EMP001,Alice Optel,Optel,12,Active
+EMP002,Bob Techno,Techno,4,Active
+EMP003,Charlie Optel,Optel,-5,Active
+EMP004,Diana Techno,Techno,8,Active
+EMP005,Eve Optel,Optel,6,Active
+EMP006,Frank Techno,Techno,3,Active
+EMP007,Grace Optel,Optel,9,Active
+EMP008,Henry Techno,Techno,5,Active
+EMP009,Ivan Optel,Optel,11,Active
+EMP010,Jane Techno,Techno,7,Active

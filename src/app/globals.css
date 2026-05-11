@@ -1,26 +1,279 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Brand palette */
+  --color-navy: #111A28;
+  --color-cool-grey: #8C9BB0;
+  --color-white: #FFFFFF;
+  --color-vivid-green: #7CC446;
+  --color-bright-blue: #1669C9;
+
+  /* Surface layers */
+  --color-surface: #182236;
+  --color-surface-hover: #1E2C45;
+  --color-surface-elevated: #1B2840;
+
+  /* Glow / interaction colours */
+  --color-green-glow: rgba(124, 196, 70, 0.18);
+  --color-green-glow-strong: rgba(124, 196, 70, 0.30);
+  --color-green-drag: rgba(124, 196, 70, 0.10);
+  --color-blue-glow: rgba(22, 105, 201, 0.20);
+
+  /* Semantic aliases */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --background: #111A28;
+  --foreground: #FFFFFF;
+  --card: #182236;
+  --card-foreground: #FFFFFF;
+  --popover: #182236;
+  --popover-foreground: #FFFFFF;
+  --primary: #7CC446;
+  --primary-foreground: #111A28;
+  --secondary: #1669C9;
+  --secondary-foreground: #FFFFFF;
+  --muted: #1E2C45;
+  --muted-foreground: #8C9BB0;
+  --accent: #1669C9;
+  --accent-foreground: #FFFFFF;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: rgba(255,255,255,0.08);
+  --input: rgba(255,255,255,0.10);
+  --ring: #7CC446;
+  --chart-1: #7CC446;
+  --chart-2: #1669C9;
+  --chart-3: #8C9BB0;
+  --chart-4: #3D8EE8;
+  --chart-5: #A8D67C;
+  --radius: 0.75rem;
+  --sidebar: #111A28;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #7CC446;
+  --sidebar-primary-foreground: #111A28;
+  --sidebar-accent: #1669C9;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: rgba(255,255,255,0.08);
+  --sidebar-ring: #7CC446;
+}
+
+.dark {
+  --background: #111A28;
+  --foreground: #FFFFFF;
+  --card: #182236;
+  --card-foreground: #FFFFFF;
+  --popover: #182236;
+  --popover-foreground: #FFFFFF;
+  --primary: #7CC446;
+  --primary-foreground: #111A28;
+  --secondary: #1669C9;
+  --secondary-foreground: #FFFFFF;
+  --muted: #1E2C45;
+  --muted-foreground: #8C9BB0;
+  --accent: #1669C9;
+  --accent-foreground: #FFFFFF;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: rgba(255,255,255,0.08);
+  --input: rgba(255,255,255,0.12);
+  --ring: #7CC446;
+  --chart-1: #7CC446;
+  --chart-2: #1669C9;
+  --chart-3: #8C9BB0;
+  --chart-4: #3D8EE8;
+  --chart-5: #A8D67C;
+  --sidebar: #111A28;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #7CC446;
+  --sidebar-primary-foreground: #111A28;
+  --sidebar-accent: #1669C9;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: rgba(255,255,255,0.08);
+  --sidebar-ring: #7CC446;
+}
+
+/* ============================================================
+   KEYFRAMES — Micro-interactions
+   ============================================================ */
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%       { transform: translateX(-6px); }
+  30%       { transform: translateX(6px); }
+  45%       { transform: translateX(-5px); }
+  60%       { transform: translateX(5px); }
+  75%       { transform: translateX(-3px); }
+  90%       { transform: translateX(3px); }
+}
+
+@keyframes success-pop {
+  0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
+  60%  { transform: scale(1.2) rotate(4deg); opacity: 1; }
+  80%  { transform: scale(0.95) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.8; }
+}
+
+@keyframes pin-jump {
+  0%, 100% { transform: translateY(0); }
+  30%       { transform: translateY(-8px); }
+  60%       { transform: translateY(-4px); }
+  80%       { transform: translateY(-6px); }
+}
+
+@keyframes fade-up-in {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-up-out {
+  0%   { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes progress-fill {
+  from { width: 0%; }
+}
+
+@keyframes dot-pulse {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%            { transform: scale(1); opacity: 1; }
+}
+
+@keyframes glow-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 196, 70, 0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(124, 196, 70, 0); }
+}
+
+/* ============================================================
+   ANIMATION UTILITY CLASSES
+   ============================================================ */
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-success-pop {
+  animation: success-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-skeleton {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.animate-pin-jump {
+  animation: pin-jump 0.6s ease-in-out;
+}
+
+.animate-fade-up-in {
+  animation: fade-up-in 0.35s ease-out both;
+}
+
+.animate-fade-up-out {
+  animation: fade-up-out 0.35s ease-in both;
+}
+
+.animate-count-up {
+  animation: count-up 0.4s ease-out both;
+}
+
+.animate-dot-pulse {
+  animation: dot-pulse 1.4s ease-in-out infinite;
+}
+
+.animate-glow-ring {
+  animation: glow-ring 1.5s ease-in-out infinite;
+}
+
+/* Stagger helpers */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+  }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Smooth focus ring */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: calc(var(--radius) * 0.5);
+  }
+
+  /* Hide scrollbar utility */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
