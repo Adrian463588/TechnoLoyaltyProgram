@@ -13,12 +13,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import type { Session } from "next-auth";
 
-type Role = "MITRA" | "TEAM_LEADER" | "HC_PM";
+type Role = "MITRA" | "TEAM_LEAD" | "HC_ADMIN";
 
 const ROLE_HIERARCHY: Record<Role, number> = {
   MITRA:       1,
-  TEAM_LEADER: 2,
-  HC_PM:       3,
+  TEAM_LEAD:   2,
+  HC_ADMIN:    3,
 };
 
 /**

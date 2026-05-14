@@ -31,10 +31,10 @@ import { motion } from "framer-motion";
 
 // ── Tier config ───────────────────────────────────────────────
 const TIER_CONFIG = {
-  BRONZE:   { color: "text-amber-600",  bg: "bg-amber-50",    border: "border-amber-200",  glow: "shadow-amber-100",  min: 0    },
-  SILVER:   { color: "text-slate-500",  bg: "bg-slate-50",    border: "border-slate-200",  glow: "shadow-slate-100",  min: 1000 },
-  GOLD:     { color: "text-yellow-600", bg: "bg-yellow-50",   border: "border-yellow-200", glow: "shadow-yellow-100", min: 3000 },
-  PLATINUM: { color: "text-blue-600",   bg: "bg-blue-50",     border: "border-blue-200",   glow: "shadow-blue-100",   min: 6000 },
+  SAPHIRE: { color: "text-slate-500",  bg: "bg-slate-50",    border: "border-slate-200",  glow: "shadow-slate-100",  min: 0    },
+  EMERALD: { color: "text-green-600",  bg: "bg-green-50",    border: "border-green-200",  glow: "shadow-green-100",  min: 430  },
+  RUBY:    { color: "text-red-600",    bg: "bg-red-50",      border: "border-red-200",    glow: "shadow-red-100",    min: 860  },
+  DIAMOND: { color: "text-cyan-600",   bg: "bg-cyan-50",     border: "border-cyan-200",   glow: "shadow-cyan-100",   min: 1300 },
 } as const;
 
 type Tier = keyof typeof TIER_CONFIG;
@@ -154,12 +154,12 @@ export function EmployeeDashboardContent({ data }: { data: EmployeeDashboardResp
   const totalTokens      = tokenSummary.totalTokens;
   const currentTier      = tokenSummary.currentTier as Tier;
   const pointsToNextTier = tokenSummary.pointsToNextTier;
-  const employeeStatus   = tokenSummary.status;
+  const employeeStatus   = tokenSummary.memberStatus;
   const isEligible       = tokenSummary.isEligibleForReward;
   const tierConfig       = TIER_CONFIG[currentTier];
 
   // Logic for next tier
-  const tierOrder: Tier[] = ["BRONZE", "SILVER", "GOLD", "PLATINUM"];
+  const tierOrder: Tier[] = ["SAPHIRE", "EMERALD", "RUBY", "DIAMOND"];
   const currentIdx        = tierOrder.indexOf(currentTier);
   const nextTier          = currentIdx < tierOrder.length - 1 ? tierOrder[currentIdx + 1] : null;
   const totalForNextTier  = nextTier ? TIER_CONFIG[nextTier].min : totalTokens;
@@ -168,7 +168,7 @@ export function EmployeeDashboardContent({ data }: { data: EmployeeDashboardResp
   const periodStart = new Date("2025-12-16");
   const periodEnd   = new Date("2026-06-15");
 
-  const animatedTokens = useCountUp(totalTokens, 1400, 150);
+  const animatedTokens = useCountUp(totalTokens, 1400);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -189,12 +189,12 @@ export function EmployeeDashboardContent({ data }: { data: EmployeeDashboardResp
             Welcome, {data.user.name}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm font-medium tracking-wide">
-            Your high-fidelity loyalty overview for <span className="font-bold text-foreground">{tokenSummary.activePeriod}</span>.
+            Your high-fidelity loyalty overview for <span className="font-bold text-foreground">this period</span>.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <EmployeeStatusBadge status={employeeStatus === "ACTIVE" ? "Active" : "Inactive"} />
-          <TierBadge tier={currentTier.charAt(0) + currentTier.slice(1).toLowerCase() as "Bronze" | "Silver" | "Gold" | "Platinum"} />
+          <TierBadge tier={currentTier} />
         </div>
       </div>
 
@@ -400,7 +400,7 @@ export function EmployeeDashboardContent({ data }: { data: EmployeeDashboardResp
               <h3 className="font-black text-xl text-foreground tracking-tight">Active Period</h3>
             </div>
             <PeriodProgress
-              periodName={tokenSummary.activePeriod}
+              periodName={"Current Period"}
               startDate={periodStart}
               endDate={periodEnd}
               className="mt-6"

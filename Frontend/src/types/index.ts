@@ -34,13 +34,14 @@ export interface RewardItem {
 }
 
 export type RewardRequestStatus = 
-  | "Pending" 
-  | "Verified" 
-  | "Rejected" 
-  | "Purchased" 
-  | "PickupScheduled" 
-  | "Completed" 
-  | "Cancelled";
+  | "DRAFT"
+  | "PENDING_VERIFICATION" 
+  | "VERIFIED" 
+  | "REJECTED" 
+  | "PURCHASED" 
+  | "PICKUP_SCHEDULED" 
+  | "COMPLETED" 
+  | "CANCELLED";
 
 export interface RewardRequest {
   id: string;

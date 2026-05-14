@@ -11,6 +11,7 @@ import {
 import { RedemptionStatusChip, RedemptionStatus } from "@/components/shared/status-badge";
 import { ChevronLeft, ChevronRight, CheckSquare } from "lucide-react";
 import { DocumentVerificationDrawer } from "./document-verification-drawer";
+import { motion } from "framer-motion";
 
 type RedemptionRequest = {
   id: string;
@@ -57,13 +58,16 @@ export function RedemptionQueueTable() {
     columnHelper.display({
       id: "actions",
       cell: info => (
-        <button 
+        <motion.button 
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
           onClick={() => setSelectedRequest(info.row.original)}
           className="p-2 hover:bg-white/10 rounded-md transition-colors text-[--color-brand-hover]"
           title="Verify Documents"
         >
           <CheckSquare size={18} />
-        </button>
+        </motion.button>
       ),
     })
   ];
@@ -112,20 +116,26 @@ export function RedemptionQueueTable() {
           Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
             className="p-1 rounded-md border border-[--color-border-subtle] hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronLeft size={18} />
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
             className="p-1 rounded-md border border-[--color-border-subtle] hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronRight size={18} />
-          </button>
+          </motion.button>
         </div>
       </div>
 

@@ -6,13 +6,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 export const claimSchema = z.object({
   division: z.enum(["OPCENT", "TECHNO"], {
-    required_error: "Please select a division.",
+    message: "Please select a division.",
   }),
   date: z.string().min(1, "Date is required"),
-  amount: z.coerce.number().min(1, "Amount must be at least 1"),
+  amount: z.number({ message: "Amount is required" }).min(1, "Amount must be at least 1"),
 });
 
 type ClaimFormValues = z.infer<typeof claimSchema>;
@@ -101,7 +102,7 @@ export function ClaimForm() {
           <input
             type="number"
             id="amount"
-            {...register("amount")}
+            {...register("amount", { valueAsNumber: true })}
             className={cn(
               "input-field",
               errors.amount && "input-field--error"
@@ -119,7 +120,10 @@ export function ClaimForm() {
         </div>
 
         <div className="pt-4 border-t border-[--color-border-subtle]">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
             type="submit"
             disabled={isPending}
             className="btn-primary w-full flex items-center justify-center gap-2"
@@ -129,7 +133,7 @@ export function ClaimForm() {
             ) : (
               "Submit Claim"
             )}
-          </button>
+          </motion.button>
         </div>
       </form>
     </div>

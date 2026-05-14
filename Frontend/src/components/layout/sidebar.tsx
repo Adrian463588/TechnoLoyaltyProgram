@@ -121,7 +121,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   transition={{ delay: index * 0.05 }}
                 >
                   <Link 
-                    href={link.href}
+                    href={link.href as any}
                     onClick={() => onClose()}
                     className={cn(
                       "relative flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 text-sm font-medium overflow-hidden group",
@@ -189,7 +189,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               transition={{ delay: 0.3 }}
             >
               <Link
-                href="/settings"
+                href={"/settings" as any}
                 onClick={() => onClose()}
                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[--color-text-secondary] hover:text-[--color-text-primary] hover:bg-[--color-border-subtle] transition-all duration-200 group"
               >

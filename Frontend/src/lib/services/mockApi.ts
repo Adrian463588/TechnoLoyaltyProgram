@@ -13,7 +13,7 @@ export const AdminService = {
         rewardId: "reward-1", 
         rewardName: "Test Reward", 
         tokensSpent: 500, 
-        status: "Pending" as const, 
+        status: "PENDING_VERIFICATION" as const, 
         requestedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }

@@ -10,11 +10,6 @@ import { TierBadge, EmployeeStatusBadge } from "@/components/shared/status-badge
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import {
-  SkeletonBentoCard,
-  SkeletonStatCard,
-  SkeletonRow,
-} from "@/components/shared/skeleton-card";
-import {
   ArrowRight,
   BarChart3,
   CalendarDays,
@@ -36,10 +31,10 @@ import type { EmployeeDashboardResponse } from "@/lib/api-client";
 
 // ── Tier config ───────────────────────────────────────────────
 const TIER_CONFIG = {
-  Bronze:   { color: "text-amber-600",  bg: "bg-amber-50",    border: "border-amber-200",  glow: "shadow-amber-100",  min: 0    },
-  Silver:   { color: "text-slate-500",  bg: "bg-slate-50",    border: "border-slate-200",  glow: "shadow-slate-100",  min: 1500 },
-  Gold:     { color: "text-yellow-600", bg: "bg-yellow-50",   border: "border-yellow-200", glow: "shadow-yellow-100", min: 3000 },
-  Platinum: { color: "text-blue-600",   bg: "bg-blue-50",     border: "border-blue-200",   glow: "shadow-blue-100",   min: 6000 },
+  SAPHIRE: { color: "text-slate-500",  bg: "bg-slate-50",    border: "border-slate-200",  glow: "shadow-slate-100",  min: 0    },
+  EMERALD: { color: "text-green-600",  bg: "bg-green-50",    border: "border-green-200",  glow: "shadow-green-100",  min: 430  },
+  RUBY:    { color: "text-red-600",    bg: "bg-red-50",      border: "border-red-200",    glow: "shadow-red-100",    min: 860  },
+  DIAMOND: { color: "text-cyan-600",   bg: "bg-cyan-50",     border: "border-cyan-200",   glow: "shadow-cyan-100",   min: 1300 },
 } as const;
 
 type Tier = keyof typeof TIER_CONFIG;
@@ -105,18 +100,18 @@ export function EmployeeDashboardClient({ data }: { data: EmployeeDashboardRespo
   const totalTokens = data?.tokenSummary.totalTokens ?? 4500;
   const remainingTokens = totalTokens - (data?.recentRedemptions.reduce((acc, r) => acc + r.item.tokenCost, 0) ?? 1300);
   const spentTokens = totalTokens - remainingTokens;
-  const tierValue = data?.tokenSummary.currentTier ?? "Gold";
-  const currentTier = (tierValue.charAt(0).toUpperCase() + tierValue.slice(1).toLowerCase()) as Tier;
+  const tierValue = data?.tokenSummary.currentTier ?? "EMERALD";
+  const currentTier = tierValue as Tier;
   
   // Basic mock logic for missing fields
-  const nextTier = currentTier === "Platinum" ? "Platinum" : "Platinum"; // simplified
+  const nextTier = currentTier === "DIAMOND" ? "DIAMOND" : "DIAMOND"; // simplified
   const totalForNextTier = data?.tokenSummary.pointsToNextTier ? totalTokens + data.tokenSummary.pointsToNextTier : 6000;
   const pointsToNextTier = data?.tokenSummary.pointsToNextTier ?? (totalForNextTier - totalTokens);
   const progressPercent = (totalTokens / totalForNextTier) * 100;
-  const employeeStatus = (data?.tokenSummary.status ? data.tokenSummary.status.charAt(0).toUpperCase() + data.tokenSummary.status.slice(1).toLowerCase() : "Active") as "Active" | "Inactive";
+  const employeeStatus = data?.tokenSummary.memberStatus === "ACTIVE" ? "ACTIVE" : "INACTIVE";
   const tokenAge = 8;
   const isEligible = data?.tokenSummary.isEligibleForReward ?? (remainingTokens >= 2000);
-  const tierConfig = TIER_CONFIG[currentTier] || TIER_CONFIG.Bronze;
+  const tierConfig = TIER_CONFIG[currentTier] || TIER_CONFIG.SAPHIRE;
 
   const periodStart = new Date("2025-12-16");
   const periodEnd   = new Date("2026-06-15");
@@ -134,7 +129,7 @@ export function EmployeeDashboardClient({ data }: { data: EmployeeDashboardRespo
     { id: 4, type: "Reward Redemption", amount: 2000, date: "1 Apr 2026",   sign: "-" as const },
   ];
 
-  const animatedTokens = useCountUp(loading ? 0 : totalTokens, 1400, 150);
+  const animatedTokens = useCountUp(loading ? 0 : totalTokens, 1400);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -153,16 +148,14 @@ export function EmployeeDashboardClient({ data }: { data: EmployeeDashboardRespo
           <div className="h-4 w-56 rounded bg-slate-200/60 animate-skeleton stagger-2" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <SkeletonBentoCard className="md:col-span-3" />
-          <SkeletonStatCard />
+          <div className="md:col-span-3 h-[320px] rounded-2xl bg-slate-100 animate-pulse" />
+          <div className="h-[320px] rounded-2xl bg-slate-100 animate-pulse" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <SkeletonBentoCard className="md:col-span-2" />
-          <SkeletonStatCard />
+          <div className="md:col-span-2 h-[200px] rounded-2xl bg-slate-100 animate-pulse" />
+          <div className="h-[200px] rounded-2xl bg-slate-100 animate-pulse" />
         </div>
-        <SkeletonBentoCard>
-          {[1, 2, 3, 4].map((i) => <SkeletonRow key={i} className={`stagger-${i}`} />)}
-        </SkeletonBentoCard>
+        <div className="h-[400px] rounded-2xl bg-slate-100 animate-pulse" />
       </div>
     );
   }

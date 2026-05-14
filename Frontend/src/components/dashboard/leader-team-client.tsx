@@ -25,6 +25,7 @@ import {
 } from "@tanstack/react-table";
 import { AlertTriangle, Coins, Search, Users } from "lucide-react";
 import { Division, TierStatus } from "@/types";
+import { motion } from "framer-motion";
 import type { TeamSummaryResponse } from "@/lib/api-client";
 
 type TeamMember = {
@@ -118,12 +119,15 @@ export function LeaderTeamClient({ data }: { data: TeamSummaryResponse[] | null 
       id: "actions",
       header: "Action",
       cell: () => (
-        <button
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
           className="text-sm text-primary font-medium hover:underline"
           data-testid="leader-team-table-action-view"
         >
           View Detail
-        </button>
+        </motion.button>
       ),
     },
   ];
