@@ -18,7 +18,7 @@ describe('Claim Form Zod Schema', () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toContain('Invalid option');
+      expect(result.error.issues[0]?.message).toContain('Please select a division.');
     }
   });
 
@@ -30,7 +30,7 @@ describe('Claim Form Zod Schema', () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toContain('Amount must be at least 1');
+      expect(result.error.issues[0]?.message).toContain('Amount must be at least 1');
     }
   });
 
@@ -42,7 +42,7 @@ describe('Claim Form Zod Schema', () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toContain('Date is required');
+      expect(result.error.issues[0]?.message).toContain('Date is required');
     }
   });
 });

@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface RewardsClientProps {
   rewards: RewardItem[];
@@ -103,7 +104,10 @@ export default function RewardsClient({ rewards, userTokens, isEligible }: Rewar
         {CATEGORIES.map((cat) => {
           const isActive = activeCategory === cat;
           return (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={cn(
@@ -119,7 +123,7 @@ export default function RewardsClient({ rewards, userTokens, isEligible }: Rewar
               {isActive && (
                 <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary-foreground/60" />
               )}
-            </button>
+            </motion.button>
           );
         })}
       </div>

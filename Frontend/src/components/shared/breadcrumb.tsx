@@ -67,7 +67,7 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
             </span>
           ) : isNavigable ? (
             <Link
-              href={href}
+              href={href as any}
               className="text-sm text-[--color-text-secondary] underline-offset-2 hover:underline hover:text-[--color-text-primary] transition-colors duration-150"
             >
               {label}

@@ -6,11 +6,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 const adjustmentSchema = z.object({
-  mitraId: z.string({ required_error: "Mitra ID is required" }).min(1, "Mitra ID is required"),
-  amount: z.coerce.number({ required_error: "Amount is required", invalid_type_error: "Amount is required" }).refine(val => val !== 0, "Amount cannot be zero"),
-  reason: z.string({ required_error: "Reason must be at least 10 characters" }).min(10, "Reason must be at least 10 characters"),
+  mitraId: z.string().min(1, "Mitra ID is required"),
+  amount: z.number({ message: "Amount is required" }).refine(val => val !== 0, "Amount cannot be zero"),
+  reason: z.string().min(10, "Reason must be at least 10 characters"),
 });
 
 type AdjustmentFormValues = z.infer<typeof adjustmentSchema>;
@@ -54,7 +55,7 @@ export function ManualTokenAdjustment() {
           <label className="text-label block mb-1">Amount (+ / -)</label>
           <input 
             type="number"
-            {...register("amount")}
+            {...register("amount", { valueAsNumber: true })}
             className={cn("input-field", errors.amount && "input-field--error")}
             disabled={isPending}
             aria-invalid={!!errors.amount}
@@ -73,13 +74,16 @@ export function ManualTokenAdjustment() {
           {errors.reason && <p className="text-xs text-[--color-error] mt-1 animate-fade-up-in">{errors.reason.message}</p>}
         </div>
 
-        <button 
+        <motion.button 
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
           type="submit" 
           disabled={isPending}
           className="btn-danger w-full py-2.5 rounded-lg font-medium mt-2 flex items-center justify-center"
         >
           {isPending ? <span className="animate-pulse-ring h-4 w-4 rounded-full border-2 border-[#FCA5A5] border-t-transparent" /> : "Submit Adjustment"}
-        </button>
+        </motion.button>
       </form>
     </div>
   );

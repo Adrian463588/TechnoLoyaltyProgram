@@ -52,13 +52,16 @@ export function RedemptionModal({ reward, userTokens, onClose }: RedemptionModal
         >
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-display font-semibold text-[--color-text-primary]">Confirm Redemption</h2>
-            <button 
+            <motion.button 
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
               onClick={onClose} 
               disabled={isPending}
               className="p-1 rounded-md text-[--color-text-secondary] hover:text-[--color-text-primary] hover:bg-white/10 transition-colors"
             >
               <X size={20} />
-            </button>
+            </motion.button>
           </div>
 
           <div className="space-y-4 mb-8">
@@ -86,14 +89,20 @@ export function RedemptionModal({ reward, userTokens, onClose }: RedemptionModal
           </div>
 
           <div className="flex gap-3">
-            <button 
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
               onClick={onClose}
               disabled={isPending}
               className="btn-ghost flex-1 text-sm font-medium"
             >
               Cancel
-            </button>
-            <button 
+            </motion.button>
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
               onClick={handleConfirm}
               disabled={isPending}
               className="btn-primary flex-1 flex justify-center items-center text-sm"
@@ -103,7 +112,7 @@ export function RedemptionModal({ reward, userTokens, onClose }: RedemptionModal
               ) : (
                 "Confirm Redemption"
               )}
-            </button>
+            </motion.button>
           </div>
         </motion.div>
       </div>

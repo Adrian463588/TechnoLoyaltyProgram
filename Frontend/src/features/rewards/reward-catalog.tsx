@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Coins, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RedemptionModal } from "./redemption-modal";
+import { motion } from "framer-motion";
 
 export interface RewardItem {
   id: string;
@@ -56,18 +57,21 @@ export function RewardCatalog({ userTokens }: { userTokens: number }) {
                   {reward.tokenCost}
                 </span>
                 
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   disabled={!canAfford}
                   onClick={() => setSelectedReward(reward)}
                   className={cn(
                     "text-sm px-3 py-1.5 rounded-lg transition-colors font-medium",
                     canAfford 
-                      ? "bg-[--color-accent-muted] text-[--color-accent] border border-[--color-border-accent] hover:bg-[--color-accent] hover:text-[#0F172A]" 
+                      ? "bg-[--color-accent-muted] text-[--color-accent] border border-[--color-border-accent] hover:bg-[--color-accent] hover:text-[#0F172A] shadow-[0_0_12px_rgba(107,206,83,0.15)] hover:shadow-[0_4px_16px_rgba(107,206,83,0.35)]" 
                       : "bg-black/20 text-[--color-text-disabled] cursor-not-allowed border border-transparent"
                   )}
                 >
                   Redeem
-                </button>
+                </motion.button>
               </div>
             </div>
           );

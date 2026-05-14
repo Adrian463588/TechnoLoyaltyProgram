@@ -13,14 +13,14 @@ declare module "next-auth" {
     user: {
       id: string;
       npk: string;
-      role: "MITRA" | "TEAM_LEADER" | "HC_PM";
+      role: "MITRA" | "TEAM_LEAD" | "HC_ADMIN";
       divisionId?: string;
     } & DefaultSession["user"];
   }
 
   interface User extends DefaultUser {
     npk: string;
-    role: "MITRA" | "TEAM_LEADER" | "HC_PM";
+    role: "MITRA" | "TEAM_LEAD" | "HC_ADMIN";
     divisionId?: string;
   }
 }
@@ -29,7 +29,7 @@ declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
     id: string;
     npk: string;
-    role: "MITRA" | "TEAM_LEADER" | "HC_PM";
+    role: "MITRA" | "TEAM_LEAD" | "HC_ADMIN";
     divisionId?: string;
   }
 }

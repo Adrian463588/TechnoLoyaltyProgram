@@ -34,13 +34,14 @@ import { MoreHorizontal, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STATUS_TO_STEP: Record<RewardRequestStatus, PipelineStep> = {
-  Pending:         "submitted",
-  Verified:        "verified",
-  Rejected:        "submitted",
-  Purchased:       "purchased",
-  PickupScheduled: "pickup",
-  Completed:       "completed",
-  Cancelled:       "submitted",
+  DRAFT:           "submitted",
+  PENDING_VERIFICATION: "submitted",
+  VERIFIED:        "verified",
+  REJECTED:        "submitted",
+  PURCHASED:       "purchased",
+  PICKUP_SCHEDULED:"pickup",
+  COMPLETED:       "completed",
+  CANCELLED:       "submitted",
 };
 
 export default function RedemptionsClient({
@@ -49,7 +50,7 @@ export default function RedemptionsClient({
   initialRequests: RewardRequest[];
 }) {
   const [requests, setRequests] = useState(initialRequests);
-  const [filter, setFilter] = useState<"All" | "Pending">("All");
+  const [filter, setFilter] = useState<"All" | "PENDING_VERIFICATION">("All");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [rejectDialog, setRejectDialog] = useState<{ open: boolean; reqId: string | null }>({
@@ -59,7 +60,7 @@ export default function RedemptionsClient({
   const [rejectReason, setRejectReason] = useState("");
 
   const filtered =
-    filter === "All" ? requests : requests.filter((r) => r.status === "Pending");
+    filter === "All" ? requests : requests.filter((r) => r.status === "PENDING_VERIFICATION");
 
   const handleStatusUpdate = (
     id: string,
@@ -79,7 +80,7 @@ export default function RedemptionsClient({
 
   const handleRejectSubmit = () => {
     if (rejectDialog.reqId && rejectReason.trim()) {
-      handleStatusUpdate(rejectDialog.reqId, "Rejected", rejectReason);
+      handleStatusUpdate(rejectDialog.reqId, "REJECTED", rejectReason);
       setRejectDialog({ open: false, reqId: null });
       setRejectReason("");
     }
@@ -88,38 +89,38 @@ export default function RedemptionsClient({
   const getStatusBadge = (status: RewardRequestStatus) => {
     const base = "text-xs font-medium px-2.5 py-1 rounded-full border";
     switch (status) {
-      case "Pending":
+      case "PENDING_VERIFICATION":
         return (
           <span className={cn(base, "bg-secondary/10 text-secondary border-secondary/20")}>
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-secondary mr-1.5 animate-dot-pulse" />
             Pending
           </span>
         );
-      case "Verified":
+      case "VERIFIED":
         return (
           <span className={cn(base, "bg-primary/10 text-primary border-primary/20")}>
             Verified
           </span>
         );
-      case "Rejected":
+      case "REJECTED":
         return (
           <span className={cn(base, "bg-destructive/10 text-destructive border-destructive/20")}>
             Rejected
           </span>
         );
-      case "Purchased":
+      case "PURCHASED":
         return (
           <span className={cn(base, "bg-secondary/10 text-secondary border-secondary/20")}>
             Purchased
           </span>
         );
-      case "PickupScheduled":
+      case "PICKUP_SCHEDULED":
         return (
           <span className={cn(base, "bg-blue-500/10 text-blue-400 border-blue-400/20")}>
             Scheduled
           </span>
         );
-      case "Completed":
+      case "COMPLETED":
         return (
           <span className={cn(base, "bg-primary/20 text-primary border-primary/30")}>
             Completed
@@ -142,8 +143,8 @@ export default function RedemptionsClient({
           All Requests
         </Button>
         <Button
-          variant={filter === "Pending" ? "default" : "outline"}
-          onClick={() => setFilter("Pending")}
+          variant={filter === "PENDING_VERIFICATION" ? "default" : "outline"}
+          onClick={() => setFilter("PENDING_VERIFICATION")}
           size="sm"
         >
           Pending Verification
@@ -195,12 +196,12 @@ export default function RedemptionsClient({
                             <MoreHorizontal className="w-4 h-4" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="min-w-[160px]">
-                            {req.status === "Pending" && (
+                            {req.status === "PENDING_VERIFICATION" && (
                               <>
                                 <DropdownMenuItem
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleStatusUpdate(req.id, "Verified");
+                                    handleStatusUpdate(req.id, "VERIFIED");
                                   }}
                                   className="text-primary focus:text-primary"
                                 >
@@ -217,31 +218,31 @@ export default function RedemptionsClient({
                                 </DropdownMenuItem>
                               </>
                             )}
-                            {req.status === "Verified" && (
+                            {req.status === "VERIFIED" && (
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleStatusUpdate(req.id, "Purchased");
+                                  handleStatusUpdate(req.id, "PURCHASED");
                                 }}
                               >
                                 Mark Purchased
                               </DropdownMenuItem>
                             )}
-                            {req.status === "Purchased" && (
+                            {req.status === "PURCHASED" && (
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleStatusUpdate(req.id, "PickupScheduled");
+                                  handleStatusUpdate(req.id, "PICKUP_SCHEDULED");
                                 }}
                               >
                                 Schedule Pickup
                               </DropdownMenuItem>
                             )}
-                            {req.status === "PickupScheduled" && (
+                            {req.status === "PICKUP_SCHEDULED" && (
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleStatusUpdate(req.id, "Completed");
+                                  handleStatusUpdate(req.id, "COMPLETED");
                                 }}
                               >
                                 Mark Completed

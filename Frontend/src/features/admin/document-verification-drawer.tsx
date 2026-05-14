@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { X, Check, Shield, FileText, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { RedemptionStatusChip } from "@/components/shared/status-badge";
+import { motion } from "framer-motion";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function DocumentVerificationDrawer({ request, onClose }: { request: any; onClose: () => void }) {
@@ -77,14 +78,17 @@ export function DocumentVerificationDrawer({ request, onClose }: { request: any;
               Verify Redemption
             </h2>
           </div>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
             onClick={handleClose}
             className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors text-[--color-text-secondary] hover:text-[--color-text-primary]"
             aria-label="Close drawer"
             data-testid="close-drawer-btn"
           >
             <X size={18} />
-          </button>
+          </motion.button>
         </div>
 
         {/* Request Info */}
@@ -162,7 +166,10 @@ export function DocumentVerificationDrawer({ request, onClose }: { request: any;
               Complete all required documents to approve
             </p>
           )}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
             onClick={handleApprove}
             disabled={!isAllVerified || isApproving}
             className="btn-primary w-full flex justify-center items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -179,7 +186,7 @@ export function DocumentVerificationDrawer({ request, onClose }: { request: any;
                 Approve Redemption
               </>
             )}
-          </button>
+          </motion.button>
         </div>
       </div>
     </div>

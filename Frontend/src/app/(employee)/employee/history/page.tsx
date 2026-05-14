@@ -19,7 +19,7 @@ const mockHistory: RewardRequest[] = [
     rewardId: "RW-001",
     rewardName: "Exclusive Partner Voucher IDR 100k",
     tokensSpent: 2000,
-    status: "Verified",
+    status: "VERIFIED",
     requestedAt: "2026-05-09T10:00:00Z",
     updatedAt: "2026-05-10T14:30:00Z",
   },
@@ -29,7 +29,7 @@ const mockHistory: RewardRequest[] = [
     rewardId: "RW-002",
     rewardName: "Company Branded Hoodie",
     tokensSpent: 4500,
-    status: "Completed",
+    status: "COMPLETED",
     requestedAt: "2026-03-12T08:00:00Z",
     updatedAt: "2026-03-25T11:00:00Z",
   },
@@ -39,7 +39,7 @@ const mockHistory: RewardRequest[] = [
     rewardId: "RW-004",
     rewardName: "Tech Gadget Bundle",
     tokensSpent: 7500,
-    status: "Rejected",
+    status: "REJECTED",
     requestedAt: "2026-01-20T09:30:00Z",
     updatedAt: "2026-01-21T10:00:00Z",
     rejectReason: "Not eligible due to recent downgrade status.",
@@ -71,9 +71,9 @@ export default function RedemptionHistoryPage() {
       <div className="flex flex-wrap gap-3">
         {[
           { label: "Total Requests", value: mockHistory.length },
-          { label: "Completed", value: mockHistory.filter((r) => r.status === "Completed").length },
-          { label: "Pending", value: mockHistory.filter((r) => r.status === "Pending").length },
-          { label: "Rejected", value: mockHistory.filter((r) => r.status === "Rejected").length },
+          { label: "Completed", value: mockHistory.filter((r) => r.status === "COMPLETED").length },
+          { label: "Pending", value: mockHistory.filter((r) => r.status === "PENDING_VERIFICATION").length },
+          { label: "Rejected", value: mockHistory.filter((r) => r.status === "REJECTED").length },
         ].map(({ label, value }) => (
           <div key={label} className="flex items-center gap-2 rounded-full border border-border bg-muted/30 px-4 py-1.5">
             <span className="text-xs text-muted-foreground">{label}:</span>

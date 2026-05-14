@@ -75,12 +75,12 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
 
         {/* User Profile Dropdown */}
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <motion.button 
+          <DropdownMenuTrigger className="focus:outline-none focus-visible:ring-2 focus-visible:ring-[--color-accent] rounded-full">
+            <motion.div 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               data-testid="profile-menu-trigger"
-              className="flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[--color-accent] rounded-full p-1 pr-3 hover:bg-[--color-border-subtle] transition-colors"
+              className="flex items-center gap-2 rounded-full p-1 pr-3 hover:bg-[--color-border-subtle] transition-colors"
             >
               <motion.div 
                 whileHover={{ rotate: 10 }}
@@ -91,7 +91,7 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
               <span className="hidden md:block text-sm font-medium text-[--color-text-primary] max-w-32 truncate">
                 {session?.user?.name || "Account"}
               </span>
-            </motion.button>
+            </motion.div>
           </DropdownMenuTrigger>
           
           <DropdownMenuContent 

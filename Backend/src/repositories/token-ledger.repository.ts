@@ -9,6 +9,7 @@
 
 import { prisma } from "@/db/prisma";
 import { TokenEventType } from "@prisma/client";
+import { DomainError } from "@/errors/domain.error";
 
 export interface AppendTokenEventInput {
   userId:      string;
@@ -30,10 +31,11 @@ export class TokenLedgerRepository {
    */
   async appendTokenEvent(input: AppendTokenEventInput, externalTx?: any) {
     const operation = async (tx: any) => {
-      // 1. Fetch current balance with lock
-      // Note: In Prisma, SELECT FOR UPDATE requires raw query or specific extensions.
-      // For this implementation, we'll use a transaction and a snapshot check.
+      // 1. Lock the User record to serialize transactions for this specific user.
+      // This prevents race conditions when appending ledger entries concurrently.
+      await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${input.userId} FOR UPDATE`;
       
+      // 2. Fetch current balance
       const lastEntry = await tx.tokenLedger.findFirst({
         where: { userId: input.userId },
         orderBy: { createdAt: 'desc' },
@@ -43,7 +45,7 @@ export class TokenLedgerRepository {
       const balanceAfter = currentBalance + input.amount;
 
       if (balanceAfter < 0) {
-        throw new Error("BALANCE_CANNOT_GO_NEGATIVE");
+        throw new DomainError("INSUFFICIENT_TOKENS", "Token balance cannot go negative");
       }
 
       // Calculate expiry if not provided but earnedYear is present
