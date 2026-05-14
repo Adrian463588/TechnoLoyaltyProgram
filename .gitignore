@@ -43,3 +43,10 @@ next-env.d.ts
 # ide
 .vscode/
 .kiro/
+
+# agents
+.agents/
+
+# test artifacts
+TestSuite/*.txt
+TestSuite/*.html

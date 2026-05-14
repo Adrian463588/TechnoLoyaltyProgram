@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Lock, Shield, Trophy, Users } from "lucide-react";
+import { motion } from "framer-motion";
 
 const DEMO_CREDENTIALS = [
   { label: "Employee (Mitra)", npk: "34567", password: "password123", icon: Trophy },
@@ -161,7 +162,10 @@ export default function LoginPage() {
         </p>
         <div className="space-y-2">
           {DEMO_CREDENTIALS.map(({ label, npk, password, icon: Icon }) => (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
               key={npk}
               type="button"
               onClick={() => {
@@ -180,7 +184,7 @@ export default function LoginPage() {
                 <p className="text-xs font-mono text-muted-foreground">{npk}</p>
                 <p className="text-xs text-muted-foreground/60">password123</p>
               </div>
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>

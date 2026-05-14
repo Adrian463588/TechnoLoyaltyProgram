@@ -2,6 +2,7 @@ import React from "react";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { TokenHeroSection } from "@/components/dashboard/token-hero-section";
 import { ShoppingBag, TrendingUp, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 // Mock data fetcher
 async function getDashboardData() {
@@ -68,7 +69,7 @@ export default async function DashboardPage() {
                <p className="text-metric-hero text-[--color-text-primary]">Ready</p>
             </div>
             <div className="border-t border-[--color-border-subtle] pt-4 mt-auto">
-               <button className="btn-primary w-full text-sm py-2" data-testid="employee-dashboard-redeem-button">Browse Catalog</button>
+               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} className="btn-primary w-full text-sm py-2" data-testid="employee-dashboard-redeem-button">Browse Catalog</motion.button>
             </div>
           </div>
 
@@ -96,9 +97,9 @@ export default async function DashboardPage() {
           <div className="col-span-12 lg:col-span-4 glass-card p-6 min-h-[300px] flex flex-col animate-fade-up-in stagger-5">
              <div className="flex items-center justify-between mb-4">
                <h3 className="text-card-heading">Upcoming Rewards</h3>
-               <button className="btn-icon">
+               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} className="btn-icon">
                  <ChevronRight className="h-4 w-4" />
-               </button>
+               </motion.button>
              </div>
              <div className="flex-1 rounded bg-[--color-border-subtle] flex items-center justify-center text-[--color-text-disabled]">
                Catalog Preview

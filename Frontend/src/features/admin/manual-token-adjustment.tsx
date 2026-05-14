@@ -8,9 +8,9 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const adjustmentSchema = z.object({
-  mitraId: z.string().min(1, "Mitra ID is required"),
-  amount: z.coerce.number().refine(val => val !== 0, "Amount cannot be zero"),
-  reason: z.string().min(10, "Reason must be at least 10 characters"),
+  mitraId: z.string({ required_error: "Mitra ID is required" }).min(1, "Mitra ID is required"),
+  amount: z.coerce.number({ required_error: "Amount is required", invalid_type_error: "Amount is required" }).refine(val => val !== 0, "Amount cannot be zero"),
+  reason: z.string({ required_error: "Reason must be at least 10 characters" }).min(10, "Reason must be at least 10 characters"),
 });
 
 type AdjustmentFormValues = z.infer<typeof adjustmentSchema>;
