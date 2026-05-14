@@ -81,6 +81,18 @@ export const adminApi = {
       body:    JSON.stringify({ status, reason }),
     }),
 
+  verifyRedemptionDocuments: (token: string, id: string, verification: {
+    idCardVerified: boolean;
+    ktpVerified: boolean;
+    npwpVerified: boolean;
+    powerOfAttorneyVerified?: boolean;
+  }) =>
+    apiFetch<{ success: boolean }>(`/api/admin/redemptions/${id}/verify-documents`, {
+      method:  "POST",
+      headers: withAuth(token),
+      body:    JSON.stringify(verification),
+    }),
+
   listUploads: (token: string) =>
     apiFetch<UploadResponse[]>("/api/admin/uploads", {
       headers: withAuth(token),
@@ -111,11 +123,13 @@ export interface EmployeeDashboardResponse {
 
 export interface TokenSummaryResponse {
   totalTokens:         number;
-  currentTier:         "BRONZE" | "SILVER" | "GOLD" | "PLATINUM";
+  currentTier:         "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
   pointsToNextTier:    number;
+  nextTier?:           "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
+  cumulativeValue:     number;
   isEligibleForReward: boolean;
-  activePeriod:        string;
-  status:              "ACTIVE" | "DOWNGRADED" | "RESET" | "INACTIVE";
+  periodEnd:           string;
+  memberStatus:        "ACTIVE" | "INACTIVE" | "RESIGNED";
 }
 
 export interface RedemptionResponse {

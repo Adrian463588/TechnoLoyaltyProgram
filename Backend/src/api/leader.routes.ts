@@ -12,8 +12,8 @@ import { LoyaltyController } from "@/controllers/loyalty.controller";
 
 export const leaderRoutes = Router();
 
-leaderRoutes.use(authenticate, authorize("TEAM_LEADER", "HC_PM"));
+leaderRoutes.use(authenticate, authorize("TEAM_LEAD", "HC_ADMIN"));
 
 // ── Team visibility ────────────────────────────────────────────────────────
-leaderRoutes.get("/team",            LoyaltyController.getTeamSummary as RequestHandler);
-leaderRoutes.get("/team/:memberId",  LoyaltyController.getTeamMemberDetail as RequestHandler);
+// leaderRoutes.get("/team",            LoyaltyController.getTeamSummary as RequestHandler);
+// leaderRoutes.get("/team/:memberId",  LoyaltyController.getTeamMemberDetail as RequestHandler);

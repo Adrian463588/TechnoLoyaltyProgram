@@ -1,42 +1,35 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 /**
- * useCountUp — Animated number counter hook
- *
- * Pure presentational hook. Counts from 0 to `target` over
- * `duration`ms with a cubic ease-out curve.
- *
- * Principle: SRP — isolated counter logic, reusable anywhere.
+ * Animated number counter hook
+ * Counts from 0 to target over duration ms with a cubic ease-out curve.
  */
-
-import { useEffect, useRef, useState } from "react";
-
-export function useCountUp(
-  target: number,
-  duration: number = 1400,
-  delay: number = 200
-): number {
-  const [value, setValue] = useState(0);
-  const rafRef = useRef<number | null>(null);
+export function useCountUp(target: number, duration: number = 1200) {
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const startAt = Date.now() + delay;
+    let rafId: number;
+    const startTime = performance.now();
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
-    function tick() {
-      const now = Date.now();
-      if (now < startAt) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
+    const frame = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      setCount(Math.floor(easeOut(progress) * target));
+      
+      if (progress < 1) {
+        rafId = requestAnimationFrame(frame);
       }
-      const progress = Math.min((now - startAt) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // cubic ease-out
-      setValue(Math.round(target * eased));
-      if (progress < 1) rafRef.current = requestAnimationFrame(tick);
-    }
-
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
-  }, [target, duration, delay]);
 
-  return value;
+    rafId = requestAnimationFrame(frame);
+    
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [target, duration]);
+
+  return count;
 }

@@ -20,20 +20,20 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     Credentials({
       name: "Credentials",
       credentials: {
-        npk:      { label: "NPK",      type: "text" },
+        email:    { label: "Email",    type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        const { npk, password } = parsed.data;
+        const { email, password } = parsed.data;
 
         try {
           const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ npk, password }),
+            body: JSON.stringify({ email, password }),
           });
 
           if (!res.ok) return null;
@@ -41,23 +41,23 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           const data = (await res.json()) as {
             user: {
               id: string;
-              npk: string;
               name: string;
               email: string;
-              role: "MITRA" | "TEAM_LEADER" | "HC_PM";
-              divisionId?: string;
+              role: "MITRA" | "TEAM_LEAD" | "HC_ADMIN";
+              division: string;
+              partnerStatus: string;
             };
           };
 
           if (!data?.user) return null;
 
           return {
-            id:         data.user.id,
-            npk:        data.user.npk,
-            name:       data.user.name,
-            email:      data.user.email,
-            role:       data.user.role,
-            divisionId: data.user.divisionId,
+            id:            data.user.id,
+            name:          data.user.name,
+            email:         data.user.email,
+            role:          data.user.role,
+            division:      data.user.division,
+            partnerStatus: data.user.partnerStatus,
           };
         } catch {
           return null;

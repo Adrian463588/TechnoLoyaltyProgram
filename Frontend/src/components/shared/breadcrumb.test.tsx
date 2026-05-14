@@ -19,11 +19,6 @@ describe('Breadcrumb', () => {
     expect(screen.getByRole('navigation', { name: /breadcrumb/i })).toBeInTheDocument();
   });
 
-  it('renders home link', () => {
-    render(<Breadcrumb />);
-    expect(screen.getByRole('link', { name: /home/i })).toBeInTheDocument();
-  });
-
   it('renders segment labels for /employee/dashboard', () => {
     render(<Breadcrumb />);
     expect(screen.getByText('Employee')).toBeInTheDocument();

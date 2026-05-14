@@ -8,7 +8,6 @@
  */
 
 import type { RequestHandler } from "express";
-import { z } from "zod";
 import { RedemptionService } from "@/services/redemption.service";
 import { redeemRequestSchema, updateStatusSchema, uuidSchema } from "@/types/validations";
 import { ValidationError } from "@/errors/validation-error";
@@ -16,7 +15,7 @@ import { NotFoundError } from "@/errors/not-found-error";
 
 export const RedemptionController = {
 
-  // GET /api/admin/redemptions — HC_PM: list all requests
+  // GET /api/admin/redemptions — HC_ADMIN: list all requests
   listAll: (async (_req, res, next) => {
     try {
       const requests = await RedemptionService.listAll();
@@ -49,7 +48,7 @@ export const RedemptionController = {
   listMyRedemptions: (async (req, res, next) => {
     try {
       const { user } = req;
-      const requests = await RedemptionService.listByUser(user.id);
+      const requests = await RedemptionService.listByMitra(user.id);
       res.json(requests);
     } catch (err) {
       next(err);
@@ -63,13 +62,12 @@ export const RedemptionController = {
       const parsed = redeemRequestSchema.safeParse(req.body);
 
       if (!parsed.success) {
-        throw new ValidationError("Invalid input", z.treeifyError(parsed.error));
+        throw new ValidationError("Invalid input", parsed.error.format());
       }
 
-      const redemption = await RedemptionService.createRequest(
+      const redemption = await RedemptionService.submitRequest(
         user.id,
         parsed.data.rewardItemId,
-        req.ip,
       );
       res.status(201).json(redemption);
     } catch (err) {
@@ -77,7 +75,7 @@ export const RedemptionController = {
     }
   }) satisfies RequestHandler,
 
-  // POST /api/admin/redemptions/:id/status — HC_PM: update status
+  // POST /api/admin/redemptions/:id/status — HC_ADMIN: update status
   updateStatus: (async (req, res, next) => {
     try {
       const { user } = req;
@@ -94,21 +92,52 @@ export const RedemptionController = {
       if (!parsed.success) {
         throw new ValidationError(
           "Invalid status parameters",
-          z.treeifyError(parsed.error),
+          parsed.error.format(),
         );
       }
 
-      const result = await RedemptionService.updateStatus(
+      const result = await RedemptionService.transitionStatus(
         idResult.data,
         parsed.data.status,
         user.id,
         parsed.data.reason,
-        req.ip,
       );
 
       res.json({
         success: true,
         message: `Status updated to ${parsed.data.status}`,
+        request: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }) satisfies RequestHandler,
+
+  // POST /api/admin/redemptions/:id/verify-documents — HC_ADMIN: verify docs
+  verifyDocuments: (async (req, res, next) => {
+    try {
+      const { user } = req;
+
+      const idParam = req.params["id"];
+      const idResult = uuidSchema.safeParse(idParam);
+      if (!idResult.success) {
+        throw new ValidationError("Invalid request ID format", { id: idParam });
+      }
+
+      const parsed = redemptionVerificationSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new ValidationError("Invalid verification data", parsed.error.format());
+      }
+
+      const result = await RedemptionService.verifyDocuments(
+        idResult.data,
+        parsed.data,
+        user.id,
+      );
+
+      res.json({
+        success: true,
+        message: "Documents verified successfully",
         request: result,
       });
     } catch (err) {

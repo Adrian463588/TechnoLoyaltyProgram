@@ -1,70 +1,48 @@
 /**
  * Backend/src/repositories/redemption.repository.ts
  *
- * Data access layer for RewardRedemptionRequest entities.
+ * Data access layer for RedemptionRequest entities.
  */
 
-import type {
+import {
   PrismaClient,
-  RewardRedemptionRequest,
+  RedemptionRequest,
   RedemptionStatus,
 } from "@prisma/client";
-
-export type RedemptionWithRelations = RewardRedemptionRequest & {
-  user: { id: string; name: string; npk: string };
-  item: { id: string; name: string; tokenCost: number; imageUrl: string | null };
-  history: Array<{
-    id: string;
-    toStatus: RedemptionStatus;
-    actorId: string;
-    reason: string | null;
-    createdAt: Date;
-  }>;
-};
 
 export class RedemptionRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findAll(): Promise<RedemptionWithRelations[]> {
-    return this.prisma.rewardRedemptionRequest.findMany({
+  async findAll() {
+    return this.prisma.redemptionRequest.findMany({
       include: {
-        user: { select: { id: true, name: true, npk: true } },
-        item: { select: { id: true, name: true, tokenCost: true, imageUrl: true } },
+        mitra: { select: { id: true, name: true, email: true } },
+        rewardItem: { select: { id: true, name: true, tokenCost: true, imageUrl: true } },
         history: { orderBy: { createdAt: "desc" } },
       },
       orderBy: { createdAt: "desc" },
     });
   }
 
-  async findById(requestId: string): Promise<RedemptionWithRelations | null> {
-    return this.prisma.rewardRedemptionRequest.findUnique({
+  async findById(requestId: string) {
+    return this.prisma.redemptionRequest.findUnique({
       where: { id: requestId },
       include: {
-        user: { select: { id: true, name: true, npk: true } },
-        item: { select: { id: true, name: true, tokenCost: true, imageUrl: true } },
+        mitra: { select: { id: true, name: true, email: true } },
+        rewardItem: { select: { id: true, name: true, tokenCost: true, imageUrl: true } },
         history: { orderBy: { createdAt: "desc" } },
       },
     });
   }
 
-  async findByUserId(userId: string): Promise<RedemptionWithRelations[]> {
-    return this.prisma.rewardRedemptionRequest.findMany({
-      where: { userId },
+  async findByMitraId(mitraId: string) {
+    return this.prisma.redemptionRequest.findMany({
+      where: { mitraId },
       include: {
-        user: { select: { id: true, name: true, npk: true } },
-        item: { select: { id: true, name: true, tokenCost: true, imageUrl: true } },
+        rewardItem: { select: { id: true, name: true, tokenCost: true, imageUrl: true } },
         history: { orderBy: { createdAt: "desc" } },
       },
       orderBy: { createdAt: "desc" },
     });
-  }
-
-  async create(data: {
-    userId: string;
-    rewardItemId: string;
-    tokensSpent: number;
-    status: RedemptionStatus;
-  }): Promise<RewardRedemptionRequest> {
-    return this.prisma.rewardRedemptionRequest.create({ data });
   }
 }

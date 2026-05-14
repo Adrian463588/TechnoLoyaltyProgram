@@ -6,46 +6,63 @@
  * DRY: single source of truth for all tier/token constants.
  */
 
-import type { MemberTierType } from "@prisma/client";
+import { MembershipTier } from "@prisma/client";
 
-type TierStatus = MemberTierType;
-
-// ── Tier thresholds ────────────────────────────────────────────────────────
-const TIER_THRESHOLDS: Record<TierStatus, number> = {
-  BRONZE:   0,
-  SILVER:   1_000,
-  GOLD:     3_000,
-  PLATINUM: 6_000,
+// ── Tier thresholds (Annual for OPCENT/TELE, 6-monthly for TECHNO) ──────────
+const OPCENT_TELE_THRESHOLDS: Record<MembershipTier, number> = {
+  SAPHIRE: 0,
+  EMERALD: 430,
+  RUBY:    860,
+  DIAMOND: 1300,
 };
 
-const TIER_ORDER: TierStatus[] = ["BRONZE", "SILVER", "GOLD", "PLATINUM"];
+const TECHNO_THRESHOLDS: Record<MembershipTier, number> = {
+  SAPHIRE: 0,
+  EMERALD: 25,
+  RUBY:    50,
+  DIAMOND: 75,
+};
+
+const TIER_ORDER: MembershipTier[] = ["SAPHIRE", "EMERALD", "RUBY", "DIAMOND"];
+
+// ── Period Constants ────────────────────────────────────────────────────────
+// P1: Dec 16 to June 15
+// P2: June 16 to Dec 15
+const PERIODS = {
+  P1_START: { month: 11, day: 16 }, // Dec 16 (0-indexed month: 11)
+  P1_END:   { month: 5,  day: 15 }, // June 15 (0-indexed month: 5)
+  P2_START: { month: 5,  day: 16 }, // June 16
+  P2_END:   { month: 11, day: 15 }, // Dec 15
+} as const;
 
 // ── Token conversion rates ─────────────────────────────────────────────────
-const OPTEL_CONVERSION = {
-  PER_SLOT_VALUE: 100,   // tokens per slot
+const CONVERSION = {
+  OPCENT_TELE_SLOT: 1, // 1 Slot = 1 Token
+  TECHNO_PROJECT:   1, // Assuming 1 Project = 1 Token
 } as const;
 
-const TECHNO_CONVERSION = {
-  PER_SPRINT_VALUE: 200, // tokens per sprint
-} as const;
+// ── Tier calculation helpers ────────────────────────────────────────────────
+function calculateOpcentTeleTier(cumulativeSlots: number): MembershipTier {
+  if (cumulativeSlots >= OPCENT_TELE_THRESHOLDS.DIAMOND) return "DIAMOND";
+  if (cumulativeSlots >= OPCENT_TELE_THRESHOLDS.RUBY)    return "RUBY";
+  if (cumulativeSlots >= OPCENT_TELE_THRESHOLDS.EMERALD) return "EMERALD";
+  return "SAPHIRE";
+}
 
-// ── Redemption threshold ────────────────────────────────────────────────────
-const REDEMPTION_THRESHOLD = 2_000;
-
-// ── Tier calculation helper ─────────────────────────────────────────────────
-function calculateTier(totalTokens: number): TierStatus {
-  if (totalTokens >= TIER_THRESHOLDS.PLATINUM) return "PLATINUM";
-  if (totalTokens >= TIER_THRESHOLDS.GOLD)     return "GOLD";
-  if (totalTokens >= TIER_THRESHOLDS.SILVER)   return "SILVER";
-  return "BRONZE";
+function calculateTechnoTier(cumulativeProjects: number): MembershipTier {
+  if (cumulativeProjects >= TECHNO_THRESHOLDS.DIAMOND) return "DIAMOND";
+  if (cumulativeProjects >= TECHNO_THRESHOLDS.RUBY)    return "RUBY";
+  if (cumulativeProjects >= TECHNO_THRESHOLDS.EMERALD) return "EMERALD";
+  return "SAPHIRE";
 }
 
 // ── Public policy object ───────────────────────────────────────────────────
 export const LOYALTY_POLICIES = {
-  TIER_THRESHOLDS,
+  OPCENT_TELE_THRESHOLDS,
+  TECHNO_THRESHOLDS,
   TIER_ORDER,
-  OPTEL_CONVERSION,
-  TECHNO_CONVERSION,
-  REDEMPTION_THRESHOLD,
-  calculateTier,
+  CONVERSION,
+  PERIODS,
+  calculateOpcentTeleTier,
+  calculateTechnoTier,
 } as const;

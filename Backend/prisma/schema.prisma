@@ -7,33 +7,51 @@ datasource db {
 }
 
 // ── Enums ──
-enum RoleType {
+enum UserRole {
   MITRA
-  TEAM_LEADER
-  HC_PM
+  TEAM_LEAD
+  HC_ADMIN
 }
 
 enum DivisionType {
-  OPTEL
+  OPCENT
+  TELE
   TECHNO
 }
 
 enum PartnershipStatus {
   ACTIVE
   INACTIVE
-}
-
-enum EmploymentStatus {
-  ACTIVE
   RESIGNED
-  TERMINATED
 }
 
 enum MemberTierType {
-  BRONZE
-  SILVER
-  GOLD
-  PLATINUM
+  SAPHIRE
+  EMERALD
+  RUBY
+  DIAMOND
+}
+
+enum HealthBenefit {
+  NONE
+  FIT
+  CLASSY
+}
+
+enum TokenEventType {
+  EARNED_SHIFT
+  EARNED_PROJECT
+  REDEEMED
+  EXPIRED
+  MANUAL_ADJUSTMENT
+  DOWNGRADE_PENALTY
+  RESET_PENALTY
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum UploadStatus {
@@ -57,208 +75,159 @@ enum RedemptionStatus {
 
 // ── Identity & Access ──
 model User {
-  id           String   @id @default(uuid())
-  npk          String   @unique
-  name         String
-  email        String   @unique
-  passwordHash String
-  isActive     Boolean  @default(true) // Required by auth
-  role         RoleType @default(MITRA)
-  divisionId   String?
-  teamId       String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String         @id @default(uuid())
+  email          String         @unique
+  name           String
+  passwordHash   String
+  division       DivisionType
+  role           UserRole       @default(MITRA)
+  partnerStatus  PartnershipStatus  @default(ACTIVE)
+  membershipTier MemberTierType @default(SAPHIRE)
+  healthBenefit  HealthBenefit  @default(NONE)
+  teamLeadId     String?
+  joinedAt       DateTime       @default(now())
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
-  division          Division?                 @relation(fields: [divisionId], references: [id])
-  team              Team?                     @relation(fields: [teamId], references: [id])
-  loyaltyProfile    UserLoyaltyProfile?
-  employmentHistory EmploymentStatusHistory[]
-  redemptions       RewardRedemptionRequest[]
+  teamLead          User?                     @relation("TeamHierarchy", fields: [teamLeadId], references: [id])
+  subordinates      User[]                    @relation("TeamHierarchy")
+  tokenLedger       TokenLedger[]
+  membershipHistory MembershipHistory[]
+  shiftClaims       ShiftClaim[]
+  projectClaims     ProjectClaim[]
+  redemptions       RedemptionRequest[]
 }
 
-model Division {
-  id        String       @id @default(uuid())
-  name      String       @unique
-  type      DivisionType
-  createdAt DateTime     @default(now())
-
-  users User[]
-  teams Team[]
-}
-
-model Team {
-  id         String   @id @default(uuid())
-  name       String
-  leaderId   String?
-  divisionId String
-  createdAt  DateTime @default(now())
-
-  division Division @relation(fields: [divisionId], references: [id])
-  users    User[]
-}
-
-// ── Historical Statuses ──
-model EmploymentStatusHistory {
-  id        String           @id @default(uuid())
-  userId    String
-  status    EmploymentStatus
-  changedAt DateTime         @default(now())
-  reason    String?
-  actorId   String // SYSTEM or admin ID
+// ── Token Ledger (append-only) ──
+model TokenLedger {
+  id           String         @id @default(uuid())
+  userId       String
+  eventType    TokenEventType
+  amount       Int            // +/-
+  balanceAfter Int            // snapshot
+  referenceId  String?        // FK to shift/project/redemption
+  earnedYear   Int?           // for expiry
+  expiresAt    DateTime?      // Dec 31 of (earnedYear + 3)
+  reason       String?        // required for MANUAL_ADJUSTMENT, penalties
+  performedBy  String         // actor ID
+  createdAt    DateTime       @default(now())
 
   user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, eventType])
 }
 
-// ── Loyalty Domain ──
-model EarningPeriod {
-  id        String   @id @default(uuid())
-  name      String   @unique // e.g., "P1-2026"
-  startDate DateTime
-  endDate   DateTime // Cut-off
-  isActive  Boolean  @default(false)
+// ── Membership History (append-only) ──
+model MembershipHistory {
+  id                 String         @id @default(uuid())
+  userId             String
+  previousTier       MemberTierType
+  newTier            MemberTierType
+  changeReason       String         // UPGRADE, DOWNGRADE, RESET, MANUAL
+  triggeredBy        String         // actor ID
+  tokenBalanceBefore Int
+  tokenBalanceAfter  Int
+  createdAt          DateTime       @default(now())
 
-  ledgers TokenLedgerEntry[]
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt(sort: Desc)])
 }
 
-model UserLoyaltyProfile {
-  id              String         @id @default(uuid())
-  userId          String         @unique
-  currentTier     MemberTierType @default(BRONZE)
-  totalTokens     Int            @default(0)
-  remainingTokens Int            @default(0)
-  tokenAgeMonths  Int            @default(0)
-  isEligible      Boolean        @default(false)
-  commitmentDate  DateTime?
-  lastResetAt     DateTime?
-  updatedAt       DateTime       @updatedAt
+// ── Claims ──
+model ShiftClaim {
+  id              String      @id @default(uuid())
+  mitraId         String
+  slotCount       Int
+  shiftDate       DateTime
+  status          ClaimStatus @default(PENDING)
+  validatedBy     String?     // actor ID
+  validatedAt     DateTime?
+  rejectionReason String?
+  createdAt       DateTime    @default(now())
 
-  memberStatus    String         @default("ACTIVE") // ACTIVE | DOWNGRADED | RESET | INACTIVE
-
-  user    User                 @relation(fields: [userId], references: [id])
-  metrics UserDivisionMetric[]
+  mitra User @relation(fields: [mitraId], references: [id])
 }
 
-model UserDivisionMetric {
-  id                String       @id @default(uuid())
-  profileId         String
-  divisionType      DivisionType
-  // Optel
-  totalSlots        Int?
-  regularSlots      Int?
-  // Techno
-  sprintBalance     Int?
-  projectRejections Int?
+model ProjectClaim {
+  id              String      @id @default(uuid())
+  mitraId         String
+  projectName     String
+  completedAt     DateTime
+  status          ClaimStatus @default(PENDING)
+  validatedBy     String?     // actor ID
+  validatedAt     DateTime?
+  rejectionReason String?
+  createdAt       DateTime    @default(now())
 
-  profile UserLoyaltyProfile @relation(fields: [profileId], references: [id])
+  mitra User @relation(fields: [mitraId], references: [id])
 }
 
-model TokenLedgerEntry {
-  id         String   @id @default(uuid())
-  userId     String
-  periodId   String
-  amount     Int // +/-
-  sourceType String // UPLOAD_OPTEL, UPLOAD_TECHNO, REDEMPTION
-  sourceId   String? // upload row ID or redemption request ID
-  createdAt  DateTime @default(now())
-
-  period EarningPeriod @relation(fields: [periodId], references: [id])
-}
-
-// ── Upload Pipeline ──
-model MonthlyUpload {
-  id           String       @id @default(uuid())
-  filename     String
-  divisionType DivisionType
-  status       UploadStatus @default(STAGED)
-  uploadedById String
-  createdAt    DateTime     @default(now())
-
-  batches UploadBatch[]
-}
-
-model UploadBatch {
-  id          String    @id @default(uuid())
-  uploadId    String
-  startedAt   DateTime  @default(now())
-  completedAt DateTime?
-  totalRows   Int       @default(0)
-  errorRows   Int       @default(0)
-
-  upload      MonthlyUpload      @relation(fields: [uploadId], references: [id], onDelete: Cascade)
-  stagingRows UploadRowStaging[]
-}
-
-model UploadRowStaging {
-  id        String  @id @default(uuid())
-  batchId   String
-  rowNumber Int
-  rawData   Json
-  isValid   Boolean @default(false)
-
-  batch  UploadBatch             @relation(fields: [batchId], references: [id], onDelete: Cascade)
-  issues UploadValidationIssue[]
-}
-
-model UploadValidationIssue {
-  id       String @id @default(uuid())
-  rowId    String
-  column   String
-  issue    String
-  severity String // ERROR | WARNING
-
-  row UploadRowStaging @relation(fields: [rowId], references: [id], onDelete: Cascade)
-}
-
-// ── Redemptions ──
+// ── Rewards & Redemptions ──
 model RewardItem {
   id          String   @id @default(uuid())
   name        String
   description String?
   tokenCost   Int
-  stockLimit  Int?
   imageUrl    String?
-  isAvailable Boolean  @default(true)
+  isActive    Boolean  @default(true)
+  stock       Int?     // null = unlimited
+  createdBy   String   // actor ID
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  requests RewardRedemptionRequest[]
+  redemptions RedemptionRequest[]
 }
 
-model RewardRedemptionRequest {
-  id           String           @id @default(uuid())
-  userId       String
-  rewardItemId String
-  tokensSpent  Int
-  status       RedemptionStatus @default(DRAFT)
-  pickupDate   DateTime?
-  rejectReason String?
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+model RedemptionRequest {
+  id                       String           @id @default(uuid())
+  mitraId                  String
+  rewardItemId             String
+  tokenCost                Int              // snapshot
+  status                   RedemptionStatus @default(DRAFT)
+  submittedAt              DateTime         @default(now())
+  verifiedBy               String?          // actor ID
+  verifiedAt               DateTime?
+  rejectionReason          String?
+  pickupScheduledAt        DateTime?
+  completedAt              DateTime?
+  // Document verification
+  idCardVerified           Boolean          @default(false)
+  ktpVerified              Boolean          @default(false)
+  npwpVerified             Boolean          @default(false)
+  powerOfAttorneyRequired  Boolean          @default(false)
+  powerOfAttorneyVerified  Boolean?
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
 
-  user    User                            @relation(fields: [userId], references: [id])
-  item    RewardItem                      @relation(fields: [rewardItemId], references: [id])
-  history RewardRedemptionStatusHistory[]
+  mitra      User                      @relation(fields: [mitraId], references: [id])
+  rewardItem RewardItem                @relation(fields: [rewardItemId], references: [id])
+  history    RedemptionStatusHistory[]
 }
 
-model RewardRedemptionStatusHistory {
-  id        String           @id @default(uuid())
-  requestId String
-  toStatus  RedemptionStatus
-  actorId   String
-  reason    String?
-  createdAt DateTime         @default(now())
+model RedemptionStatusHistory {
+  id                  String           @id @default(uuid())
+  redemptionRequestId String
+  previousStatus      RedemptionStatus
+  newStatus           RedemptionStatus
+  changedBy           String           // actor ID
+  note                String?
+  createdAt           DateTime         @default(now())
 
-  request RewardRedemptionRequest @relation(fields: [requestId], references: [id])
+  request RedemptionRequest @relation(fields: [redemptionRequestId], references: [id])
 }
 
 // ── Audit ──
 model AuditLog {
-  id         String   @id @default(uuid())
-  action     String
-  actorId    String
-  targetType String
-  targetId   String
-  details    Json?
-  ipAddress  String?
-  createdAt  DateTime @default(now())
+  id               String   @id @default(uuid())
+  actorId          String
+  action           String   // e.g. 'TOKEN_MANUAL_ADJUST'
+  targetUserId     String?
+  targetEntityType String?
+  targetEntityId   String?
+  previousValue    Json?
+  newValue         Json?
+  ipAddress        String?
+  createdAt        DateTime @default(now())
 }
