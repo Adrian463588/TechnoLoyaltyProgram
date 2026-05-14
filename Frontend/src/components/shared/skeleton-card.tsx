@@ -1,92 +1,82 @@
-import { cn } from "@/lib/utils";
+"use client";
+
 import React from "react";
 
-interface SkeletonProps {
-  className?: string;
-  children?: React.ReactNode;
-  style?: React.CSSProperties;
-}
-
-function Skeleton({ className, style }: SkeletonProps) {
+export function TokenCardSkeleton() {
   return (
-    <div
-      className={cn(
-        "rounded-lg bg-muted animate-skeleton",
-        className
-      )}
-      style={style}
-    />
-  );
-}
-
-export function SkeletonBentoCard({ className, children }: SkeletonProps) {
-  return (
-    <div
-      className={cn(
-        "rounded-2xl border border-border bg-card p-6 space-y-4 overflow-hidden",
-        className
-      )}
-    >
-      <div className="flex justify-between items-start">
-        <div className="space-y-2 flex-1">
-          <Skeleton className="h-3 w-28" />
-          <Skeleton className="h-10 w-36 stagger-1" />
-          <Skeleton className="h-3 w-48 stagger-2" />
-        </div>
-        <Skeleton className="h-7 w-20 rounded-full stagger-1" />
-      </div>
-      <div className="space-y-2 pt-4">
-        <Skeleton className="h-3 w-full stagger-3" />
-        <Skeleton className="h-3 w-3/4 stagger-4" />
-      </div>
-      {children}
+    <div className="glass-card p-6 space-y-4">
+      {/* Label */}
+      <div className="skeleton h-3 w-24 rounded" />
+      {/* Hero number */}
+      <div className="skeleton h-12 w-40 rounded" />
+      {/* Sub-value */}
+      <div className="skeleton h-3 w-32 rounded" />
+      {/* Divider */}
+      <div className="skeleton h-px w-full rounded" />
+      {/* Footer info */}
+      <div className="skeleton h-3 w-48 rounded" />
     </div>
   );
 }
 
-export function SkeletonStatCard({ className }: SkeletonProps) {
+export function TableRowSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div
-      className={cn(
-        "rounded-2xl border border-border bg-card p-5 space-y-3",
-        className
-      )}
-    >
-      <Skeleton className="h-3 w-20" />
-      <Skeleton className="h-8 w-24 stagger-1" />
-      <Skeleton className="h-2 w-full rounded-full stagger-2" />
-    </div>
-  );
-}
-
-export function SkeletonRow({ className, style }: SkeletonProps) {
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-between py-3 border-b border-border last:border-0",
-        className
-      )}
-      style={style}
-    >
-      <div className="space-y-1.5">
-        <Skeleton className="h-3 w-32" />
-        <Skeleton className="h-2.5 w-20 stagger-1" />
-      </div>
-      <Skeleton className="h-4 w-16 stagger-2" />
-    </div>
-  );
-}
-
-export function SkeletonTableRow({ cols = 4, className }: SkeletonProps & { cols?: number }) {
-  return (
-    <div className={cn("flex items-center gap-4 px-4 py-3 border-b border-border", className)}>
-      {Array.from({ length: cols }).map((_, i) => (
-        <Skeleton
-          key={i}
-          className={cn("h-3 flex-1", i === 0 && "max-w-[80px]")}
-          style={{ animationDelay: `${i * 60}ms` }}
-        />
+    <>
+      {Array.from({ length: rows }).map((_, i) => (
+        <tr key={i} className="border-b border-[--color-border-subtle]">
+          <td className="p-4"><div className="skeleton h-4 w-32 rounded" /></td>
+          <td className="p-4"><div className="skeleton h-4 w-20 rounded" /></td>
+          <td className="p-4"><div className="skeleton h-4 w-16 rounded" /></td>
+          <td className="p-4"><div className="skeleton h-6 w-24 rounded-full" /></td>
+          <td className="p-4"><div className="skeleton h-4 w-8 rounded ml-auto" /></td>
+        </tr>
       ))}
+    </>
+  );
+}
+
+export function DashboardSkeleton() {
+  return (
+    <div
+      className="bento-grid"
+      role="status"
+      aria-label="Loading loyalty data"
+      aria-busy="true"
+    >
+      {/* Welcome banner */}
+      <div className="col-span-12 glass-card p-6">
+        <div className="skeleton h-6 w-64 rounded mb-2" />
+        <div className="skeleton h-4 w-48 rounded" />
+      </div>
+
+      {/* Stat cards x3 */}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="col-span-12 md:col-span-4 glass-card p-6 space-y-4">
+          <div className="skeleton h-3 w-20 rounded" />
+          <div className="skeleton h-10 w-32 rounded" />
+          <div className="skeleton h-3 w-28 rounded" />
+        </div>
+      ))}
+
+      {/* Chart area */}
+      <div className="col-span-12 lg:col-span-8 glass-card p-6">
+        <div className="skeleton h-4 w-40 rounded mb-4" />
+        <div className="skeleton h-40 w-full rounded-lg" />
+      </div>
+
+      {/* Side panel */}
+      <div className="col-span-12 lg:col-span-4 glass-card p-6 space-y-3">
+        <div className="skeleton h-4 w-32 rounded mb-4" />
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3 mb-3">
+            <div className="skeleton h-10 w-10 rounded-lg shrink-0" />
+            <div className="space-y-2 flex-1">
+              <div className="skeleton h-3 w-full rounded" />
+              <div className="skeleton h-3 w-2/3 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -16,10 +16,11 @@ export const authConfig = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id         = user.id ?? "";
-        token.npk        = (user as { npk: string }).npk;
-        token.role       = (user as { role: "MITRA" | "TEAM_LEADER" | "HC_PM" }).role;
-        token.divisionId = (user as { divisionId?: string }).divisionId;
+        token.id            = user.id ?? "";
+        token.email         = user.email ?? "";
+        token.role          = (user as { role: "MITRA" | "TEAM_LEAD" | "HC_ADMIN" }).role;
+        token.division      = (user as { division?: string }).division;
+        token.partnerStatus = (user as { partnerStatus?: string }).partnerStatus;
       }
       return token;
     },
@@ -27,9 +28,10 @@ export const authConfig = {
       if (token && session.user) {
         session.user.id = token.id as string;
         const user = session.user as unknown as Record<string, unknown>;
-        user.npk        = token.npk;
-        user.role       = token.role;
-        user.divisionId = token.divisionId;
+        user.email         = token.email;
+        user.role          = token.role;
+        user.division      = token.division;
+        user.partnerStatus = token.partnerStatus;
       }
       return session;
     },

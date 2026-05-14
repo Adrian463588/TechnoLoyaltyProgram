@@ -8,49 +8,40 @@
  */
 
 import type {
-  RoleType,
-  DivisionType,
-  MemberTierType,
+  UserRole,
+  Division,
+  MembershipTier,
   RedemptionStatus,
   UploadStatus,
+  PartnerStatus,
 } from "@prisma/client";
 
 // ── Re-exported Prisma enum types ────────────────────────────
-export type Role = RoleType;                        // MITRA | TEAM_LEADER | HC_PM
-export type Division = DivisionType;                // OPTEL | TECHNO
-export type TierStatus = MemberTierType;            // BRONZE | SILVER | GOLD | PLATINUM
+export type Role = UserRole;                        // MITRA | TEAM_LEAD | HC_ADMIN
+export type DivisionType = Division;                // OPCENT | TELE | TECHNO
+export type TierStatus = MembershipTier;            // SAPHIRE | EMERALD | RUBY | DIAMOND
 export type RewardRequestStatus = RedemptionStatus; // DRAFT | PENDING_VERIFICATION | ...
-
-// ── Member Status ─────────────────────────────────────────────
-export type MemberStatus = "ACTIVE" | "DOWNGRADED" | "RESET" | "INACTIVE";
-
-// ── Upload Status ─────────────────────────────────────────────
-export type { UploadStatus };
 
 // ── User ──────────────────────────────────────────────────────
 export interface User {
   id: string;
   name: string;
   email: string;
-  npk: string;
   role: Role;
-  divisionId: string | null;
-  teamId: string | null;
+  division: DivisionType;
+  partnerStatus: PartnerStatus;
+  membershipTier: TierStatus;
 }
 
 // ── Token Summary (employee dashboard) ───────────────────────
 export interface TokenSummary {
   userId: string;
   totalTokens: number;
-  remainingTokens: number;
   currentTier: TierStatus;
-  pointsToNextTier: number;
-  totalForNextTier: number;
+  pointsToNextTier: number | null;
+  nextTier: TierStatus | null;
   isEligibleForReward: boolean;
-  activePeriod: string;
-  activePeriodStart: string;
-  activePeriodEnd: string;
-  memberStatus: MemberStatus;
+  memberStatus: PartnerStatus;
 }
 
 // ── Reward ────────────────────────────────────────────────────
@@ -60,75 +51,28 @@ export interface RewardItem {
   description: string | null;
   tokenCost: number;
   imageUrl: string | null;
-  isAvailable: boolean;
-  stockLimit: number | null;
+  isActive: boolean;
+  stock: number | null;
 }
 
 // ── Redemption Request ────────────────────────────────────────
 export interface RewardRequest {
   id: string;
-  userId: string;
+  mitraId: string;
   userName?: string;
-  userNpk?: string;
+  userEmail?: string;
   rewardId: string;
   rewardName: string;
-  tokensSpent: number;
+  tokenCost: number;
   status: RewardRequestStatus;
-  requestedAt: string;
+  submittedAt: string;
   updatedAt: string;
-  rejectReason?: string | null;
-}
-
-// ── Upload ────────────────────────────────────────────────────
-export interface UploadValidationIssue {
-  row: number;
-  column: string;
-  issue: string;
-  severity: "ERROR" | "WARNING";
-}
-
-export interface MonthlyUpload {
-  id: string;
-  filename: string;
-  divisionType: Division;
-  uploadedAt: string;
-  status: UploadStatus;
-  validRows: number;
-  errorRows: number;
-  issues?: UploadValidationIssue[];
-}
-
-// ── Team ──────────────────────────────────────────────────────
-export interface TeamMemberSummary {
-  id: string;
-  name: string;
-  npk: string;
-  division: Division;
-  tokens: number;
-  tier: TierStatus;
-  memberStatus: MemberStatus;
+  rejectionReason?: string | null;
 }
 
 // ── Employee Dashboard (full) ─────────────────────────────────
 export interface EmployeeDashboardData {
-  user: {
-    id: string;
-    name: string;
-    npk: string;
-    division: Division;
-  };
+  user: User;
   tokenSummary: TokenSummary;
   recentRedemptions: RewardRequest[];
-}
-
-// ── Audit ──────────────────────────────────────────────────────
-export interface AuditLogEntry {
-  id: string;
-  action: string;
-  actorId: string;
-  targetType: string;
-  targetId: string;
-  details: Record<string, unknown> | null;
-  ipAddress: string | null;
-  createdAt: string;
 }

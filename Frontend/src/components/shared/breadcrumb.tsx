@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, Home } from "lucide-react";
+import React from "react";
 import { cn } from "@/lib/utils";
 
 const labelMap: Record<string, string> = {
@@ -12,19 +12,16 @@ const labelMap: Record<string, string> = {
   dashboard: "Dashboard",
   rewards: "Rewards",
   history: "History",
-  uploads: "Uploads",
-  redemptions: "Redemptions",
+  uploads: "Monthly Uploads",
+  redemptions: "Redemption Requests",
   snapshots: "Snapshots",
   audit: "Audit Log",
   team: "Team Overview",
   alerts: "Alerts",
   login: "Login",
+  members: "Members",
 };
 
-/**
- * Route segments that are layout/role containers only — they have no
- * dedicated page.tsx and must NOT be rendered as clickable links.
- */
 const LAYOUT_ONLY_SEGMENTS = new Set(["employee", "admin", "leader"]);
 
 function toLabel(segment: string): string {
@@ -52,38 +49,35 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
   return (
     <nav
       aria-label="Breadcrumb"
-      className={cn(
-        "flex items-center gap-1 text-xs text-muted-foreground animate-fade-up-in",
-        className
-      )}
+      className={cn("flex items-center gap-2 py-3", className)}
     >
-      <Link
-        href="/"
-        className="flex items-center hover:text-foreground transition-colors"
-        aria-label="Home"
-      >
-        <Home className="h-3 w-3" />
-      </Link>
-
-      {crumbs.map(({ href, label, isLast, isNavigable }) => (
-        <span key={href} className="flex items-center gap-1">
-          <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+      {crumbs.map(({ href, label, isLast, isNavigable }, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && (
+            <span className="text-[--color-text-disabled] text-sm select-none">
+              /
+            </span>
+          )}
           {isLast ? (
-            <span className="font-medium text-foreground" aria-current="page">
+            <span
+              className="text-sm font-medium text-[--color-text-primary]"
+              aria-current="page"
+            >
               {label}
             </span>
           ) : isNavigable ? (
             <Link
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              href={href as any}
-              className="hover:text-foreground transition-colors"
+              href={href}
+              className="text-sm text-[--color-text-secondary] underline-offset-2 hover:underline hover:text-[--color-text-primary] transition-colors duration-150"
             >
               {label}
             </Link>
           ) : (
-            <span className="text-muted-foreground/70">{label}</span>
+            <span className="text-sm text-[--color-text-secondary]">
+              {label}
+            </span>
           )}
-        </span>
+        </React.Fragment>
       ))}
     </nav>
   );

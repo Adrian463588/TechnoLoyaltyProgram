@@ -13,16 +13,11 @@ export { LoyaltyCalculationService }                from "./loyalty-calculation.
 export {
   determineTier,
   getNextTier,
-  getPointsToNextTier,
-  calculateOptelTokens,
-  calculateTechnoTokens,
-  checkDowngrade,
-  checkReset,
   checkRedemptionEligibility,
-  TIER_THRESHOLDS,
-  TIER_ORDER,
-  REDEMPTION_ELIGIBILITY_THRESHOLD,
 } from "./loyalty.service";
+
+export { membershipService }                        from "./membership.service";
+export { evaluationService }                        from "./evaluation.service";
 
 export { PeriodService }                            from "./period.service";
 export { RedemptionService }                        from "./redemption.service";

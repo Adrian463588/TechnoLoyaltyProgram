@@ -9,16 +9,16 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/db/prisma";
 
 export type AuditAction =
-  | "UPLOAD_STAGED"
-  | "UPLOAD_COMMITTED"
-  | "UPLOAD_FAILED"
-  | "TOKENS_ISSUED"
-  | "REDEMPTION_VERIFIED"
-  | "REDEMPTION_REJECTED"
-  | "REDEMPTION_CREATED"
-  | "REDEMPTION_STATUS_UPDATED"
-  | "MANUAL_TOKEN_ADJUSTMENT"
-  | "EMPLOYEE_RESIGNED";
+  | "TOKEN_MANUAL_ADJUST"
+  | "TIER_UPGRADE"
+  | "TIER_DOWNGRADE"
+  | "TIER_RESET"
+  | "REDEMPTION_SUBMITTED"
+  | "REDEMPTION_STATUS_CHANGED"
+  | "CLAIM_APPROVED"
+  | "CLAIM_REJECTED"
+  | "SCHEDULED_MEMBERSHIP_EVALUATION"
+  | "TOKEN_EXPIRY";
 
 interface LogAuditParams {
   action: AuditAction;
@@ -43,8 +43,8 @@ export async function logAudit(params: LogAuditParams): Promise<void> {
     data: {
       action: params.action,
       actorId: params.actorId,
-      targetType: params.targetType,
-      targetId: params.targetId,
+      targetEntityType: params.targetType,
+      targetEntityId: params.targetId,
       details: (params.details ?? {}) as Prisma.InputJsonValue,
       ipAddress: params.ipAddress ?? null,
     },

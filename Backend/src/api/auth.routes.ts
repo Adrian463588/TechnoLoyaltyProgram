@@ -23,29 +23,28 @@ authRoutes.post("/login", (async (req, res) => {
   if (!parsed.success) {
     res.status(400).json({
       error:   "Invalid input",
-      details: z.treeifyError(parsed.error),
+      details: parsed.error.format(),
     });
     return;
   }
 
-  const { npk, password } = parsed.data;
+  const { email, password } = parsed.data;
 
   try {
     const user = await prisma.user.findUnique({
-      where: { npk },
+      where: { email },
       select: {
-        id:           true,
-        npk:          true,
-        name:         true,
-        email:        true,
-        passwordHash: true,
-        role:         true,
-        divisionId:   true,
-        isActive:     true,
+        id:             true,
+        name:           true,
+        email:          true,
+        division:       true,
+        role:           true,
+        partnerStatus:  true,
+        passwordHash:   true,
       },
     });
 
-    if (!user || !user.isActive) {
+    if (!user || user.partnerStatus === "RESIGNED") {
       res.status(401).json({ error: "Invalid credentials." });
       return;
     }
@@ -59,11 +58,10 @@ authRoutes.post("/login", (async (req, res) => {
     res.json({
       user: {
         id:         user.id,
-        npk:        user.npk,
         name:       user.name,
         email:      user.email,
         role:       user.role,
-        divisionId: user.divisionId ?? undefined,
+        division:   user.division,
       },
     });
   } catch (err) {
