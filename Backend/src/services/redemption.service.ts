@@ -128,17 +128,21 @@ export class RedemptionService {
     idCardVerified: boolean; 
     ktpVerified: boolean; 
     npwpVerified: boolean;
-    powerOfAttorneyVerified?: boolean; 
+    powerOfAttorneyVerified?: boolean | undefined; 
   }, actorId: string) {
     const request = await prisma.redemptionRequest.findUnique({ where: { id: requestId } });
     if (!request) throw new NotFoundError("RedemptionRequest", requestId);
 
+    // Filter out undefined values to satisfy exactOptionalPropertyTypes: true
+    const updateData: any = {
+      ...input,
+      updatedAt: new Date(),
+    };
+    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
     return prisma.redemptionRequest.update({
       where: { id: requestId },
-      data: {
-        ...input,
-        updatedAt: new Date(),
-      },
+      data: updateData,
     });
   }
 
@@ -178,17 +182,14 @@ export class RedemptionService {
           throw new ValidationError("Insufficient tokens at verification time");
         }
 
-        await tx.tokenLedger.create({
-          data: {
-            userId: request.mitraId,
-            eventType: TokenEventType.REDEEMED,
-            amount: -request.tokenCost,
-            balanceAfter: currentBalance - request.tokenCost,
-            referenceId: request.id,
-            performedBy: actorId,
-            reason: `Redemption: ${request.rewardItem.name}`,
-          }
-        });
+        await tokenLedgerRepository.appendTokenEvent({
+          userId: request.mitraId,
+          eventType: TokenEventType.REDEEMED,
+          amount: -request.tokenCost,
+          referenceId: request.id,
+          performedBy: actorId,
+          reason: `Redemption: ${request.rewardItem.name}`,
+        }, tx);
       }
 
       const updated = await tx.redemptionRequest.update({
@@ -211,4 +212,4 @@ export class RedemptionService {
   }
 }
 
-export const RedemptionService = new RedemptionService();
+export const redemptionService = new RedemptionService();

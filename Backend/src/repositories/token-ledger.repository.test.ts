@@ -5,7 +5,7 @@
  * Verifies atomicity, balance snapshots, and negative balance rejection.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { tokenLedgerRepository } from "./token-ledger.repository";
 import { prisma } from "@/db/prisma";
 import { TokenEventType } from "@prisma/client";
@@ -30,7 +30,7 @@ describe("TokenLedgerRepository", () => {
     vi.mocked(prisma.tokenLedger.findFirst).mockResolvedValue({ balanceAfter: 100 } as any);
     
     // Mock create to return the created entry
-    vi.mocked(prisma.tokenLedger.create).mockImplementation(({ data }) => Promise.resolve({ ...data, id: "new-id" } as any));
+    vi.mocked(prisma.tokenLedger.create).mockImplementation(({ data }) => Promise.resolve({ ...data, id: "new-id" } as any) as any);
 
     const result = await tokenLedgerRepository.appendTokenEvent({
       userId: "user-1",
@@ -61,7 +61,7 @@ describe("TokenLedgerRepository", () => {
 
   it("should set expiresAt automatically for earned tokens", async () => {
     vi.mocked(prisma.tokenLedger.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.tokenLedger.create).mockImplementation(({ data }) => Promise.resolve({ ...data } as any));
+    vi.mocked(prisma.tokenLedger.create).mockImplementation(({ data }) => Promise.resolve({ ...data } as any) as any);
 
     const result = await tokenLedgerRepository.appendTokenEvent({
       userId: "user-1",

@@ -6,7 +6,7 @@
  */
 
 import { prisma } from "@/db/prisma";
-import { Division, TokenEventType, MembershipTier, PartnerStatus } from "@prisma/client";
+import { DivisionType, TokenEventType, MemberTierType, PartnershipStatus } from "@prisma/client";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
 import { membershipService } from "./membership.service";
 import { LOYALTY_POLICIES } from "@/policies/loyalty.policy";
@@ -38,8 +38,8 @@ export class EvaluationService {
 
     const activeMitras = await prisma.user.findMany({
       where: {
-        partnerStatus: PartnerStatus.ACTIVE,
-        division: { in: [Division.OPCENT, Division.TELE] },
+        partnerStatus: PartnershipStatus.ACTIVE,
+        division: { in: [DivisionType.OPCENT, DivisionType.TELE] },
       },
     });
 
@@ -78,26 +78,25 @@ export class EvaluationService {
         const currentBalance = await tokenLedgerRepository.getBalance(mitra.id);
         
         // Decide between DOWNGRADE and RESET based on availability (placeholder logic)
-        // If they had ZERO claims at all (not even pending/rejected), we'll consider it a RESET
         const totalAttempts = await prisma.shiftClaim.count({
           where: {
             mitraId: mitra.id,
-            shiftDate: { gte: months[2].start, lte: months[0].end },
+            shiftDate: { gte: months[2]!.start, lte: months[0]!.end },
           }
         });
 
         const isReset = totalAttempts === 0;
 
         await prisma.$transaction(async (tx) => {
-          let newTier: MembershipTier = MembershipTier.SAPHIRE;
+          let newTier: MemberTierType = MemberTierType.SAPHIRE;
           let penaltyAmount = currentBalance;
-          let eventType = TokenEventType.RESET_PENALTY;
+          let eventType: TokenEventType = TokenEventType.RESET_PENALTY;
 
           if (!isReset) {
             // Apply Downgrade (Tier - 1, 50% penalty)
             const tierOrder = LOYALTY_POLICIES.TIER_ORDER;
             const currentIdx = tierOrder.indexOf(mitra.membershipTier);
-            newTier = currentIdx > 0 ? tierOrder[currentIdx - 1] as MembershipTier : MembershipTier.SAPHIRE;
+            newTier = currentIdx > 0 ? tierOrder[currentIdx - 1] as MemberTierType : MemberTierType.SAPHIRE;
             penaltyAmount = Math.floor(currentBalance * 0.5);
             eventType = TokenEventType.DOWNGRADE_PENALTY;
           }
@@ -165,7 +164,7 @@ export class EvaluationService {
     // For safety, we'll allow it to run any time but only target cohorts that have passed their expiresAt
     
     const activeUsers = await prisma.user.findMany({
-      where: { partnerStatus: { in: [PartnerStatus.ACTIVE, PartnerStatus.INACTIVE] } },
+      where: { partnerStatus: { in: [PartnershipStatus.ACTIVE, PartnershipStatus.INACTIVE] } },
       select: { id: true }
     });
 

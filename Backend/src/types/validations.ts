@@ -42,7 +42,7 @@ export const RedemptionStatusEnum = z.enum([
 // ============================================================
 
 export const loginSchema = z.object({
-  email: z.string().email("Invalid company email address"),
+  npk: z.string().min(1, "NPK is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -100,6 +100,7 @@ export type UploadMetaInput = z.infer<typeof uploadMetaSchema>;
 // ============================================================
 
 export const baseRowSchema = z.object({
+  npk: z.string().min(1, "NPK is required"),
   email: z.string().email("Email is required"),
   name: z.string().min(1, "Name is required"),
   partnerStatus: z.enum(["AKTIF", "RESIGN", "RESIGNED", "INAKTIF"]).transform(val => {
@@ -127,6 +128,7 @@ export type TechnoRowInput = z.infer<typeof technoRowSchema>;
 // ============================================================
 
 export const createUserSchema = z.object({
+  npk: z.string().min(1),
   email: z.string().email(),
   name: z.string().min(2),
   password: z.string().min(6),

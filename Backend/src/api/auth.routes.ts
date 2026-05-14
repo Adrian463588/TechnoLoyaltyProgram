@@ -16,7 +16,56 @@ import { loginSchema }   from "@/types/validations";
 
 export const authRoutes = Router();
 
-// ── Login ──────────────────────────────────────────────────────────────────
+/**
+ * @openapi
+ * /api/auth/login:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Authenticate a user and return user data
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - npk
+ *               - password
+ *             properties:
+ *               npk:
+ *                 type: string
+ *                 example: "12345"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: password123
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     npk:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *                     division:
+ *                       type: string
+ *       401:
+ *         description: Invalid credentials
+ */
 authRoutes.post("/login", (async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
 
@@ -28,15 +77,16 @@ authRoutes.post("/login", (async (req, res) => {
     return;
   }
 
-  const { email, password } = parsed.data;
+  const { npk, password } = parsed.data;
 
   try {
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { npk },
       select: {
         id:             true,
         name:           true,
         email:          true,
+        npk:            true,
         division:       true,
         role:           true,
         partnerStatus:  true,
@@ -60,6 +110,7 @@ authRoutes.post("/login", (async (req, res) => {
         id:         user.id,
         name:       user.name,
         email:      user.email,
+        npk:        user.npk,
         role:       user.role,
         division:   user.division,
       },
@@ -70,7 +121,32 @@ authRoutes.post("/login", (async (req, res) => {
   }
 }) as RequestHandler);
 
-// ── Verify session token ───────────────────────────────────────────────────
+/**
+ * @openapi
+ * /api/auth/verify:
+ *   get:
+ *     tags:
+ *       - Authentication
+ *     summary: Verify the current session token
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Token is valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 valid:
+ *                   type: boolean
+ *                 userId:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized or invalid token
+ */
 authRoutes.get("/verify", authenticate, ((req, res) => {
   res.json({ valid: true, userId: req.user.id, role: req.user.role });
 }) satisfies RequestHandler);

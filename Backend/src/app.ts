@@ -17,8 +17,13 @@ import { employeeRoutes } from "./api/employee.routes";
 import { adminRoutes }    from "./api/admin.routes";
 import { leaderRoutes }   from "./api/leader.routes";
 import { errorHandler }   from "./middleware/error-handler";
+import swaggerUi          from "swagger-ui-express";
+import { swaggerSpec }    from "./utils/swagger";
 
 const app: Application = express();
+
+// ── Swagger Documentation ──────────────────────────────────────────────────
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // ── Global middleware ─────────────────────────────────────────────────────
 app.use(express.json({ limit: "10mb" }));

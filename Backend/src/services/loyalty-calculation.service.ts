@@ -16,7 +16,7 @@ import type {
   TokenSummary,
   RewardRequest,
 } from "@/types/domain.types";
-import { PartnerStatus } from "@prisma/client";
+import { PartnershipStatus } from "@prisma/client";
 
 /**
  * Returns the token summary for a specific employee.
