@@ -8,8 +8,8 @@
  */
 
 import type { RequestHandler } from "express";
-import { RedemptionService } from "@/services/redemption.service";
-import { redeemRequestSchema, updateStatusSchema, uuidSchema } from "@/types/validations";
+import { redemptionService } from "@/services/redemption.service";
+import { redeemRequestSchema, updateStatusSchema, uuidSchema, redemptionVerificationSchema } from "@/types/validations";
 import { ValidationError } from "@/errors/validation-error";
 import { NotFoundError } from "@/errors/not-found-error";
 
@@ -18,7 +18,7 @@ export const RedemptionController = {
   // GET /api/admin/redemptions — HC_ADMIN: list all requests
   listAll: (async (_req, res, next) => {
     try {
-      const requests = await RedemptionService.listAll();
+      const requests = await redemptionService.listAll();
       res.json(requests);
     } catch (err) {
       next(err);
@@ -34,7 +34,7 @@ export const RedemptionController = {
         throw new ValidationError("Invalid request ID format", { id: idParam });
       }
 
-      const request = await RedemptionService.getById(idResult.data);
+      const request = await redemptionService.getById(idResult.data);
       if (!request) {
         throw new NotFoundError("Redemption request", idResult.data);
       }
@@ -48,7 +48,7 @@ export const RedemptionController = {
   listMyRedemptions: (async (req, res, next) => {
     try {
       const { user } = req;
-      const requests = await RedemptionService.listByMitra(user.id);
+      const requests = await redemptionService.listByMitra(user.id);
       res.json(requests);
     } catch (err) {
       next(err);
@@ -65,7 +65,7 @@ export const RedemptionController = {
         throw new ValidationError("Invalid input", parsed.error.format());
       }
 
-      const redemption = await RedemptionService.submitRequest(
+      const redemption = await redemptionService.submitRequest(
         user.id,
         parsed.data.rewardItemId,
       );
@@ -96,7 +96,7 @@ export const RedemptionController = {
         );
       }
 
-      const result = await RedemptionService.transitionStatus(
+      const result = await redemptionService.transitionStatus(
         idResult.data,
         parsed.data.status,
         user.id,
@@ -129,7 +129,7 @@ export const RedemptionController = {
         throw new ValidationError("Invalid verification data", parsed.error.format());
       }
 
-      const result = await RedemptionService.verifyDocuments(
+      const result = await redemptionService.verifyDocuments(
         idResult.data,
         parsed.data,
         user.id,

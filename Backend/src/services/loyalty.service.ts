@@ -10,7 +10,7 @@
  * Single Source of Truth: All tier constants imported from loyalty.policy.ts.
  */
 
-import { MembershipTier, PartnerStatus, Division } from "@prisma/client";
+import { MemberTierType, PartnershipStatus, DivisionType } from "@prisma/client";
 import { LOYALTY_POLICIES } from "@/policies/loyalty.policy";
 
 // ============================================================
@@ -20,8 +20,8 @@ import { LOYALTY_POLICIES } from "@/policies/loyalty.policy";
 /**
  * Determines the membership tier based on division and cumulative value.
  */
-export function determineTier(division: Division, cumulativeValue: number): MembershipTier {
-  if (division === Division.TECHNO) {
+export function determineTier(division: DivisionType, cumulativeValue: number): MemberTierType {
+  if (division === DivisionType.TECHNO) {
     return LOYALTY_POLICIES.calculateTechnoTier(cumulativeValue);
   }
   return LOYALTY_POLICIES.calculateOpcentTeleTier(cumulativeValue);
@@ -30,10 +30,10 @@ export function determineTier(division: Division, cumulativeValue: number): Memb
 /**
  * Returns the next tier above the current one, or null if already Diamond.
  */
-export function getNextTier(current: MembershipTier): MembershipTier | null {
+export function getNextTier(current: MemberTierType): MemberTierType | null {
   const idx = LOYALTY_POLICIES.TIER_ORDER.indexOf(current);
   return idx < LOYALTY_POLICIES.TIER_ORDER.length - 1
-    ? (LOYALTY_POLICIES.TIER_ORDER[idx + 1] as MembershipTier)
+    ? (LOYALTY_POLICIES.TIER_ORDER[idx + 1] as MemberTierType)
     : null;
 }
 
@@ -44,7 +44,7 @@ export function getNextTier(current: MembershipTier): MembershipTier | null {
 export interface EligibilityCheckInput {
   tokenBalance: number;
   rewardTokenCost: number;
-  partnerStatus: PartnerStatus;
+  partnerStatus: PartnershipStatus;
   isItemActive: boolean;
   stock?: number | null;
 }
@@ -64,7 +64,7 @@ export function checkRedemptionEligibility(
   const { tokenBalance, rewardTokenCost, partnerStatus, isItemActive, stock } = input;
   const reasons: string[] = [];
 
-  if (partnerStatus !== PartnerStatus.ACTIVE) {
+  if (partnerStatus !== PartnershipStatus.ACTIVE) {
     reasons.push("Only active partners are eligible for redemption.");
   }
   if (!isItemActive) {

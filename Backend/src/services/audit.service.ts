@@ -25,7 +25,8 @@ interface LogAuditParams {
   actorId: string;
   targetType: string;
   targetId: string;
-  details?: Record<string, unknown>;
+  previousValue?: Record<string, unknown>;
+  newValue?: Record<string, unknown>;
   ipAddress?: string | undefined;
   /** Allows injecting a transaction client for atomic logs */
   tx?: Prisma.TransactionClient;
@@ -45,7 +46,8 @@ export async function logAudit(params: LogAuditParams): Promise<void> {
       actorId: params.actorId,
       targetEntityType: params.targetType,
       targetEntityId: params.targetId,
-      details: (params.details ?? {}) as Prisma.InputJsonValue,
+      previousValue: (params.previousValue ?? null) as Prisma.InputJsonValue,
+      newValue: (params.newValue ?? null) as Prisma.InputJsonValue,
       ipAddress: params.ipAddress ?? null,
     },
   });

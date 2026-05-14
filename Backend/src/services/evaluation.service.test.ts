@@ -5,10 +5,10 @@
  * Verifies idempotency and inactivity penalty logic.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { evaluationService } from "./evaluation.service";
 import { prisma } from "@/db/prisma";
-import { PartnerStatus, Division } from "@prisma/client";
+import { PartnershipStatus, DivisionType } from "@prisma/client";
 
 vi.mock("@/db/prisma", () => ({
   prisma: {
@@ -57,7 +57,7 @@ describe("EvaluationService", () => {
 
     const result = await evaluationService.runMonthlyMembershipEvaluation();
 
-    expect(result.skipped).toBe(true);
+    expect((result as any).skipped).toBe(true);
     expect(prisma.user.findMany).not.toHaveBeenCalled();
   });
 
@@ -67,13 +67,14 @@ describe("EvaluationService", () => {
 
     vi.mocked(prisma.auditLog.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.user.findMany).mockResolvedValue([
-      { id: "user-1", partnerStatus: PartnerStatus.ACTIVE, division: Division.OPCENT, membershipTier: "EMERALD" }
+      { id: "user-1", partnerStatus: PartnershipStatus.ACTIVE, division: DivisionType.OPCENT, membershipTier: "EMERALD" }
     ] as any);
     
     // Mock zero approved claims for last 3 months but 1 total attempt to trigger DOWNGRADE instead of RESET
-    vi.mocked(prisma.shiftClaim.count).mockImplementation(({ where }) => {
+    vi.mocked(prisma.shiftClaim.count).mockImplementation((args) => {
       // If status: "APPROVED" is in where, return 0. Otherwise return 1.
-      return Promise.resolve((where as any).status === "APPROVED" ? 0 : 1);
+      const res = (args?.where as any)?.status === "APPROVED" ? 0 : 1;
+      return Promise.resolve(res) as any;
     });
     
     // Mock user has 1000 tokens
@@ -82,9 +83,14 @@ describe("EvaluationService", () => {
 
     const result = await evaluationService.runMonthlyMembershipEvaluation();
 
-    expect(result.evaluated).toBe(1);
-    expect(result.downgraded).toBe(1);
-    expect(result.reset).toBe(0);
+    if ("skipped" in result && result.skipped) {
+       throw new Error("Should not have skipped");
+    }
+
+    const data = result as { evaluated: number; downgraded: number; reset: number; skipped: number };
+    expect(data.evaluated).toBe(1);
+    expect(data.downgraded).toBe(1);
+    expect(data.reset).toBe(0);
     expect(prisma.tokenLedger.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
         amount: -500 // 50% of 1000

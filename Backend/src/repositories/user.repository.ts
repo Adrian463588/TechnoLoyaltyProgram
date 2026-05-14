@@ -11,8 +11,8 @@ import {
   PrismaClient,
   User,
   UserRole,
-  Division,
-  MembershipTier,
+  DivisionType,
+  MemberTierType,
 } from "@prisma/client";
 
 export class UserRepository {
@@ -28,7 +28,7 @@ export class UserRepository {
 
   async upsertByEmail(
     email: string,
-    data: { name: string; division: Division; role?: UserRole },
+    data: { name: string; division: DivisionType; role?: UserRole },
   ): Promise<User> {
     return this.prisma.user.upsert({
       where: { email },

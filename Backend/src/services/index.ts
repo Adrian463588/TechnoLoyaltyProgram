@@ -19,9 +19,10 @@ export {
 export { membershipService }                        from "./membership.service";
 export { evaluationService }                        from "./evaluation.service";
 
-export { PeriodService }                            from "./period.service";
-export { RedemptionService }                        from "./redemption.service";
+// export { PeriodService }                            from "./period.service";
+export { redemptionService }                        from "./redemption.service";
 
+/*
 export {
   parseOptelCSV,
   parseTechnoCSV,
@@ -34,3 +35,4 @@ export {
   parseTechnoXLSX,
   detectDivisionFromXLSX,
 }                                                   from "./upload-xlsx.service";
+*/

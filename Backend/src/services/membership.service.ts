@@ -5,14 +5,14 @@
  * SOLID — SRP: only handles membership business logic.
  */
 
-import { MembershipTier, HealthBenefit, Division } from "@prisma/client";
+import { MemberTierType, HealthBenefit, DivisionType } from "@prisma/client";
 import { LOYALTY_POLICIES } from "@/policies/loyalty.policy";
 
 export interface TierCalculationResult {
-  tier: MembershipTier;
+  tier: MemberTierType;
   healthBenefit: HealthBenefit;
   threshold: number;
-  nextTier: MembershipTier | null;
+  nextTier: MemberTierType | null;
   pointsToNext: number | null;
 }
 
@@ -20,11 +20,11 @@ export class MembershipService {
   /**
    * Calculates the current tier and benefit based on division and cumulative metrics.
    */
-  calculateTier(division: Division, cumulativeValue: number): TierCalculationResult {
-    let tier: MembershipTier;
-    let thresholds: Record<MembershipTier, number>;
+  calculateTier(division: DivisionType, cumulativeValue: number): TierCalculationResult {
+    let tier: MemberTierType;
+    let thresholds: Record<MemberTierType, number>;
 
-    if (division === Division.TECHNO) {
+    if (division === DivisionType.TECHNO) {
       tier = LOYALTY_POLICIES.calculateTechnoTier(cumulativeValue);
       thresholds = LOYALTY_POLICIES.TECHNO_THRESHOLDS;
     } else {
@@ -36,7 +36,7 @@ export class MembershipService {
     const tierOrder = LOYALTY_POLICIES.TIER_ORDER;
     const currentIdx = tierOrder.indexOf(tier);
     
-    const nextTier = (currentIdx < tierOrder.length - 1 ? tierOrder[currentIdx + 1] : null) as MembershipTier | null;
+    const nextTier = (currentIdx < tierOrder.length - 1 ? tierOrder[currentIdx + 1] : null) as MemberTierType | null;
     const pointsToNext = nextTier ? Math.max(0, (thresholds[nextTier] ?? 0) - cumulativeValue) : null;
 
     return {
@@ -51,11 +51,11 @@ export class MembershipService {
   /**
    * Returns the start and end dates of the current evaluation period.
    */
-  getCurrentPeriodDates(division: Division, referenceDate: Date = new Date()): { start: Date; end: Date } {
+  getCurrentPeriodDates(division: DivisionType, referenceDate: Date = new Date()): { start: Date; end: Date } {
     const year = referenceDate.getFullYear();
     const { PERIODS } = LOYALTY_POLICIES;
 
-    if (division === Division.TECHNO) {
+    if (division === DivisionType.TECHNO) {
       // Techno: 6-month evaluation (P1 or P2)
       const p1End = new Date(year, PERIODS.P1_END.month, PERIODS.P1_END.day, 23, 59, 59);
       
@@ -93,12 +93,12 @@ export class MembershipService {
   /**
    * Maps membership tier to health benefit.
    */
-  private getHealthBenefit(tier: MembershipTier): HealthBenefit {
+  private getHealthBenefit(tier: MemberTierType): HealthBenefit {
     switch (tier) {
-      case MembershipTier.EMERALD:
-      case MembershipTier.RUBY:
+      case MemberTierType.EMERALD:
+      case MemberTierType.RUBY:
         return HealthBenefit.FIT;
-      case MembershipTier.DIAMOND:
+      case MemberTierType.DIAMOND:
         return HealthBenefit.CLASSY;
       default:
         return HealthBenefit.NONE;

@@ -25,7 +25,8 @@
       "@/types/*":       ["./src/types/*"],
       "@/errors":        ["./src/errors/index.ts"],
       "@/errors/*":      ["./src/errors/*"],
-      "@/api/*":         ["./src/api/*"]
+      "@/api/*":         ["./src/api/*"],
+      "@/domain/*":      ["./src/domain/*"]
     }
   },
   "include": [

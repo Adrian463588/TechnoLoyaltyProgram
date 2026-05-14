@@ -6,24 +6,29 @@
  * DRY: single source of truth for all tier/token constants.
  */
 
-import { MembershipTier } from "@prisma/client";
+import { MemberTierType } from "@prisma/client";
 
 // ── Tier thresholds (Annual for OPCENT/TELE, 6-monthly for TECHNO) ──────────
-const OPCENT_TELE_THRESHOLDS: Record<MembershipTier, number> = {
+const OPCENT_TELE_THRESHOLDS = {
   SAPHIRE: 0,
   EMERALD: 430,
   RUBY:    860,
   DIAMOND: 1300,
-};
+} as const;
 
-const TECHNO_THRESHOLDS: Record<MembershipTier, number> = {
+const TECHNO_THRESHOLDS = {
   SAPHIRE: 0,
   EMERALD: 25,
   RUBY:    50,
   DIAMOND: 75,
-};
+} as const;
 
-const TIER_ORDER: MembershipTier[] = ["SAPHIRE", "EMERALD", "RUBY", "DIAMOND"];
+const TIER_ORDER: MemberTierType[] = [
+  MemberTierType.SAPHIRE,
+  MemberTierType.EMERALD,
+  MemberTierType.RUBY,
+  MemberTierType.DIAMOND,
+];
 
 // ── Period Constants ────────────────────────────────────────────────────────
 // P1: Dec 16 to June 15
@@ -42,18 +47,18 @@ const CONVERSION = {
 } as const;
 
 // ── Tier calculation helpers ────────────────────────────────────────────────
-function calculateOpcentTeleTier(cumulativeSlots: number): MembershipTier {
-  if (cumulativeSlots >= OPCENT_TELE_THRESHOLDS.DIAMOND) return "DIAMOND";
-  if (cumulativeSlots >= OPCENT_TELE_THRESHOLDS.RUBY)    return "RUBY";
-  if (cumulativeSlots >= OPCENT_TELE_THRESHOLDS.EMERALD) return "EMERALD";
-  return "SAPHIRE";
+function calculateOpcentTeleTier(cumulativeSlots: number): MemberTierType {
+  if (cumulativeSlots >= OPCENT_TELE_THRESHOLDS.DIAMOND) return MemberTierType.DIAMOND;
+  if (cumulativeSlots >= OPCENT_TELE_THRESHOLDS.RUBY)    return MemberTierType.RUBY;
+  if (cumulativeSlots >= OPCENT_TELE_THRESHOLDS.EMERALD) return MemberTierType.EMERALD;
+  return MemberTierType.SAPHIRE;
 }
 
-function calculateTechnoTier(cumulativeProjects: number): MembershipTier {
-  if (cumulativeProjects >= TECHNO_THRESHOLDS.DIAMOND) return "DIAMOND";
-  if (cumulativeProjects >= TECHNO_THRESHOLDS.RUBY)    return "RUBY";
-  if (cumulativeProjects >= TECHNO_THRESHOLDS.EMERALD) return "EMERALD";
-  return "SAPHIRE";
+function calculateTechnoTier(cumulativeProjects: number): MemberTierType {
+  if (cumulativeProjects >= TECHNO_THRESHOLDS.DIAMOND) return MemberTierType.DIAMOND;
+  if (cumulativeProjects >= TECHNO_THRESHOLDS.RUBY)    return MemberTierType.RUBY;
+  if (cumulativeProjects >= TECHNO_THRESHOLDS.EMERALD) return MemberTierType.EMERALD;
+  return MemberTierType.SAPHIRE;
 }
 
 // ── Public policy object ───────────────────────────────────────────────────

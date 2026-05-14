@@ -77,6 +77,7 @@ enum RedemptionStatus {
 model User {
   id             String         @id @default(uuid())
   email          String         @unique
+  npk            String         @unique
   name           String
   passwordHash   String
   division       DivisionType

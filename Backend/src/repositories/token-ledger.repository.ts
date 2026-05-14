@@ -28,8 +28,8 @@ export class TokenLedgerRepository {
    *
    * @throws DomainError if balance becomes negative.
    */
-  async appendTokenEvent(input: AppendTokenEventInput) {
-    return prisma.$transaction(async (tx) => {
+  async appendTokenEvent(input: AppendTokenEventInput, externalTx?: any) {
+    const operation = async (tx: any) => {
       // 1. Fetch current balance with lock
       // Note: In Prisma, SELECT FOR UPDATE requires raw query or specific extensions.
       // For this implementation, we'll use a transaction and a snapshot check.
@@ -68,7 +68,9 @@ export class TokenLedgerRepository {
       });
 
       return newEntry;
-    });
+    };
+
+    return externalTx ? operation(externalTx) : prisma.$transaction(operation);
   }
 
   /**

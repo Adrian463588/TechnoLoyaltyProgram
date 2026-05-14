@@ -9,18 +9,19 @@
 
 import type {
   UserRole,
-  Division,
-  MembershipTier,
+  DivisionType as PrismaDivision,
+  MemberTierType,
   RedemptionStatus,
   UploadStatus,
-  PartnerStatus,
+  PartnershipStatus,
 } from "@prisma/client";
 
 // ── Re-exported Prisma enum types ────────────────────────────
 export type Role = UserRole;                        // MITRA | TEAM_LEAD | HC_ADMIN
-export type DivisionType = Division;                // OPCENT | TELE | TECHNO
-export type TierStatus = MembershipTier;            // SAPHIRE | EMERALD | RUBY | DIAMOND
+export type DivisionType = PrismaDivision;          // OPCENT | TELE | TECHNO
+export type TierStatus = MemberTierType;            // SAPHIRE | EMERALD | RUBY | DIAMOND
 export type RewardRequestStatus = RedemptionStatus; // DRAFT | PENDING_VERIFICATION | ...
+export type PartnerStatus = PartnershipStatus;      // ACTIVE | INACTIVE | RESIGNED
 
 // ── User ──────────────────────────────────────────────────────
 export interface User {
@@ -42,6 +43,8 @@ export interface TokenSummary {
   nextTier: TierStatus | null;
   isEligibleForReward: boolean;
   memberStatus: PartnerStatus;
+  cumulativeValue: number;
+  periodEnd: string;
 }
 
 // ── Reward ────────────────────────────────────────────────────

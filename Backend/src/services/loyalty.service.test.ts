@@ -1,36 +1,36 @@
 import { describe, it, expect } from "vitest";
 import { determineTier, getNextTier, checkRedemptionEligibility } from "./loyalty.service";
-import { MembershipTier, PartnerStatus, Division } from "@prisma/client";
+import { MemberTierType, PartnershipStatus, DivisionType } from "@prisma/client";
 
 describe("Loyalty Engine — Pure Logic", () => {
   describe("determineTier", () => {
     it("should calculate correct tier for OPCENT", () => {
-      expect(determineTier(Division.OPCENT, 0)).toBe(MembershipTier.SAPHIRE);
-      expect(determineTier(Division.OPCENT, 429)).toBe(MembershipTier.SAPHIRE); // Boundary
-      expect(determineTier(Division.OPCENT, 430)).toBe(MembershipTier.EMERALD);
-      expect(determineTier(Division.OPCENT, 859)).toBe(MembershipTier.EMERALD); // Boundary
-      expect(determineTier(Division.OPCENT, 860)).toBe(MembershipTier.RUBY);
-      expect(determineTier(Division.OPCENT, 1299)).toBe(MembershipTier.RUBY); // Boundary
-      expect(determineTier(Division.OPCENT, 1300)).toBe(MembershipTier.DIAMOND);
+      expect(determineTier(DivisionType.OPCENT, 0)).toBe(MemberTierType.SAPHIRE);
+      expect(determineTier(DivisionType.OPCENT, 429)).toBe(MemberTierType.SAPHIRE); // Boundary
+      expect(determineTier(DivisionType.OPCENT, 430)).toBe(MemberTierType.EMERALD);
+      expect(determineTier(DivisionType.OPCENT, 859)).toBe(MemberTierType.EMERALD); // Boundary
+      expect(determineTier(DivisionType.OPCENT, 860)).toBe(MemberTierType.RUBY);
+      expect(determineTier(DivisionType.OPCENT, 1299)).toBe(MemberTierType.RUBY); // Boundary
+      expect(determineTier(DivisionType.OPCENT, 1300)).toBe(MemberTierType.DIAMOND);
     });
 
     it("should calculate correct tier for TECHNO", () => {
-      expect(determineTier(Division.TECHNO, 0)).toBe(MembershipTier.SAPHIRE);
-      expect(determineTier(Division.TECHNO, 24)).toBe(MembershipTier.SAPHIRE); // Boundary
-      expect(determineTier(Division.TECHNO, 25)).toBe(MembershipTier.EMERALD);
-      expect(determineTier(Division.TECHNO, 49)).toBe(MembershipTier.EMERALD); // Boundary
-      expect(determineTier(Division.TECHNO, 50)).toBe(MembershipTier.RUBY);
-      expect(determineTier(Division.TECHNO, 74)).toBe(MembershipTier.RUBY); // Boundary
-      expect(determineTier(Division.TECHNO, 75)).toBe(MembershipTier.DIAMOND);
+      expect(determineTier(DivisionType.TECHNO, 0)).toBe(MemberTierType.SAPHIRE);
+      expect(determineTier(DivisionType.TECHNO, 24)).toBe(MemberTierType.SAPHIRE); // Boundary
+      expect(determineTier(DivisionType.TECHNO, 25)).toBe(MemberTierType.EMERALD);
+      expect(determineTier(DivisionType.TECHNO, 49)).toBe(MemberTierType.EMERALD); // Boundary
+      expect(determineTier(DivisionType.TECHNO, 50)).toBe(MemberTierType.RUBY);
+      expect(determineTier(DivisionType.TECHNO, 74)).toBe(MemberTierType.RUBY); // Boundary
+      expect(determineTier(DivisionType.TECHNO, 75)).toBe(MemberTierType.DIAMOND);
     });
   });
 
   describe("getNextTier", () => {
     it("should return correct next tier", () => {
-      expect(getNextTier(MembershipTier.SAPHIRE)).toBe(MembershipTier.EMERALD);
-      expect(getNextTier(MembershipTier.EMERALD)).toBe(MembershipTier.RUBY);
-      expect(getNextTier(MembershipTier.RUBY)).toBe(MembershipTier.DIAMOND);
-      expect(getNextTier(MembershipTier.DIAMOND)).toBeNull();
+      expect(getNextTier(MemberTierType.SAPHIRE)).toBe(MemberTierType.EMERALD);
+      expect(getNextTier(MemberTierType.EMERALD)).toBe(MemberTierType.RUBY);
+      expect(getNextTier(MemberTierType.RUBY)).toBe(MemberTierType.DIAMOND);
+      expect(getNextTier(MemberTierType.DIAMOND)).toBeNull();
     });
   });
 
@@ -38,7 +38,7 @@ describe("Loyalty Engine — Pure Logic", () => {
     const base = {
       tokenBalance: 2000,
       rewardTokenCost: 1000,
-      partnerStatus: PartnerStatus.ACTIVE,
+      partnerStatus: PartnershipStatus.ACTIVE,
       isItemActive: true,
     };
 
@@ -48,7 +48,7 @@ describe("Loyalty Engine — Pure Logic", () => {
     });
 
     it("should block if resigned", () => {
-      const result = checkRedemptionEligibility({ ...base, partnerStatus: PartnerStatus.RESIGNED });
+      const result = checkRedemptionEligibility({ ...base, partnerStatus: PartnershipStatus.RESIGNED });
       expect(result.isEligible).toBe(false);
     });
 
