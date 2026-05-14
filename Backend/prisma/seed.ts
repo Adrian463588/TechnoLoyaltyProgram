@@ -43,6 +43,7 @@ async function main() {
   const adminUser = await prisma.user.create({
     data: {
       email: "admin@berijalan.id",
+      npk: "12345",
       name: "Admin User",
       passwordHash,
       role: UserRole.HC_ADMIN,
@@ -53,6 +54,7 @@ async function main() {
   const leaderUser = await prisma.user.create({
     data: {
       email: "leader@berijalan.id",
+      npk: "23456",
       name: "Leader User",
       passwordHash,
       role: UserRole.TEAM_LEAD,
@@ -63,6 +65,7 @@ async function main() {
   const emp1 = await prisma.user.create({
     data: {
       email: "alice@berijalan.id",
+      npk: "34567",
       name: "Alice Optel",
       passwordHash,
       role: UserRole.MITRA,
@@ -74,6 +77,7 @@ async function main() {
   const emp2 = await prisma.user.create({
     data: {
       email: "bob@berijalan.id",
+      npk: "45678",
       name: "Bob Techno",
       passwordHash,
       role: UserRole.MITRA,

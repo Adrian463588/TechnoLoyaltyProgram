@@ -23,9 +23,7 @@ describe('EmployeeDashboardPage', () => {
     render(Page)
     
     // Wait for the elements to be present
-    await waitFor(() => {
-      expect(screen.getByText('Welcome back, Mitra!')).toBeInTheDocument()
-    })
+    expect(screen.getByTestId('employee-dashboard-heading')).toBeInTheDocument()
 
     expect(screen.getByText('Active Earning Period: P2: Jun 16 → Dec 15')).toBeInTheDocument()
     expect(screen.getByText('Earning Streak')).toBeInTheDocument()

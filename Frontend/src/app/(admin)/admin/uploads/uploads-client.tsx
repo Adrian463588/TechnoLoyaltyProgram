@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SuccessAnimation } from "@/components/shared/success-animation";
-import { SkeletonTableRow } from "@/components/shared/skeleton-card";
+import { TableRowSkeleton } from "@/components/shared/skeleton-card";
 import {
   UploadCloud,
   CheckCircle,
@@ -295,9 +295,11 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                   Parsing &amp; validating <span className="text-foreground font-semibold">{files[0]?.name}</span>…
                 </p>
               </div>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <SkeletonTableRow key={i} style={{ animationDelay: `${i * 80}ms` }} />
-              ))}
+              <Table>
+                <TableBody>
+                  <TableRowSkeleton rows={5} />
+                </TableBody>
+              </Table>
             </BentoCard>
           )}
 

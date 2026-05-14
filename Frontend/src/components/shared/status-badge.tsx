@@ -86,3 +86,32 @@ export function EligibilityChip({ eligible, reason, className }: { eligible: boo
   );
 }
 
+// Partner/Employee Status Badge
+export type PartnerStatus = "ACTIVE" | "DOWNGRADED" | "RESET" | "INACTIVE";
+
+const partnerStatusConfig: Record<PartnerStatus, { bg: string; color: string; label: string }> = {
+  ACTIVE: { bg: "rgba(107, 206, 83, 0.15)", color: "#6BCE53", label: "ACTIVE" },
+  DOWNGRADED: { bg: "rgba(245, 158, 11, 0.15)", color: "#FCD34D", label: "DOWNGRADED" },
+  RESET: { bg: "rgba(239, 68, 68, 0.15)", color: "#FCA5A5", label: "RESET" },
+  INACTIVE: { bg: "rgba(148, 163, 184, 0.15)", color: "#94A3B8", label: "INACTIVE" },
+};
+
+export function EmployeeStatusBadge({ status, className }: { status: PartnerStatus | string; className?: string }) {
+  const normalizedStatus = (status?.toUpperCase() || "ACTIVE") as PartnerStatus;
+  const config = partnerStatusConfig[normalizedStatus] || partnerStatusConfig.ACTIVE;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wider uppercase border",
+        className
+      )}
+      style={{ 
+        backgroundColor: config.bg, 
+        color: config.color,
+        borderColor: `rgba(${parseInt(config.color.slice(1,3), 16)}, ${parseInt(config.color.slice(3,5), 16)}, ${parseInt(config.color.slice(5,7), 16)}, 0.3)`
+      }}
+    >
+      {config.label}
+    </span>
+  );
+}

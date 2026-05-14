@@ -32,8 +32,8 @@ type TeamMember = {
   name: string;
   division: Division;
   tokens: number;
-  tier: TierStatus;
-  status: "Active" | "Downgraded" | "Reset";
+  tier: string;
+  status: string;
 };
 
 const mockTeamData: TeamMember[] = [
@@ -105,13 +105,13 @@ export function LeaderTeamClient({ data }: { data: TeamSummaryResponse[] | null 
     {
       accessorKey: "tier",
       header: "Current Tier",
-      cell: ({ row }) => <TierBadge tier={row.getValue("tier") as TierStatus} />,
+      cell: ({ row }) => <TierBadge tier={row.getValue("tier") as any} />,
     },
     {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
-        <EmployeeStatusBadge status={row.getValue("status") as "Active" | "Downgraded" | "Reset" | "Inactive"} />
+        <EmployeeStatusBadge status={row.getValue("status") as string} />
       ),
     },
     {
