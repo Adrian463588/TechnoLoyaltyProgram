@@ -41,7 +41,7 @@ export const RedemptionStatusEnum = z.enum([
 // ============================================================
 
 export const loginSchema = z.object({
-  email: z.string().email("Invalid company email address"),
+  npk: z.string().min(1, "NPK is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 

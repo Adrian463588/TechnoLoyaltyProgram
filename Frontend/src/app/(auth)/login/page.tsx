@@ -13,15 +13,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Lock, Shield, Trophy, Users } from "lucide-react";
 
 const DEMO_CREDENTIALS = [
-  { label: "Employee (Mitra)", npk: "EMP001", password: "password123", icon: Trophy },
-  { label: "Team Leader",      npk: "LDR001", password: "password123", icon: Users },
-  { label: "HC PM Admin",      npk: "ADM001", password: "password123", icon: Shield },
+  { label: "Employee (Mitra)", npk: "34567", password: "password123", icon: Trophy },
+  { label: "Team Leader",      npk: "23456", password: "password123", icon: Users },
+  { label: "HC PM Admin",      npk: "12345", password: "password123", icon: Shield },
 ];
 
 const ROLE_REDIRECT: Record<string, string> = {
-  MITRA:       "/employee/dashboard",
-  TEAM_LEADER: "/leader/team",
-  HC_PM:       "/admin/dashboard",
+  MITRA:     "/employee/dashboard",
+  TEAM_LEAD: "/leader/team",
+  HC_ADMIN:  "/admin/dashboard",
 };
 
 export default function LoginPage() {

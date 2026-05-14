@@ -7,6 +7,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -26,7 +28,10 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
 
       <div className="flex items-center gap-4">
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[--color-accent] rounded-full">
+          <DropdownMenuTrigger 
+            data-testid="profile-menu-trigger"
+            className="flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[--color-accent] rounded-full"
+          >
             <div className="h-9 w-9 rounded-full bg-[--color-accent-muted] flex items-center justify-center border border-[--color-border-accent] text-[--color-accent]">
               <User size={18} />
             </div>
@@ -34,18 +39,32 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
               {session?.user?.name || "Account"}
             </span>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 glass-elevated border-[--color-border-glass]">
-            <DropdownMenuItem className="focus:bg-[--color-border-subtle] focus:text-[--color-text-primary] cursor-pointer">
-              <User className="mr-2 h-4 w-4" />
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => signOut()}
-              className="text-[--color-error] focus:bg-red-500/10 focus:text-[--color-error] cursor-pointer"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Log out
-            </DropdownMenuItem>
+          <DropdownMenuContent 
+            align="end" 
+            className="w-56 glass-elevated border-[--color-border-glass]"
+          >
+            <div data-testid="profile-menu-content">
+              <DropdownMenuLabel className="flex flex-col gap-1">
+                <span className="text-sm font-bold text-[--color-text-primary]">
+                  {session?.user?.name || "Account"}
+                </span>
+                <span className="text-[10px] text-[--color-text-secondary] font-mono tracking-tighter">
+                  {session?.user?.id || "NPK-XXXX"}
+                </span>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="focus:bg-[--color-border-subtle] focus:text-[--color-text-primary] cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => signOut()}
+                className="text-[--color-error] focus:bg-red-500/10 focus:text-[--color-error] cursor-pointer"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Log out
+              </DropdownMenuItem>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -3,9 +3,9 @@
  * Cypress Custom Commands
  *
  * cy.login(npk, password) — caches auth state via cy.session()
- * cy.loginAsAdmin()       — HC_PM seed user   (ADM001 / password123)
- * cy.loginAsEmployee()    — MITRA seed user    (EMP001 / password123)
- * cy.loginAsLeader()      — TEAM_LEADER user   (LDR001 / password123)
+ * cy.loginAsAdmin()       — HC_ADMIN seed user   (12345 / password123)
+ * cy.loginAsEmployee()    — MITRA seed user      (34567 / password123)
+ * cy.loginAsLeader()      — TEAM_LEAD seed user   (23456 / password123)
  */
 
 /// <reference types="cypress" />
@@ -50,21 +50,21 @@ Cypress.Commands.add("login", (npk: string, password: string) => {
 
 Cypress.Commands.add("loginAsAdmin", () => {
   cy.login(
-    Cypress.env("ADMIN_NPK")      ?? "ADM001",
+    Cypress.env("ADMIN_NPK")      ?? "12345",
     Cypress.env("ADMIN_PASSWORD") ?? "password123"
   );
 });
 
 Cypress.Commands.add("loginAsEmployee", () => {
   cy.login(
-    Cypress.env("EMPLOYEE_NPK")      ?? "EMP001",
+    Cypress.env("EMPLOYEE_NPK")      ?? "34567",
     Cypress.env("EMPLOYEE_PASSWORD") ?? "password123"
   );
 });
 
 Cypress.Commands.add("loginAsLeader", () => {
   cy.login(
-    Cypress.env("LEADER_NPK")      ?? "LDR001",
+    Cypress.env("LEADER_NPK")      ?? "23456",
     Cypress.env("LEADER_PASSWORD") ?? "password123"
   );
 });

@@ -60,8 +60,8 @@ export class EmployeeDashboardPage {
 
   openProfileDropdown() {
     cy.get(this.tokenValue, { timeout: 8000 }).should("be.visible");
-    cy.get(this.profileTrigger).click({ force: true });
-    cy.get("[data-slot=dropdown-menu-content]", { timeout: 6000 }).should("exist");
+    cy.get(this.profileTrigger).click();
+    cy.get('[data-testid="profile-menu-content"]', { timeout: 10000 }).should("exist").and("be.visible");
     return this;
   }
 }

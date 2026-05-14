@@ -29,8 +29,8 @@ export default async function DashboardPage() {
           {/* Welcome Banner */}
           <div className="col-span-12 glass-card p-6 flex items-center justify-between animate-fade-up-in">
             <div>
-              <h1 className="text-card-heading text-2xl mb-1">Welcome back, Mitra!</h1>
-              <p className="text-[--color-text-secondary]">Active Earning Period: {data.period}</p>
+              <h1 data-testid="employee-dashboard-heading" className="text-3xl font-bold tracking-tight text-[--color-text-primary]">Dashboard</h1>
+              <p className="text-[--color-text-secondary] text-sm mt-1">Active Earning Period: {data.period}</p>
             </div>
           </div>
 
@@ -52,6 +52,9 @@ export default async function DashboardPage() {
               <p className="text-metric-hero text-[--color-text-primary]">5 Mos</p>
             </div>
             <div className="border-t border-[--color-border-subtle] pt-4 mt-auto text-[--color-text-secondary] text-sm">
+              <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden mb-2" data-testid="employee-dashboard-tier-progress">
+                <div className="h-full bg-[--color-accent] w-3/4" />
+              </div>
               Keep going to maintain Emerald!
             </div>
           </div>
@@ -65,16 +68,29 @@ export default async function DashboardPage() {
                <p className="text-metric-hero text-[--color-text-primary]">Ready</p>
             </div>
             <div className="border-t border-[--color-border-subtle] pt-4 mt-auto">
-               <button className="btn-primary w-full text-sm py-2">Browse Catalog</button>
+               <button className="btn-primary w-full text-sm py-2" data-testid="employee-dashboard-redeem-button">Browse Catalog</button>
             </div>
           </div>
 
           {/* Token History & Rewards (Placeholders for Bento shape) */}
           <div className="col-span-12 lg:col-span-8 glass-card p-6 min-h-[300px] animate-fade-up-in stagger-4">
              <h3 className="text-card-heading mb-4">Token History</h3>
-             <div className="w-full h-40 rounded bg-[--color-border-subtle] flex items-center justify-center text-[--color-text-disabled]">
-               Chart Area
-             </div>
+              <div className="space-y-3 mt-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded bg-white/5" data-testid={`employee-dashboard-activity-${i}`}>
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-[--color-accent]/20 flex items-center justify-center text-[--color-accent]">
+                        <TrendingUp className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Monthly Token Award</p>
+                        <p className="text-xs text-[--color-text-secondary]">Oct 2024 • Opcent Division</p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-bold text-[--color-accent]">+120</p>
+                  </div>
+                ))}
+              </div>
           </div>
 
           <div className="col-span-12 lg:col-span-4 glass-card p-6 min-h-[300px] flex flex-col animate-fade-up-in stagger-5">

@@ -1,6 +1,6 @@
 import { RewardRequest } from "@/types";
 import { BentoCard } from "@/components/ui/bento-card";
-import { RedemptionStatusBadge } from "@/components/shared/status-badge";
+import { RedemptionStatusChip } from "@/components/shared/status-badge";
 import {
   Table,
   TableBody,
@@ -136,7 +136,7 @@ export default function RedemptionHistoryPage() {
                     {formatDate(req.updatedAt)}
                   </TableCell>
                   <TableCell>
-                    <RedemptionStatusBadge status={req.status} />
+                    <RedemptionStatusChip status={req.status} />
                   </TableCell>
                 </TableRow>
               ))}
