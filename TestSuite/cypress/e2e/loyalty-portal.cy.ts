@@ -5,6 +5,7 @@ describe('Berijalan Loyalty Portal E2E', () => {
   });
 
   it('Employee Dashboard: Can submit a claim successfully', () => {
+    cy.loginAsEmployee();
     cy.visit('/employee/dashboard');
     
     // Check Hero Section
@@ -18,6 +19,7 @@ describe('Berijalan Loyalty Portal E2E', () => {
   });
 
   it('Admin Dashboard: Document verification and approval flow', () => {
+    cy.loginAsAdmin();
     cy.visit('/admin/dashboard');
 
     cy.get('h1').contains('HC Admin Dashboard').should('be.visible');
@@ -26,6 +28,8 @@ describe('Berijalan Loyalty Portal E2E', () => {
     cy.get('button[title="Verify Documents"]').first().click();
 
     // The drawer should open
+    cy.wait(1000);
+    cy.document().then(doc => cy.writeFile('dom-drawer.html', doc.documentElement.innerHTML));
     cy.get('h2').contains('Verify Redemption').should('be.visible');
 
     // The Approve button should be disabled initially
@@ -47,6 +51,7 @@ describe('Berijalan Loyalty Portal E2E', () => {
   });
 
   it('Admin Dashboard: Manual Token Adjustment Validation', () => {
+    cy.loginAsAdmin();
     cy.visit('/admin/dashboard');
 
     cy.get('h3').contains('Manual Token Adjustment').should('be.visible');
@@ -55,6 +60,8 @@ describe('Berijalan Loyalty Portal E2E', () => {
     cy.get('button').contains('Submit Adjustment').click();
     
     // Check validation messages
+    cy.wait(1000);
+    cy.document().then(doc => cy.writeFile('dom-validation.html', doc.documentElement.innerHTML));
     cy.contains('Mitra ID is required').should('be.visible');
     cy.contains('Reason must be at least 10 characters').should('be.visible');
 

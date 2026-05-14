@@ -3,6 +3,7 @@ import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { Upload, Users, ShoppingBag, Coins, ChevronRight } from "lucide-react";
 import { RedemptionQueueTable } from "@/features/admin/redemption-queue-table";
 import { ManualTokenAdjustment } from "@/features/admin/manual-token-adjustment";
+import { motion } from "framer-motion";
 
 export default function AdminDashboardPage() {
   return (
@@ -99,18 +100,18 @@ export default function AdminDashboardPage() {
             <div className="glass-card p-6">
               <h3 className="text-card-heading mb-6">Quick Actions</h3>
               <div className="space-y-4">
-                <button className="btn-primary w-full text-left flex justify-between items-center px-4 py-3">
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} className="btn-primary w-full text-left flex justify-between items-center px-4 py-3">
                   Upload Data File
                   <Upload className="h-4 w-4" />
-                </button>
-                <button className="btn-ghost w-full text-left flex justify-between items-center px-4 py-3">
+                </motion.button>
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} className="btn-ghost w-full text-left flex justify-between items-center px-4 py-3">
                   Process Month End
                   <ChevronRight className="h-4 w-4" />
-                </button>
-                <button className="btn-ghost w-full text-left flex justify-between items-center px-4 py-3 text-[--color-error]">
+                </motion.button>
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} className="btn-ghost w-full text-left flex justify-between items-center px-4 py-3 text-[--color-error]">
                   Run Downgrade Job
                   <ChevronRight className="h-4 w-4" />
-                </button>
+                </motion.button>
               </div>
             </div>
             
