@@ -5,7 +5,7 @@
  * DRY: consumers import from here, not from individual files.
  */
 
-export { AuditService }                             from "./audit.service";
+export { logAudit }                                 from "./audit.service";
 export type { AuditAction }                         from "./audit.service";
 
 export { LoyaltyCalculationService }                from "./loyalty-calculation.service";

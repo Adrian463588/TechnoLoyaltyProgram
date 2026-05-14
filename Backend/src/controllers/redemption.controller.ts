@@ -8,9 +8,11 @@
  */
 
 import type { RequestHandler } from "express";
-import type { AuthenticatedRequest } from "@/types/api.types";
+import { z } from "zod";
 import { RedemptionService } from "@/services/redemption.service";
-import { redeemRequestSchema, updateStatusSchema } from "@/types/validations";
+import { redeemRequestSchema, updateStatusSchema, uuidSchema } from "@/types/validations";
+import { ValidationError } from "@/errors/validation-error";
+import { NotFoundError } from "@/errors/not-found-error";
 
 export const RedemptionController = {
 
@@ -27,10 +29,15 @@ export const RedemptionController = {
   // GET /api/admin/redemptions/:id
   getById: (async (req, res, next) => {
     try {
-      const request = await RedemptionService.getById(req.params["id"]!);
+      const idParam = req.params["id"];
+      const idResult = uuidSchema.safeParse(idParam);
+      if (!idResult.success) {
+        throw new ValidationError("Invalid request ID format", { id: idParam });
+      }
+
+      const request = await RedemptionService.getById(idResult.data);
       if (!request) {
-        res.status(404).json({ error: "Redemption request not found" });
-        return;
+        throw new NotFoundError("Redemption request", idResult.data);
       }
       res.json(request);
     } catch (err) {
@@ -41,7 +48,7 @@ export const RedemptionController = {
   // GET /api/employee/redemptions — current user's history
   listMyRedemptions: (async (req, res, next) => {
     try {
-      const { user } = req as AuthenticatedRequest;
+      const { user } = req;
       const requests = await RedemptionService.listByUser(user.id);
       res.json(requests);
     } catch (err) {
@@ -52,18 +59,18 @@ export const RedemptionController = {
   // POST /api/employee/redemptions — submit new request
   createRequest: (async (req, res, next) => {
     try {
-      const { user } = req as AuthenticatedRequest;
-      const parsed   = redeemRequestSchema.safeParse(req.body);
+      const { user } = req;
+      const parsed = redeemRequestSchema.safeParse(req.body);
 
       if (!parsed.success) {
-        res.status(400).json({
-          error:   "Invalid input",
-          details: parsed.error.flatten(),
-        });
-        return;
+        throw new ValidationError("Invalid input", z.treeifyError(parsed.error));
       }
 
-      const redemption = await RedemptionService.createRequest(user.id, parsed.data.rewardItemId);
+      const redemption = await RedemptionService.createRequest(
+        user.id,
+        parsed.data.rewardItemId,
+        req.ip,
+      );
       res.status(201).json(redemption);
     } catch (err) {
       next(err);
@@ -73,22 +80,30 @@ export const RedemptionController = {
   // POST /api/admin/redemptions/:id/status — HC_PM: update status
   updateStatus: (async (req, res, next) => {
     try {
-      const { user }  = req as AuthenticatedRequest;
-      const parsed    = updateStatusSchema.safeParse(req.body);
+      const { user } = req;
 
+      // Validate path parameter
+      const idParam = req.params["id"];
+      const idResult = uuidSchema.safeParse(idParam);
+      if (!idResult.success) {
+        throw new ValidationError("Invalid request ID format", { id: idParam });
+      }
+
+      // Validate body
+      const parsed = updateStatusSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({
-          error:   "Invalid status parameters",
-          details: parsed.error.flatten(),
-        });
-        return;
+        throw new ValidationError(
+          "Invalid status parameters",
+          z.treeifyError(parsed.error),
+        );
       }
 
       const result = await RedemptionService.updateStatus(
-        req.params["id"]!,
+        idResult.data,
         parsed.data.status,
         user.id,
-        parsed.data.reason
+        parsed.data.reason,
+        req.ip,
       );
 
       res.json({

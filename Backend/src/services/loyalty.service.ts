@@ -1,35 +1,27 @@
 /**
- * Loyalty Engine — Domain Services
+ * Backend/src/services/loyalty.service.ts
  *
- * Deterministic, testable business logic for token calculation,
+ * Loyalty Engine — Pure domain logic for token calculations,
  * tier determination, downgrade checks, and reset logic.
  *
- * IMPORTANT: These functions must NOT import from React or Next.js.
- * They are pure domain logic and must remain framework-agnostic.
+ * IMPORTANT: Do NOT import from React or Next.js here.
+ * This file is framework-agnostic domain logic.
+ *
+ * Single Source of Truth: All tier constants imported from loyalty.policy.ts.
  */
 
 import type { MemberTierType } from "@prisma/client";
+import { LOYALTY_POLICIES } from "@/policies/loyalty.policy";
 
-// Alias so pure-domain functions remain readable
+// Alias for readability
 type TierStatus = MemberTierType;
 
-// ============================================================
-// TIER THRESHOLDS
-// These values should eventually come from a configurable rule
-// table, but are hardcoded here for Phase 1 as per PRD.
-// ============================================================
-
-export const TIER_THRESHOLDS: Record<TierStatus, number> = {
-  BRONZE: 0,
-  SILVER: 1000,
-  GOLD: 3000,
-  PLATINUM: 6000,
-};
-
-export const TIER_ORDER: TierStatus[] = ["BRONZE", "SILVER", "GOLD", "PLATINUM"];
-
-// Minimum tokens required to be eligible for redemption
-export const REDEMPTION_ELIGIBILITY_THRESHOLD = 2000;
+// ── Re-exports for backward compatibility ─────────────────────
+// Services should import from loyalty.policy.ts directly, but these
+// re-exports allow existing service code to keep its imports.
+export const TIER_THRESHOLDS = LOYALTY_POLICIES.TIER_THRESHOLDS;
+export const TIER_ORDER = LOYALTY_POLICIES.TIER_ORDER;
+export const REDEMPTION_ELIGIBILITY_THRESHOLD = LOYALTY_POLICIES.REDEMPTION_THRESHOLD;
 
 // ============================================================
 // TIER DETERMINATION
@@ -37,21 +29,20 @@ export const REDEMPTION_ELIGIBILITY_THRESHOLD = 2000;
 
 /**
  * Determines the membership tier based on total token count.
- * Returns the highest tier the user qualifies for.
+ * Delegates to the centralized policy — single source of truth.
  */
 export function determineTier(totalTokens: number): TierStatus {
-  if (totalTokens >= TIER_THRESHOLDS.PLATINUM) return "PLATINUM";
-  if (totalTokens >= TIER_THRESHOLDS.GOLD) return "GOLD";
-  if (totalTokens >= TIER_THRESHOLDS.SILVER) return "SILVER";
-  return "BRONZE";
+  return LOYALTY_POLICIES.calculateTier(totalTokens);
 }
 
 /**
  * Returns the next tier above the current one, or null if already Platinum.
  */
 export function getNextTier(current: TierStatus): TierStatus | null {
-  const idx = TIER_ORDER.indexOf(current);
-  return idx < TIER_ORDER.length - 1 ? TIER_ORDER[idx + 1] : null;
+  const idx = LOYALTY_POLICIES.TIER_ORDER.indexOf(current);
+  return idx < LOYALTY_POLICIES.TIER_ORDER.length - 1
+    ? (LOYALTY_POLICIES.TIER_ORDER[idx + 1] as TierStatus)
+    : null;
 }
 
 /**
@@ -60,7 +51,7 @@ export function getNextTier(current: TierStatus): TierStatus | null {
 export function getPointsToNextTier(totalTokens: number): number {
   const nextTier = getNextTier(determineTier(totalTokens));
   if (!nextTier) return 0;
-  return Math.max(0, TIER_THRESHOLDS[nextTier] - totalTokens);
+  return Math.max(0, LOYALTY_POLICIES.TIER_THRESHOLDS[nextTier] - totalTokens);
 }
 
 // ============================================================
@@ -78,10 +69,12 @@ export interface OptelSlotRow {
 
 /**
  * Calculates Optel token contribution from slot data.
- * Each slot translates to a configurable token value.
- * Resigned employees earn 0 tokens.
+ * Uses centralized conversion rate from loyalty.policy.ts.
  */
-export function calculateOptelTokens(row: OptelSlotRow, tokensPerSlot = 100): number {
+export function calculateOptelTokens(
+  row: OptelSlotRow,
+  tokensPerSlot = LOYALTY_POLICIES.OPTEL_CONVERSION.PER_SLOT_VALUE,
+): number {
   if (row.isResigned || row.partnershipStatus !== "ACTIVE") return 0;
   return row.totalSlots * tokensPerSlot;
 }
@@ -92,7 +85,7 @@ export function calculateOptelTokens(row: OptelSlotRow, tokensPerSlot = 100): nu
 
 export interface TechnoSprintRow {
   npk: string;
-  monthlySprints: number[];   // array of sprint values per month in period
+  monthlySprints: number[];
   totalSprintPerPeriod: number;
   projectRejections: number;
   partnershipStatus: "ACTIVE" | "INACTIVE";
@@ -101,12 +94,13 @@ export interface TechnoSprintRow {
 
 /**
  * Calculates Techno token contribution from sprint data.
- * Rejected projects can reduce the effective sprint count by policy.
- * Resigned employees earn 0 tokens.
+ * Uses centralized conversion rate from loyalty.policy.ts.
  */
-export function calculateTechnoTokens(row: TechnoSprintRow, tokensPerSprint = 200): number {
+export function calculateTechnoTokens(
+  row: TechnoSprintRow,
+  tokensPerSprint = LOYALTY_POLICIES.TECHNO_CONVERSION.PER_SPRINT_VALUE,
+): number {
   if (row.isResigned || row.partnershipStatus !== "ACTIVE") return 0;
-  // Policy: each rejection reduces 1 sprint worth of tokens
   const effectiveSprints = Math.max(0, row.totalSprintPerPeriod - row.projectRejections);
   return effectiveSprints * tokensPerSprint;
 }
@@ -117,9 +111,9 @@ export function calculateTechnoTokens(row: TechnoSprintRow, tokensPerSprint = 20
 
 export interface DowngradeCheckInput {
   currentTier: TierStatus;
-  projectRejections: number;   // for Techno
-  missedSlots: number;         // for Optel (slots below minimum threshold)
-  periodTokens: number;        // tokens earned this period
+  projectRejections: number;
+  missedSlots: number;
+  periodTokens: number;
 }
 
 export interface DowngradeResult {
@@ -129,14 +123,11 @@ export interface DowngradeResult {
   reason: string | null;
 }
 
-// Configurable thresholds
 const DOWNGRADE_REJECTION_LIMIT = 3;
 const DOWNGRADE_MIN_PERIOD_TOKENS = 500;
 
 /**
  * Checks if an employee should be downgraded based on business rules.
- * - Techno: 3+ project rejections triggers a one-level downgrade.
- * - Optel: Earning below minimum threshold triggers a one-level downgrade.
  */
 export function checkDowngrade(input: DowngradeCheckInput): DowngradeResult {
   const { currentTier, projectRejections, periodTokens } = input;
@@ -148,12 +139,23 @@ export function checkDowngrade(input: DowngradeCheckInput): DowngradeResult {
     return { shouldDowngrade: false, fromTier: currentTier, toTier: null, reason: null };
   }
 
-  const currentIdx = TIER_ORDER.indexOf(currentTier);
-  const toTier = currentIdx > 0 ? TIER_ORDER[currentIdx - 1] : currentTier;
+  const currentIdx = LOYALTY_POLICIES.TIER_ORDER.indexOf(currentTier);
+  const toTier =
+    currentIdx > 0
+      ? (LOYALTY_POLICIES.TIER_ORDER[currentIdx - 1] as TierStatus)
+      : currentTier;
 
   const reasons: string[] = [];
-  if (isRejectionBreach) reasons.push(`${projectRejections} project rejections exceeded limit of ${DOWNGRADE_REJECTION_LIMIT}`);
-  if (isInsufficientEarning) reasons.push(`Earned ${periodTokens} tokens, below ${DOWNGRADE_MIN_PERIOD_TOKENS} minimum`);
+  if (isRejectionBreach) {
+    reasons.push(
+      `${String(projectRejections)} project rejections exceeded limit of ${String(DOWNGRADE_REJECTION_LIMIT)}`,
+    );
+  }
+  if (isInsufficientEarning) {
+    reasons.push(
+      `Earned ${String(periodTokens)} tokens, below ${String(DOWNGRADE_MIN_PERIOD_TOKENS)} minimum`,
+    );
+  }
 
   return {
     shouldDowngrade: toTier !== currentTier,
@@ -168,8 +170,8 @@ export function checkDowngrade(input: DowngradeCheckInput): DowngradeResult {
 // ============================================================
 
 export interface ResetCheckInput {
-  consecutiveLowPeriods: number;  // periods in a row with < threshold earnings
-  isInactive: boolean;             // flagged as inactive by HR
+  consecutiveLowPeriods: number;
+  isInactive: boolean;
   isResigned: boolean;
 }
 
@@ -182,8 +184,6 @@ const RESET_CONSECUTIVE_PERIODS_LIMIT = 2;
 
 /**
  * Checks if an employee's tokens should be reset to zero.
- * - 2+ consecutive low-performance periods triggers a reset.
- * - Resigned status triggers a reset.
  */
 export function checkReset(input: ResetCheckInput): ResetResult {
   const { consecutiveLowPeriods, isInactive, isResigned } = input;
@@ -191,15 +191,13 @@ export function checkReset(input: ResetCheckInput): ResetResult {
   if (isResigned) {
     return { shouldReset: true, reason: "Employee has resigned from the company." };
   }
-
   if (isInactive) {
     return { shouldReset: true, reason: "Employee flagged as inactive by HR." };
   }
-
   if (consecutiveLowPeriods >= RESET_CONSECUTIVE_PERIODS_LIMIT) {
     return {
       shouldReset: true,
-      reason: `${consecutiveLowPeriods} consecutive periods below performance threshold.`,
+      reason: `${String(consecutiveLowPeriods)} consecutive periods below performance threshold.`,
     };
   }
 
@@ -225,20 +223,28 @@ export interface EligibilityResult {
 
 /**
  * Validates whether an employee can redeem a specific reward.
- * All conditions must pass for eligibility.
  */
-export function checkRedemptionEligibility(input: EligibilityCheckInput): EligibilityResult {
-  const { totalTokens, rewardTokenCost, partnershipStatus, isResigned, memberStatus } = input;
+export function checkRedemptionEligibility(
+  input: EligibilityCheckInput,
+): EligibilityResult {
+  const { totalTokens, rewardTokenCost, partnershipStatus, isResigned, memberStatus } =
+    input;
   const reasons: string[] = [];
 
   if (isResigned) reasons.push("Resigned employees are not eligible for redemption.");
   if (partnershipStatus !== "ACTIVE") reasons.push("Partnership status must be active.");
-  if (memberStatus === "RESET") reasons.push("Token balance has been reset; you are not eligible until next period.");
-  if (totalTokens < rewardTokenCost) {
-    reasons.push(`Insufficient tokens: you have ${totalTokens.toLocaleString()}, reward costs ${rewardTokenCost.toLocaleString()}.`);
+  if (memberStatus === "RESET") {
+    reasons.push("Token balance has been reset; you are not eligible until next period.");
   }
-  if (totalTokens < REDEMPTION_ELIGIBILITY_THRESHOLD) {
-    reasons.push(`Minimum ${REDEMPTION_ELIGIBILITY_THRESHOLD.toLocaleString()} tokens required for any redemption.`);
+  if (totalTokens < rewardTokenCost) {
+    reasons.push(
+      `Insufficient tokens: you have ${totalTokens.toLocaleString()}, reward costs ${rewardTokenCost.toLocaleString()}.`,
+    );
+  }
+  if (totalTokens < LOYALTY_POLICIES.REDEMPTION_THRESHOLD) {
+    reasons.push(
+      `Minimum ${LOYALTY_POLICIES.REDEMPTION_THRESHOLD.toLocaleString()} tokens required for any redemption.`,
+    );
   }
 
   return { isEligible: reasons.length === 0, reasons };

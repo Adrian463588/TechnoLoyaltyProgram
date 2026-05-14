@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-base-to-string */
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 /**
  * Upload XLSX Service — Real Excel file parser for Optel and Techno templates
  *
@@ -57,7 +59,7 @@ function getCellStr(row: ExcelJS.Row, col: number): string {
   if (val === null || val === undefined) return "";
   if (typeof val === "object" && "richText" in val) {
     // RichText cell
-    return (val as ExcelJS.CellRichTextValue).richText.map((r) => r.text).join("").trim();
+    return (val).richText.map((r) => r.text).join("").trim();
   }
   if (typeof val === "object" && "result" in val) {
     // Formula cell
@@ -84,8 +86,7 @@ function isRowEmpty(row: ExcelJS.Row, checkCols: number[]): boolean {
 
 export async function parseOptelXLSX(buffer: Uint8Array | Buffer): Promise<ParseResult<ParsedOptelRow>> {
   const workbook = new ExcelJS.Workbook();
-  // @ts-expect-error ExcelJS Buffer type mismatch with newer @types/node
-  await workbook.xlsx.load(buffer as never);
+  await workbook.xlsx.load(buffer as unknown as import("exceljs").Buffer);
 
   const sheet = workbook.worksheets[0];
   if (!sheet) {
@@ -216,8 +217,7 @@ export async function parseOptelXLSX(buffer: Uint8Array | Buffer): Promise<Parse
 
 export async function parseTechnoXLSX(buffer: Uint8Array | Buffer): Promise<ParseResult<ParsedTechnoRow>> {
   const workbook = new ExcelJS.Workbook();
-  // @ts-expect-error ExcelJS Buffer type mismatch with newer @types/node
-  await workbook.xlsx.load(buffer as never);
+  await workbook.xlsx.load(buffer as unknown as import("exceljs").Buffer);
 
   const sheet = workbook.worksheets[0];
   if (!sheet) {
@@ -342,8 +342,7 @@ export async function parseTechnoXLSX(buffer: Uint8Array | Buffer): Promise<Pars
 
 export async function detectDivisionFromXLSX(buffer: Uint8Array | Buffer): Promise<"OPTEL" | "TECHNO" | null> {
   const workbook = new ExcelJS.Workbook();
-  // @ts-expect-error ExcelJS Buffer type mismatch with newer @types/node
-  await workbook.xlsx.load(buffer as never);
+  await workbook.xlsx.load(buffer as unknown as import("exceljs").Buffer);
   const sheet = workbook.worksheets[0];
   if (!sheet) return null;
 

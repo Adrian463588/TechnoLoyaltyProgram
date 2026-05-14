@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
  * Unit Tests — Upload Service
  * Covers file parsing and the new UploadProcessingService
  */
 
 import { describe, it, expect } from "vitest";
-import { FileParser } from "@/lib/parser/file-parser";
+import { FileParser } from "@/utils/file-parser";
 
 // ── FileParser ─────────────────────────────────────────────
 describe("FileParser", () => {
@@ -13,11 +14,11 @@ describe("FileParser", () => {
     const result = FileParser.parseCsv(csv);
     
     expect(result.length).toBe(1);
-    expect(result[0].npk).toBe("EMP001");
-    expect(result[0].name).toBe("John");
-    expect(result[0].division).toBe("OPTEL");
-    expect(result[0].slots).toBe(10);
-    expect(result[0].partnershipStatus).toBe("AKTIF");
+    expect(result[0]!.npk).toBe("EMP001");
+    expect(result[0]!.name).toBe("John");
+    expect(result[0]!.division).toBe("OPTEL");
+    expect(result[0]!.slots).toBe(10);
+    expect(result[0]!.partnershipStatus).toBe("AKTIF");
   });
 
   it("handles missing values in CSV gracefully", () => {
@@ -25,9 +26,9 @@ describe("FileParser", () => {
     const result = FileParser.parseCsv(csv);
     
     expect(result.length).toBe(1);
-    expect(result[0].npk).toBe("EMP001");
-    expect(result[0].name).toBe(null);
-    expect(result[0].division).toBe("OPTEL");
+    expect(result[0]!.npk).toBe("EMP001");
+    expect(result[0]!.name).toBe(null);
+    expect(result[0]!.division).toBe("OPTEL");
   });
 });
 
@@ -42,6 +43,6 @@ describe("UploadProcessingService logic", () => {
     const csv = "NPK\nEMP001";
     const result = FileParser.parseBuffer(Buffer.from(csv), "test.csv");
     expect(result.length).toBe(1);
-    expect(result[0].npk).toBe("EMP001");
+    expect(result[0]!.npk).toBe("EMP001");
   });
 });

@@ -68,7 +68,8 @@ export default function LeaderLayout({ children }: { children: ReactNode }) {
             return (
               <Link
                 key={href}
-                href={href}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                href={href as any}
                 className={cn(
                   "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                   isActive
@@ -132,7 +133,8 @@ export default function LeaderLayout({ children }: { children: ReactNode }) {
             return (
               <Link
                 key={href}
-                href={href}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                href={href as any}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors w-full",
@@ -160,7 +162,8 @@ export default function LeaderLayout({ children }: { children: ReactNode }) {
           return (
             <Link
               key={href}
-              href={href}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              href={href as any}
               className={cn(
                 "flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground"

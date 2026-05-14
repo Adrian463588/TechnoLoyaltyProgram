@@ -9,7 +9,7 @@ import {
   ScrollText,
   ShieldCheck,
 } from "lucide-react";
-import { AppNavbar, type NavItem } from "@/frontend/components/layout/app-navbar";
+import { AppNavbar, type NavItem } from "@/components/layout/app-navbar";
 
 // ── Nav config ─────────────────────────────────────────────────
 const navItems: NavItem[] = [

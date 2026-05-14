@@ -74,7 +74,8 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
             </span>
           ) : isNavigable ? (
             <Link
-              href={href}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              href={href as any}
               className="hover:text-foreground transition-colors"
             >
               {label}

@@ -132,6 +132,8 @@ model UserLoyaltyProfile {
   lastResetAt     DateTime?
   updatedAt       DateTime       @updatedAt
 
+  memberStatus    String         @default("ACTIVE") // ACTIVE | DOWNGRADED | RESET | INACTIVE
+
   user    User                 @relation(fields: [userId], references: [id])
   metrics UserDivisionMetric[]
 }

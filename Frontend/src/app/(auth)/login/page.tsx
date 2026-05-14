@@ -59,7 +59,8 @@ export default function LoginPage() {
     const session = await sessionRes.json();
     const role = session?.user?.role as string | undefined;
     const redirectTo = role ? (ROLE_REDIRECT[role] ?? "/employee/dashboard") : "/employee/dashboard";
-    router.push(redirectTo);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    router.push(redirectTo as any);
   };
 
   return (

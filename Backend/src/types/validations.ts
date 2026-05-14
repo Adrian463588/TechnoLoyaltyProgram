@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-deprecated */
 /**
  * Zod Validation Schemas
  * Shared between frontend forms and backend API routes.
@@ -115,3 +116,17 @@ export const createUserSchema = z.object({
 });
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
+
+// ============================================================
+// COMMON VALIDATION SCHEMAS
+// ============================================================
+
+/**
+ * UUID validation schema for path parameters.
+ * Validates that a string is a valid UUID format.
+ * @example
+ * const id = uuidSchema.parse(req.params.id);
+ */
+export const uuidSchema = z.string().uuid("Invalid UUID format");
+
+export type UuidInput = z.infer<typeof uuidSchema>;

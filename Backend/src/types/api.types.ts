@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 /**
  * Backend/src/types/api.types.ts
  *
@@ -22,9 +23,15 @@ export interface SessionUser {
 
 // ── Authenticated request extension ───────────────────────────────────────
 
-export interface AuthenticatedRequest extends Request {
-  user: SessionUser;
+declare global {
+  namespace Express {
+    interface Request {
+      user: SessionUser;
+    }
+  }
 }
+
+export type AuthenticatedRequest = Request;
 
 // ── Standard API response envelopes ───────────────────────────────────────
 

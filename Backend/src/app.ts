@@ -8,6 +8,7 @@
  * Clean Code: Each concern is registered once, in order.
  */
 
+import "dotenv/config"; // Load .env before Prisma initializes
 import express, { type Application } from "express";
 import cors from "cors";
 
@@ -55,10 +56,10 @@ app.use("/api/leader",   leaderRoutes);
 app.use(errorHandler);
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────
-const PORT = Number(process.env.PORT ?? 8080);
+const PORT = Number(process.env.PORT ?? 4000);
 
 app.listen(PORT, () => {
-  console.warn(`[Backend] Server running on port ${PORT} — env: ${process.env.NODE_ENV ?? "development"}`);
+  console.warn(`[Backend] Server running on port ${String(PORT)} — env: ${process.env.NODE_ENV ?? "development"}`);
 });
 
 export default app;

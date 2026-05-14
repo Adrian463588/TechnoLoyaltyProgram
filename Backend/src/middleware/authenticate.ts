@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 /**
  * Backend/src/middleware/authenticate.ts
  *
@@ -8,7 +10,33 @@
  */
 
 import type { RequestHandler } from "express";
-import type { AuthenticatedRequest } from "@/types/api.types";
+import { jwtDecrypt } from "jose";
+import { hkdf } from "node:crypto";
+import type { SessionUser } from "@/types/api.types";
+
+/**
+ * Derives the encryption key from NEXTAUTH_SECRET using HKDF, 
+ * matching NextAuth v5 default behavior.
+ */
+async function getDerivedEncryptionKey(secret: string): Promise<Uint8Array> {
+  const info = "NextAuth.js Generated Encryption Key";
+  // HKDF derivation
+  return new Promise((resolve, reject) => {
+    hkdf(
+      "sha256",
+      secret,
+      "",
+      info,
+      32,
+      (err, derivedKey) => {
+        if (err) reject(err);
+        else resolve(new Uint8Array(derivedKey));
+      }
+    );
+  });
+}
+
+let derivedKey: Uint8Array | null = null;
 
 export const authenticate: RequestHandler = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -19,30 +47,33 @@ export const authenticate: RequestHandler = async (req, res, next) => {
   }
 
   const token = authHeader.slice(7);
+  const secret = process.env.NEXTAUTH_SECRET;
+
+  if (!secret) {
+    console.error("[Auth] NEXTAUTH_SECRET is not defined");
+    res.status(500).json({ error: "Internal server error" });
+    return;
+  }
 
   try {
-    // TODO: verify JWT with NextAuth secret — for now forward to NextAuth session API
-    // In a full split, Backend would verify the JWT independently using jose or jsonwebtoken
-    // with the shared NEXTAUTH_SECRET.
-    const sessionRes = await fetch(`${process.env.FRONTEND_ORIGIN}/api/auth/session`, {
-      headers: { Cookie: `next-auth.session-token=${token}` },
+    if (!derivedKey) {
+      derivedKey = await getDerivedEncryptionKey(secret);
+    }
+
+    // Decrypt JWE token
+    const { payload } = await jwtDecrypt(token, derivedKey, {
+      clockTolerance: 15, // 15 seconds tolerance
     });
 
-    if (!sessionRes.ok) {
-      res.status(401).json({ error: "Unauthorized" });
+    if (!payload || !payload["user"]) {
+      res.status(401).json({ error: "Invalid session" });
       return;
     }
 
-    const session = await sessionRes.json() as { user?: { id: string; role: string; npk: string } };
-
-    if (!session?.user) {
-      res.status(401).json({ error: "Unauthorized" });
-      return;
-    }
-
-    (req as AuthenticatedRequest).user = session.user;
+    req.user = payload["user"] as unknown as SessionUser;
     next();
-  } catch {
+  } catch (err) {
+    console.error("[Auth] Authentication failed:", err);
     res.status(401).json({ error: "Authentication failed" });
   }
 };

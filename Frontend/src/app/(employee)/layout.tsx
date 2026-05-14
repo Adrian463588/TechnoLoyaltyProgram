@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 import { Coins, HistoryIcon, LayoutDashboard, ShoppingBag, Trophy } from "lucide-react";
-import { AppNavbar, type NavItem } from "@/frontend/components/layout/app-navbar";
+import { AppNavbar, type NavItem } from "@/components/layout/app-navbar";
 
 // ── Nav config ─────────────────────────────────────────────────
 // Defined here so AdminLayout & LeaderLayout follow the same pattern

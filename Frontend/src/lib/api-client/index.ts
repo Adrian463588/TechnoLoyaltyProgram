@@ -85,6 +85,11 @@ export const adminApi = {
     apiFetch<UploadResponse[]>("/api/admin/uploads", {
       headers: withAuth(token),
     }),
+
+  getAuditLogs: (token: string) =>
+    apiFetch<AuditLogResponse[]>("/api/admin/audit", {
+      headers: withAuth(token),
+    }),
 };
 
 // ── Leader API ─────────────────────────────────────────────────────────────
@@ -132,6 +137,18 @@ export interface UploadResponse {
   createdAt:   string;
   validRows:   number;
   errorRows:   number;
+}
+
+export interface AuditLogResponse {
+  id:         string;
+  action:     string;
+  actorId:    string;
+  actorName:  string;
+  actorNpk:   string;
+  targetId?:  string;
+  targetType?: string;
+  details:    Record<string, unknown>;
+  createdAt:  string;
 }
 
 export interface TeamSummaryResponse {

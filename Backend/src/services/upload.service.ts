@@ -11,10 +11,10 @@
  */
 
 import { prisma } from "@/db/prisma";
-import { optelRowSchema, technoRowSchema } from "@/lib/validations";
+import { optelRowSchema, technoRowSchema } from "@/types/validations";
 import { LoyaltyCalculationService } from "./loyalty-calculation.service";
-import { AuditService } from "./audit.service";
-import { FileParser } from "@/lib/parser/file-parser";
+import { logAudit } from "./audit.service";
+import { FileParser } from "@/utils/file-parser";
 
 // ============================================================
 // SHARED TYPES
@@ -87,11 +87,20 @@ export function parseOptelCSV(csvText: string): ParseResult<ParsedOptelRow> {
     };
   }
 
-  // Auto-detect delimiter
-  const delimiter = lines[0].includes("\t") ? "\t" : ",";
-  const headers = lines[0].split(delimiter).map((h) => h.trim().toUpperCase());
+  // Auto-detect delimiter - lines[0] is guaranteed to exist after length check
+  const headerLine = lines[0];
+  if (!headerLine) {
+    return {
+      rows: [],
+      issues: [{ rowNumber: 0, column: "FILE", issue: "File has no header row", severity: "ERROR" }],
+      validCount: 0,
+      errorCount: 0,
+    };
+  }
+  const delimiter = headerLine.includes("\t") ? "\t" : ",";
+  const headers = headerLine.split(delimiter).map((h) => h.trim().toUpperCase());
 
-  const getColIdx = (...names: string[]) =>
+  const getColIdx = (...names: string[]): number =>
     names.reduce<number>((found, n) => (found !== -1 ? found : headers.indexOf(n)), -1);
 
   const npkIdx   = getColIdx("NPK");
@@ -114,15 +123,17 @@ export function parseOptelCSV(csvText: string): ParseResult<ParsedOptelRow> {
 
   for (let i = 1; i < lines.length; i++) {
     const rowNumber = i + 1;
-    const cols = lines[i].split(delimiter).map((c) => c.trim());
+    const line = lines[i];
+    if (!line) continue; // skip undefined lines
+    const cols = line.split(delimiter).map((c) => c.trim());
     if (cols.every((c) => c === "")) continue; // skip blank lines
 
-    const npk  = npkIdx  !== -1 ? cols[npkIdx]  ?? "" : "";
-    const name = nameIdx !== -1 ? cols[nameIdx] ?? "" : "";
+    const npk  = npkIdx  !== -1 ? (cols[npkIdx] ?? "") : "";
+    const name = nameIdx !== -1 ? (cols[nameIdx] ?? "") : "";
     const slotsRaw = slotsIdx !== -1 ? parseFloat(cols[slotsIdx] ?? "0") : 0;
     const slots = isNaN(slotsRaw) ? 0 : slotsRaw;
 
-    const statusRaw = (statusIdx !== -1 ? cols[statusIdx] ?? "" : "").toUpperCase();
+    const statusRaw = (statusIdx !== -1 ? (cols[statusIdx] ?? "") : "").toUpperCase();
     const partnershipStatus: "ACTIVE" | "INACTIVE" =
       statusRaw.includes("AKTIF") || statusRaw === "ACTIVE" ? "ACTIVE" : "INACTIVE";
     const isResigned = statusRaw.includes("RESIGN") || statusRaw === "RESIGNED";
@@ -168,10 +179,20 @@ export function parseTechnoCSV(csvText: string): ParseResult<ParsedTechnoRow> {
     };
   }
 
-  const delimiter = lines[0].includes("\t") ? "\t" : ",";
-  const headers = lines[0].split(delimiter).map((h) => h.trim().toUpperCase());
+  // lines[0] is guaranteed to exist after length check
+  const headerLine = lines[0];
+  if (!headerLine) {
+    return {
+      rows: [],
+      issues: [{ rowNumber: 0, column: "FILE", issue: "File has no header row", severity: "ERROR" }],
+      validCount: 0,
+      errorCount: 0,
+    };
+  }
+  const delimiter = headerLine.includes("\t") ? "\t" : ",";
+  const headers = headerLine.split(delimiter).map((h) => h.trim().toUpperCase());
 
-  const getColIdx = (...names: string[]) =>
+  const getColIdx = (...names: string[]): number =>
     names.reduce<number>((found, n) => (found !== -1 ? found : headers.indexOf(n)), -1);
 
   const npkIdx      = getColIdx("NPK");
@@ -194,17 +215,19 @@ export function parseTechnoCSV(csvText: string): ParseResult<ParsedTechnoRow> {
 
   for (let i = 1; i < lines.length; i++) {
     const rowNumber = i + 1;
-    const cols = lines[i].split(delimiter).map((c) => c.trim());
+    const line = lines[i];
+    if (!line) continue; // skip undefined lines
+    const cols = line.split(delimiter).map((c) => c.trim());
     if (cols.every((c) => c === "")) continue;
 
-    const npk  = cols[npkIdx]  ?? "";
-    const name = cols[nameIdx] ?? "";
+    const npk  = npkIdx !== -1 ? (cols[npkIdx] ?? "") : "";
+    const name = nameIdx !== -1 ? (cols[nameIdx] ?? "") : "";
     const sprintRaw   = sprintIdx !== -1 ? parseFloat(cols[sprintIdx] ?? "0") : 0;
     const rejectRaw   = rejectIdx !== -1 ? parseFloat(cols[rejectIdx] ?? "0") : 0;
     const sprints     = isNaN(sprintRaw) ? 0 : sprintRaw;
     const rejections  = isNaN(rejectRaw) ? 0 : Math.max(0, rejectRaw);
 
-    const statusRaw = (statusIdx !== -1 ? cols[statusIdx] ?? "" : "").toUpperCase();
+    const statusRaw = (statusIdx !== -1 ? (cols[statusIdx] ?? "") : "").toUpperCase();
     const partnershipStatus: "ACTIVE" | "INACTIVE" =
       statusRaw.includes("AKTIF") || statusRaw === "ACTIVE" ? "ACTIVE" : "INACTIVE";
     const isResigned = statusRaw.includes("RESIGN") || statusRaw === "RESIGNED";
@@ -263,12 +286,34 @@ export function buildUploadSummary(result: {
 // UPLOAD PROCESSING SERVICE (DB write — Phase 1–3)
 // ============================================================
 
-export class UploadProcessingService {
+export const UploadProcessingService = {
+  /** List all uploads with batch summary */
+  async listAll() {
+    return prisma.monthlyUpload.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        batches: { select: { totalRows: true, errorRows: true } },
+      },
+    });
+  },
+
+  /** Get single upload by ID with full detail */
+  async getById(uploadId: string) {
+    return prisma.monthlyUpload.findUnique({
+      where: { id: uploadId },
+      include: {
+        batches: {
+          include: { stagingRows: { include: { issues: true } } },
+        },
+      },
+    });
+  },
+
   /**
    * Phase 1: Ingest and Stage
    * Creates MonthlyUpload + UploadBatch + UploadRowStaging records.
    */
-  static async stageFile(
+  async stageFile(
     filename: string,
     fileBuffer: Buffer,
     divisionType: "OPTEL" | "TECHNO",
@@ -313,7 +358,7 @@ export class UploadProcessingService {
       })),
     });
 
-    await AuditService.log({
+    await logAudit({
       action: "UPLOAD_STAGED",
       actorId,
       targetType: "MonthlyUpload",
@@ -322,14 +367,14 @@ export class UploadProcessingService {
     });
 
     return { upload, batch };
-  }
+  },
 
   /**
    * Phase 2: Validate Staged Rows
    * Reads rows from UploadBatch and validates via Zod schema.
    * Issues are stored in UploadValidationIssue (separate model).
    */
-  static async validateStagedUpload(uploadId: string) {
+  async validateStagedUpload(uploadId: string) {
     const upload = await prisma.monthlyUpload.findUnique({
       where: { id: uploadId },
       include: {
@@ -375,13 +420,13 @@ export class UploadProcessingService {
     );
 
     return { uploadId, totalRows: stagingRows.length, totalErrors };
-  }
+  },
 
   /**
    * Phase 3: Commit Validated Rows
    * Processes each valid staging row through LoyaltyCalculationService.
    */
-  static async commitUpload(uploadId: string, actorId: string) {
+  async commitUpload(uploadId: string, actorId: string) {
     const upload = await prisma.monthlyUpload.findUnique({
       where: { id: uploadId },
       include: {
@@ -415,23 +460,26 @@ export class UploadProcessingService {
     for (const row of validRows) {
       try {
         const rawData = row.rawData as Record<string, unknown>;
+        const safeName = typeof rawData["name"] === "string" ? rawData["name"] : "Unknown";
+        const rawNpk = rawData["npk"];
+        const safeNpk = typeof rawNpk === "string" ? rawNpk : typeof rawNpk === "number" ? String(rawNpk) : "";
 
         const user = await prisma.user.upsert({
-          where: { npk: String(rawData.npk) },
+          where: { npk: safeNpk },
           create: {
-            npk: String(rawData.npk),
-            name: String(rawData.name ?? "Unknown"),
+            npk: safeNpk,
+            name: safeName,
             role: "MITRA",
-            email: `${rawData.npk}@example.com`,
+            email: `${safeNpk}@example.com`,
             passwordHash: "hashed_placeholder",
           },
-          update: { name: rawData.name ? String(rawData.name) : undefined },
+          update: { name: safeName },
         });
 
         await LoyaltyCalculationService.issueTokensForPeriod(
           user.id,
           periodId,
-          upload.divisionType as "OPTEL" | "TECHNO",
+          upload.divisionType,
           rawData as Record<string, number | string>,
           actorId,
           row.id // sourceId for ledger
@@ -449,7 +497,7 @@ export class UploadProcessingService {
       data: { status: "COMPLETED" },
     });
 
-    await AuditService.log({
+    await logAudit({
       action: "UPLOAD_COMMITTED",
       actorId,
       targetType: "MonthlyUpload",

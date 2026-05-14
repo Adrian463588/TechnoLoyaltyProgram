@@ -18,8 +18,7 @@ import NextAuth from "next-auth";
 import { authConfig } from "@/lib/auth/auth.config";
 
 const { auth } = NextAuth(authConfig);
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 // Paths that require no authentication
 const PUBLIC_PREFIXES = [

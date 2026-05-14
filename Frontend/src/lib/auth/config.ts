@@ -1,19 +1,18 @@
 /**
  * NextAuth v5 Node.js Configuration
  *
- * This file merges the edge-safe configuration from `auth.config.ts` with Node.js
- * dependent providers (like Credentials using bcrypt and Prisma).
+ * The Frontend doesn't access the database directly.
+ * Credentials verification is delegated to the Backend REST API.
  *
- * Use this exported `auth`, `signIn`, `signOut`, `handlers` in all Node.js environments
- * (e.g. Server Actions, API routes, Server Components).
+ * SOLID — SRP: auth module only handles session/JWT, not DB queries.
  */
 
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { prisma } from "@/lib/db/prisma";
-import bcrypt from "bcryptjs";
 import { loginSchema } from "@/lib/validations";
 import { authConfig } from "./auth.config";
+
+const BACKEND_URL = process.env["BACKEND_URL"] ?? "http://localhost:4000";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -30,33 +29,39 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
         const { npk, password } = parsed.data;
 
-        const user = await prisma.user.findUnique({
-          where: { npk },
-          select: {
-            id:           true,
-            npk:          true,
-            name:         true,
-            email:        true,
-            passwordHash: true,
-            role:         true,
-            divisionId:   true,
-            isActive:     true,
-          },
-        });
+        try {
+          const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ npk, password }),
+          });
 
-        if (!user || !user.isActive) return null;
+          if (!res.ok) return null;
 
-        const passwordMatch = await bcrypt.compare(password, user.passwordHash);
-        if (!passwordMatch) return null;
+          const data = (await res.json()) as {
+            user: {
+              id: string;
+              npk: string;
+              name: string;
+              email: string;
+              role: "MITRA" | "TEAM_LEADER" | "HC_PM";
+              divisionId?: string;
+            };
+          };
 
-        return {
-          id:         user.id,
-          npk:        user.npk,
-          name:       user.name,
-          email:      user.email,
-          role:       user.role,
-          divisionId: user.divisionId ?? undefined,
-        };
+          if (!data?.user) return null;
+
+          return {
+            id:         data.user.id,
+            npk:        data.user.npk,
+            name:       data.user.name,
+            email:      data.user.email,
+            role:       data.user.role,
+            divisionId: data.user.divisionId,
+          };
+        } catch {
+          return null;
+        }
       },
     }),
   ],

@@ -1,6 +1,14 @@
+/**
+ * Backend/src/services/audit.service.ts
+ *
+ * Audit trail logging — exported as plain functions (not a class).
+ * All mutations in the system must call logAudit for traceability.
+ */
+
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/db/prisma";
 
-export type AuditAction = 
+export type AuditAction =
   | "UPLOAD_STAGED"
   | "UPLOAD_COMMITTED"
   | "UPLOAD_FAILED"
@@ -18,29 +26,34 @@ interface LogAuditParams {
   targetType: string;
   targetId: string;
   details?: Record<string, unknown>;
-  ipAddress?: string;
-  // Allows injecting a transaction client for atomic logs
-  tx?: Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+  ipAddress?: string | undefined;
+  /** Allows injecting a transaction client for atomic logs */
+  tx?: Prisma.TransactionClient;
 }
 
-export class AuditService {
-  /**
-   * Logs an action to the audit trail.
-   * Can be used standalone or passed a Prisma Transaction Client (`tx`) to ensure
-   * the log is committed atomically with the related business operation.
-   */
-  static async log(params: LogAuditParams) {
-    const client = params.tx ?? prisma;
-    
-    await client.auditLog.create({
-      data: {
-        action: params.action,
-        actorId: params.actorId,
-        targetType: params.targetType,
-        targetId: params.targetId,
-        details: params.details ?? {},
-        ipAddress: params.ipAddress,
-      },
-    });
-  }
+/**
+ * Logs an action to the audit trail.
+ * Can be used standalone or passed a Prisma Transaction Client (`tx`) to ensure
+ * the log is committed atomically with the related business operation.
+ */
+export async function logAudit(params: LogAuditParams): Promise<void> {
+  const client = params.tx ?? prisma;
+
+  await client.auditLog.create({
+    data: {
+      action: params.action,
+      actorId: params.actorId,
+      targetType: params.targetType,
+      targetId: params.targetId,
+      details: (params.details ?? {}) as Prisma.InputJsonValue,
+      ipAddress: params.ipAddress ?? null,
+    },
+  });
 }
+
+/**
+ * @deprecated Use logAudit() directly. This class wrapper is kept for backward compatibility.
+ */
+export const AuditService = {
+  log: logAudit,
+};

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
 /**
  * Period Service — Earning period and cut-off logic
  *
@@ -96,3 +97,14 @@ export function getPeriodProgressPercent(from: Date = new Date()): number {
   const elapsedMs = from.getTime() - period.startDate.getTime();
   return Math.round(Math.min(100, Math.max(0, (elapsedMs / totalMs) * 100)));
 }
+
+/**
+ * Period Service — Earning period and cut-off logic
+ */
+export const PeriodService = {
+  getPeriodsForYear,
+  getActivePeriod,
+  isCutOffDate,
+  getDaysUntilCutOff,
+  getPeriodProgressPercent,
+};

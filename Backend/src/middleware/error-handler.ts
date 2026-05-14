@@ -1,29 +1,52 @@
 /**
  * Backend/src/middleware/error-handler.ts
  *
- * Centralized Express error handler.
- * All uncaught errors bubble here — never expose internal stack in production.
- *
- * Clean Code: single place to format all error responses.
+ * Centralized error handler. Must be registered LAST in Express middleware chain.
+ * Differentiates custom AppError subtypes and returns structured JSON.
  */
 
 import type { ErrorRequestHandler } from "express";
+import { AppError, ValidationError, NotFoundError } from "@/errors";
 
-export interface AppError extends Error {
-  statusCode?: number;
-  code?:       string;
-}
+export const errorHandler: ErrorRequestHandler = (err: unknown, _req, res, _next): void => {
+  const isDev = process.env.NODE_ENV !== "production";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const errorHandler: ErrorRequestHandler = (err: AppError, _req, res, _next) => {
-  const statusCode = err.statusCode ?? 500;
-  const isDev      = process.env.NODE_ENV === "development";
+  // ── Known error types ───────────────────────────────────────
+  if (err instanceof ValidationError) {
+    res.status(err.statusCode).json({
+      error: err.message,
+      code: err.code,
+      details: err.details,
+    });
+    return;
+  }
 
-  console.error(`[ErrorHandler] ${err.message}`, isDev ? err.stack : "");
+  if (err instanceof NotFoundError) {
+    res.status(err.statusCode).json({
+      error: err.message,
+      code: err.code,
+    });
+    return;
+  }
 
-  res.status(statusCode).json({
-    error:   err.message ?? "Internal server error",
-    code:    err.code,
-    ...(isDev && { stack: err.stack }),
+  if (err instanceof AppError) {
+    res.status(err.statusCode).json({
+      error: err.message,
+      code: err.code,
+    });
+    return;
+  }
+
+  // ── Unknown / unexpected error ──────────────────────────────
+  const errorInstance = err instanceof Error ? err : new Error(String(err));
+  console.error(
+    "[ErrorHandler] Unhandled error:",
+    isDev ? errorInstance.stack : errorInstance.message,
+  );
+
+  res.status(500).json({
+    error: "Internal server error",
+    code: "INTERNAL_ERROR",
+    ...(isDev && { stack: errorInstance.stack }),
   });
 };

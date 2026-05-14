@@ -8,13 +8,33 @@
  */
 
 import type { RequestHandler } from "express";
-import type { AuthenticatedRequest } from "@/types/api.types";
-import { UploadProcessingService, parseOptelCSV, parseTechnoCSV, buildUploadSummary } from "@/services/upload.service";
-import { parseOptelXLSX, parseTechnoXLSX, detectDivisionFromXLSX }                    from "@/services/upload-xlsx.service";
-import { uploadMetaSchema } from "@/types/validations";
+import multer from "multer";
+import { z } from "zod";
+import {
+  UploadProcessingService,
+  parseOptelCSV,
+  parseTechnoCSV,
+  buildUploadSummary,
+} from "@/services/upload.service";
+import {
+  parseOptelXLSX,
+  parseTechnoXLSX,
+  detectDivisionFromXLSX,
+} from "@/services/upload-xlsx.service";
+import { uploadMetaSchema, uuidSchema } from "@/types/validations";
+import { ValidationError } from "@/errors/validation-error";
+import { NotFoundError } from "@/errors/not-found-error";
+
+// ── Multer Configuration ──────────────────────────────────────────────────
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+});
+
+export const uploadMiddleware = upload.single("file");
 
 const XLSX_EXTENSIONS = [".xlsx", ".xls"] as const;
-const CSV_EXTENSIONS  = [".csv", ".tsv"]  as const;
+const CSV_EXTENSIONS = [".csv", ".tsv"] as const;
 
 function getExtension(filename: string): string {
   return filename.substring(filename.lastIndexOf(".")).toLowerCase();
@@ -48,12 +68,17 @@ export const UploadController = {
   // GET /api/admin/uploads/:id
   getById: (async (req, res, next) => {
     try {
-      const upload = await UploadProcessingService.getById(req.params["id"]!);
-      if (!upload) {
-        res.status(404).json({ error: "Upload not found" });
-        return;
+      const idParam = req.params["id"];
+      const idResult = uuidSchema.safeParse(idParam);
+      if (!idResult.success) {
+        throw new ValidationError("Invalid upload ID format", { id: idParam });
       }
-      res.json(upload);
+
+      const uploadRecord = await UploadProcessingService.getById(idResult.data);
+      if (!uploadRecord) {
+        throw new NotFoundError("Upload", idResult.data);
+      }
+      res.json(uploadRecord);
     } catch (err) {
       next(err);
     }
@@ -62,21 +87,35 @@ export const UploadController = {
   // POST /api/admin/uploads — stage a file
   stageFile: (async (req, res, next) => {
     try {
-      const { user } = req as AuthenticatedRequest;
-      // Express multer middleware would populate req.file; for now use body
-      const { filename, divisionType } = req.body as { filename: string; divisionType: string };
+      const { user } = req;
 
-      const metaParsed = uploadMetaSchema.safeParse({ filename, divisionType });
-      if (!metaParsed.success) {
-        res.status(400).json({ error: "Invalid metadata", details: metaParsed.error.flatten() });
-        return;
+      if (!req.file) {
+        throw new ValidationError("No file uploaded");
       }
 
-      const buffer          = req.body.fileBuffer as Buffer;
-      const { upload }      = await UploadProcessingService.stageFile(filename, buffer, metaParsed.data.divisionType, user.id);
-      await UploadProcessingService.validateStagedUpload(upload.id);
+      const { filename, divisionType } = req.body as {
+        filename?: string;
+        divisionType?: string;
+      };
+      const actualFilename = filename ?? req.file.originalname;
 
-      res.json({ success: true, uploadId: upload.id });
+      const metaParsed = uploadMetaSchema.safeParse({ filename: actualFilename, divisionType });
+      if (!metaParsed.success) {
+        throw new ValidationError(
+          "Invalid file metadata",
+          z.treeifyError(metaParsed.error),
+        );
+      }
+
+      const { upload: stagedUpload } = await UploadProcessingService.stageFile(
+        actualFilename,
+        req.file.buffer,
+        metaParsed.data.divisionType,
+        user.id,
+      );
+      await UploadProcessingService.validateStagedUpload(stagedUpload.id);
+
+      res.json({ success: true, uploadId: stagedUpload.id });
     } catch (err) {
       next(err);
     }
@@ -85,12 +124,14 @@ export const UploadController = {
   // POST /api/admin/uploads/process — preview/validate file content
   processFile: (async (req, res, next) => {
     try {
-      const { filename, mimeType, fileBuffer, division } = req.body as {
-        filename:   string;
-        mimeType:   string;
-        fileBuffer: Buffer;
-        division?:  string;
-      };
+      if (!req.file) {
+        throw new ValidationError("No file uploaded");
+      }
+
+      const { division } = req.body as { division?: string };
+      const filename = req.file.originalname;
+      const mimeType = req.file.mimetype;
+      const fileBuffer = req.file.buffer;
 
       let resolvedDivision = division?.toUpperCase();
 
@@ -98,40 +139,38 @@ export const UploadController = {
         if (!resolvedDivision || !["OPTEL", "TECHNO"].includes(resolvedDivision)) {
           const detected = await detectDivisionFromXLSX(fileBuffer);
           if (!detected) {
-            res.status(400).json({ error: "Could not determine division from file headers." });
-            return;
+            throw new ValidationError("Could not determine division from file headers");
           }
           resolvedDivision = detected;
         }
 
         const divUpper = resolvedDivision as "OPTEL" | "TECHNO";
-        const result   = divUpper === "OPTEL"
-          ? await parseOptelXLSX(fileBuffer)
-          : await parseTechnoXLSX(fileBuffer);
+        const result =
+          divUpper === "OPTEL"
+            ? await parseOptelXLSX(fileBuffer)
+            : await parseTechnoXLSX(fileBuffer);
 
-        const summary = buildUploadSummary(result as Parameters<typeof buildUploadSummary>[0]);
+        const summary = buildUploadSummary(result);
         res.json({ division: divUpper, rows: result.rows, issues: result.issues, summary });
         return;
       }
 
       if (isCSV(filename)) {
         if (!resolvedDivision || !["OPTEL", "TECHNO"].includes(resolvedDivision)) {
-          res.status(400).json({ error: "Division must be OPTEL or TECHNO for CSV files" });
-          return;
+          throw new ValidationError("Division must be OPTEL or TECHNO for CSV files");
         }
 
-        const csvText  = fileBuffer.toString("utf-8");
+        const csvText = fileBuffer.toString("utf-8");
         const divUpper = resolvedDivision as "OPTEL" | "TECHNO";
-        const result   = divUpper === "OPTEL"
-          ? parseOptelCSV(csvText)
-          : parseTechnoCSV(csvText);
+        const result =
+          divUpper === "OPTEL" ? parseOptelCSV(csvText) : parseTechnoCSV(csvText);
 
-        const summary = buildUploadSummary(result as Parameters<typeof buildUploadSummary>[0]);
+        const summary = buildUploadSummary(result);
         res.json({ division: divUpper, rows: result.rows, issues: result.issues, summary });
         return;
       }
 
-      res.status(415).json({ error: `Unsupported file type: ${mimeType}` });
+      throw new ValidationError(`Unsupported file type: ${mimeType}`);
     } catch (err) {
       next(err);
     }
@@ -140,8 +179,15 @@ export const UploadController = {
   // POST /api/admin/uploads/:id/commit
   commitUpload: (async (req, res, next) => {
     try {
-      const { user } = req as AuthenticatedRequest;
-      const result   = await UploadProcessingService.commitUpload(req.params["id"]!, user.id);
+      const { user } = req;
+
+      const idParam = req.params["id"];
+      const idResult = uuidSchema.safeParse(idParam);
+      if (!idResult.success) {
+        throw new ValidationError("Invalid upload ID format", { id: idParam });
+      }
+
+      const result = await UploadProcessingService.commitUpload(idResult.data, user.id);
       res.json(result);
     } catch (err) {
       next(err);

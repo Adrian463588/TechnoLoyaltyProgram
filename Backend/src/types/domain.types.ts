@@ -1,100 +1,134 @@
-export type Role = "Mitra" | "TeamLeader" | "HCPM";
+/**
+ * Backend/src/types/domain.types.ts
+ *
+ * Canonical domain types — aligned with Prisma enum values (SCREAMING_SNAKE_CASE).
+ * The Frontend types/index.ts must mirror these exactly.
+ *
+ * DO NOT add business logic here. Types only.
+ */
 
-export type Division = "Optel" | "Techno";
+import type {
+  RoleType,
+  DivisionType,
+  MemberTierType,
+  RedemptionStatus,
+  UploadStatus,
+} from "@prisma/client";
 
-export type TierStatus = "Bronze" | "Silver" | "Gold" | "Platinum";
+// ── Re-exported Prisma enum types ────────────────────────────
+export type Role = RoleType;                        // MITRA | TEAM_LEADER | HC_PM
+export type Division = DivisionType;                // OPTEL | TECHNO
+export type TierStatus = MemberTierType;            // BRONZE | SILVER | GOLD | PLATINUM
+export type RewardRequestStatus = RedemptionStatus; // DRAFT | PENDING_VERIFICATION | ...
 
+// ── Member Status ─────────────────────────────────────────────
+export type MemberStatus = "ACTIVE" | "DOWNGRADED" | "RESET" | "INACTIVE";
+
+// ── Upload Status ─────────────────────────────────────────────
+export type { UploadStatus };
+
+// ── User ──────────────────────────────────────────────────────
 export interface User {
   id: string;
   name: string;
   email: string;
+  npk: string;
   role: Role;
-  division: Division;
+  divisionId: string | null;
+  teamId: string | null;
 }
 
+// ── Token Summary (employee dashboard) ───────────────────────
 export interface TokenSummary {
   userId: string;
   totalTokens: number;
+  remainingTokens: number;
   currentTier: TierStatus;
   pointsToNextTier: number;
   totalForNextTier: number;
   isEligibleForReward: boolean;
   activePeriod: string;
-  status: "Active" | "Downgraded" | "Reset" | "Inactive";
+  activePeriodStart: string;
+  activePeriodEnd: string;
+  memberStatus: MemberStatus;
 }
 
+// ── Reward ────────────────────────────────────────────────────
 export interface RewardItem {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   tokenCost: number;
-  category: "Voucher" | "Merchandise" | "Experience" | "TimeOff";
-  imageUrl?: string;
+  imageUrl: string | null;
   isAvailable: boolean;
+  stockLimit: number | null;
 }
 
-export type RewardRequestStatus = 
-  | "Pending" 
-  | "Verified" 
-  | "Rejected" 
-  | "Purchased" 
-  | "PickupScheduled" 
-  | "Completed" 
-  | "Cancelled";
-
+// ── Redemption Request ────────────────────────────────────────
 export interface RewardRequest {
   id: string;
   userId: string;
   userName?: string;
+  userNpk?: string;
   rewardId: string;
   rewardName: string;
   tokensSpent: number;
   status: RewardRequestStatus;
   requestedAt: string;
   updatedAt: string;
-  rejectReason?: string;
+  rejectReason?: string | null;
 }
 
+// ── Upload ────────────────────────────────────────────────────
 export interface UploadValidationIssue {
   row: number;
   column: string;
   issue: string;
-  severity: "Error" | "Warning";
+  severity: "ERROR" | "WARNING";
 }
 
 export interface MonthlyUpload {
   id: string;
   filename: string;
+  divisionType: Division;
   uploadedAt: string;
-  status: "Staged" | "Processing" | "Completed" | "Failed";
+  status: UploadStatus;
   validRows: number;
   errorRows: number;
-  issues: UploadValidationIssue[];
+  issues?: UploadValidationIssue[];
 }
 
+// ── Team ──────────────────────────────────────────────────────
 export interface TeamMemberSummary {
   id: string;
   name: string;
+  npk: string;
   division: Division;
   tokens: number;
   tier: TierStatus;
-  status: TokenSummary["status"];
+  memberStatus: MemberStatus;
 }
 
-export interface PeriodSnapshot {
-  id: string;
-  periodName: string;
-  cutOffDate: string;
-  totalTokensIssued: number;
-  totalUsersActive: number;
+// ── Employee Dashboard (full) ─────────────────────────────────
+export interface EmployeeDashboardData {
+  user: {
+    id: string;
+    name: string;
+    npk: string;
+    division: Division;
+  };
+  tokenSummary: TokenSummary;
+  recentRedemptions: RewardRequest[];
 }
 
+// ── Audit ──────────────────────────────────────────────────────
 export interface AuditLogEntry {
   id: string;
   action: string;
   actorId: string;
-  actorName: string;
-  targetId?: string;
-  timestamp: string;
-  details: string;
+  targetType: string;
+  targetId: string;
+  details: Record<string, unknown> | null;
+  ipAddress: string | null;
+  createdAt: string;
 }

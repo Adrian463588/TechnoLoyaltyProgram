@@ -91,7 +91,8 @@ export function AppNavbar({
 
         {/* Brand */}
         <Link
-          href={navItems[0]?.href ?? "/"}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          href={(navItems[0]?.href ?? "/") as any}
           className="flex items-center gap-2.5 text-lg font-bold text-foreground shrink-0"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-sm shadow-primary/30">
@@ -105,7 +106,8 @@ export function AppNavbar({
           {navItems.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
-              href={href}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              href={href as any}
               className={cn(
                 "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200",
                 isActive(href)
@@ -171,7 +173,8 @@ export function AppNavbar({
           {navItems.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
-              href={href}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              href={href as any}
               onClick={() => setMobileOpen(false)}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors w-full",
