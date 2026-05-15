@@ -28,18 +28,19 @@ export class UserRepository {
 
   async upsertByEmail(
     email: string,
-    data: { name: string; division: DivisionType; role?: UserRole },
+    data: { name: string; npk: string; division: DivisionType; role?: UserRole },
   ): Promise<User> {
     return this.prisma.user.upsert({
       where: { email },
       create: {
         email,
+        npk: data.npk,
         name: data.name,
         passwordHash: "changeme",
         role: data.role ?? "MITRA",
         division: data.division,
       },
-      update: { name: data.name },
+      update: { name: data.name, npk: data.npk },
     });
   }
 

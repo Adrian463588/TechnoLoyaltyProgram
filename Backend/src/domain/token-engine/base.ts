@@ -43,7 +43,7 @@ export function getNextTier(
   if (idx < 0 || idx >= tierOrder.length - 1) {
     return null;
   }
-  return tierOrder[idx + 1];
+  return tierOrder[idx + 1] ?? null;
 }
 
 /**

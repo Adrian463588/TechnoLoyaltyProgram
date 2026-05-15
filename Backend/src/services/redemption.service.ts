@@ -11,6 +11,7 @@ import { prisma } from "@/db/prisma";
 import { RedemptionStatus, TokenEventType } from "@prisma/client";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
 import { checkRedemptionEligibility } from "./loyalty.service";
+import { logAudit } from "./audit.service";
 import { NotFoundError, ValidationError } from "@/errors/index";
 
 /**
@@ -106,7 +107,7 @@ export class RedemptionService {
         },
       });
 
-      // 2. Append history
+      // 2. Append status history
       await tx.redemptionStatusHistory.create({
         data: {
           redemptionRequestId: request.id,
@@ -115,6 +116,16 @@ export class RedemptionService {
           changedBy: userId,
           note: "Initial submission",
         },
+      });
+
+      // 3. Audit — PRD §5.6 REDEMPTION_SUBMITTED required
+      await logAudit({
+        action: "REDEMPTION_SUBMITTED",
+        actorId: userId,
+        targetType: "RedemptionRequest",
+        targetId: request.id,
+        newValue: { rewardItemId, tokenCost: item.tokenCost, status: "PENDING_VERIFICATION" },
+        tx,
       });
 
       return request;
@@ -204,7 +215,18 @@ export class RedemptionService {
           newStatus,
           changedBy: actorId,
           note: note ?? null,
-        }
+        },
+      });
+
+      // Audit — PRD §5.6 REDEMPTION_STATUS_CHANGED required
+      await logAudit({
+        action: "REDEMPTION_STATUS_CHANGED",
+        actorId,
+        targetType: "RedemptionRequest",
+        targetId: requestId,
+        previousValue: { status: currentStatus },
+        newValue: { status: newStatus, note: note ?? null },
+        tx,
       });
 
       return updated;

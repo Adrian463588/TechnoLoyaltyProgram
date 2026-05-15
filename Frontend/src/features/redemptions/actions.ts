@@ -46,7 +46,7 @@ export async function submitRedemptionRequest(formData: { rewardItemId: string }
  */
 export async function updateRedemptionStatus(requestId: string, status: string, reason?: string) {
   const session = await auth();
-  if (!session?.user || session.user.role !== "HC_ADMIN") {
+  if (!session?.user || session.user.role !== "HC_PM") {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -78,7 +78,7 @@ export async function verifyRedemptionDocuments(requestId: string, verification:
   powerOfAttorneyVerified?: boolean;
 }) {
   const session = await auth();
-  if (!session?.user || session.user.role !== "HC_ADMIN") {
+  if (!session?.user || session.user.role !== "HC_PM") {
     return { success: false, error: "Unauthorized" };
   }
 

@@ -50,7 +50,7 @@ export function getNextTier(current: MemberTierType): MemberTierType | null {
   if (idx < 0 || idx >= TIER_ORDER.length - 1) {
     return null;
   }
-  return TIER_ORDER[idx + 1];
+  return TIER_ORDER[idx + 1] ?? null;
 }
 
 /**
@@ -61,7 +61,7 @@ export function getPreviousTier(current: MemberTierType): MemberTierType | null 
   if (idx <= 0) {
     return null;
   }
-  return TIER_ORDER[idx - 1];
+  return TIER_ORDER[idx - 1] ?? null;
 }
 
 // ============================================================

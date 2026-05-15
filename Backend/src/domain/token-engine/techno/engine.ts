@@ -99,31 +99,43 @@ export function getTechnoPeriodDates(referenceDate: Date = new Date()): {
     return { period: "P2", start: p2Start, end: p2End, daysRemaining, monthsRemaining };
   }
   
-  // After Dec 15 but before Dec 16 (gap between periods)
-  if (now > p2End.getTime() && now < p1Start.getTime() + 365 * 24 * 60 * 60 * 1000) {
+  // After Dec 15: Dec 16-31 starts P1 for next cycle
+  if (now > p2End.getTime()) {
     const nextP1Start = new Date(year, 11, 16, 0, 0, 0); // Dec 16 current year
     const nextP1End = new Date(year + 1, 5, 15, 23, 59, 59); // Jun 15 next year
     const daysRemaining = Math.ceil((nextP1End.getTime() - now) / (1000 * 60 * 60 * 24));
     const monthsRemaining = Math.ceil(daysRemaining / 30);
     return { period: "P1", start: nextP1Start, end: nextP1End, daysRemaining, monthsRemaining };
   }
-  
-  // Default fallback
-  const nextP2Start = new Date(year, 5, 16, 0, 0, 0);
-  const nextP2End = new Date(year, 11, 15, 23, 59, 59);
-  const daysRemaining = Math.ceil((nextP2End.getTime() - now) / (1000 * 60 * 60 * 24));
+
+  // Fallback: before p1Start (should not normally be reached with correct date ranges)
+  const daysRemaining = Math.ceil((p1End.getTime() - now) / (1000 * 60 * 60 * 24));
   const monthsRemaining = Math.ceil(daysRemaining / 30);
-  
-  return { period: "P2", start: nextP2Start, end: nextP2End, daysRemaining, monthsRemaining };
+  return { period: "P1", start: p1Start, end: p1End, daysRemaining, monthsRemaining };
 }
 
 /**
- * Checks if the current date is within the evaluation period.
- * Evaluation deadline: June 15 or December 15 depending on period
+ * Checks if the current date is within an active evaluation period.
+ * Returns false after Dec 15 (evaluation deadline), even though
+ * Dec 16-31 is technically the start of the next P1.
  */
 export function isWithinTechnoEvaluationPeriod(referenceDate: Date = new Date()): boolean {
-  const { end } = getTechnoPeriodDates(referenceDate);
-  return referenceDate <= end;
+  const month = referenceDate.getMonth(); // 0-indexed
+  const day = referenceDate.getDate();
+
+  // Dec 16-31 is after the evaluation deadline
+  if (month === 11 && day > 15) return false;
+
+  // Jun 16 - Dec 15 is P2 (also within period)
+  if (month > 5 && month < 11) return true;
+  if (month === 11 && day <= 15) return true;
+
+  // Jan 1 - Jun 15 is P1 (within period)
+  if (month < 5) return true;
+  if (month === 5 && day <= 15) return true;
+
+  // Jun 16 or beyond but already handled above
+  return true;
 }
 
 /**

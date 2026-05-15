@@ -32,14 +32,14 @@ export function getTokenEngine(division: DivisionType): TokenEngine {
  * Type guard to check if an engine is Opcent/Tele type.
  */
 export function isOpcentTeleEngine(engine: TokenEngine): engine is OpcentTokenEngine {
-  return engine.division === DivisionType.OPCENT || engine.division === DivisionType.TELE;
+  return engine instanceof OpcentTokenEngine;
 }
 
 /**
  * Type guard to check if an engine is Techno type.
  */
 export function isTechnoEngine(engine: TokenEngine): engine is TechnoTokenEngine {
-  return engine.division === DivisionType.TECHNO;
+  return engine instanceof TechnoTokenEngine;
 }
 
 /**

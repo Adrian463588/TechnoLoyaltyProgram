@@ -13,6 +13,8 @@ import { TokenEventType } from "@prisma/client";
 vi.mock("@/db/prisma", () => ({
   prisma: {
     $transaction: vi.fn((callback) => callback(prisma)),
+    // Row-lock query used inside appendTokenEvent
+    $queryRaw: vi.fn().mockResolvedValue([]),
     tokenLedger: {
       findFirst: vi.fn(),
       create: vi.fn(),
@@ -56,7 +58,7 @@ describe("TokenLedgerRepository", () => {
       eventType: TokenEventType.REDEEMED,
       amount: -50, // More than 30
       performedBy: "user-1",
-    })).rejects.toThrow("BALANCE_CANNOT_GO_NEGATIVE");
+    })).rejects.toMatchObject({ code: "INSUFFICIENT_TOKENS" });
   });
 
   it("should set expiresAt automatically for earned tokens", async () => {

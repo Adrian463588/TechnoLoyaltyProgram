@@ -4,7 +4,7 @@
     "lib":                  ["ES2020"],
     "module":               "commonjs",
     "moduleResolution":     "node",
-    "rootDir":              "./src",
+    "rootDir":              ".",
     "outDir":               "./dist",
     "strict":               true,
     "noUncheckedIndexedAccess": true,
@@ -30,7 +30,8 @@
     }
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "prisma/**/*.ts"
   ],
   "exclude": ["node_modules", "dist"]
 }

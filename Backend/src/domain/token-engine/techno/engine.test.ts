@@ -80,11 +80,11 @@ describe("TechnoTokenEngine", () => {
     });
 
     it("calculates months remaining correctly", () => {
-      const junDate = new Date(2026, 5, 1); // Jun 1, 2026 (early in P2)
-      const result = getTechnoPeriodDates(junDate);
-      // P2 ends Dec 15, so about 6.5 months remaining
-      expect(result.monthsRemaining).toBeGreaterThanOrEqual(6);
-      expect(result.monthsRemaining).toBeLessThanOrEqual(7);
+      const julDate = new Date(2026, 6, 1); // Jul 1, 2026 — early in P2 (Jun 16 - Dec 15)
+      const result = getTechnoPeriodDates(julDate);
+      // P2 ends Dec 15, so about 5.5 months remaining from Jul 1
+      expect(result.monthsRemaining).toBeGreaterThanOrEqual(5);
+      expect(result.monthsRemaining).toBeLessThanOrEqual(6);
     });
   });
 

@@ -5,14 +5,14 @@
  * Token verification endpoint — used by Backend middleware pre-check.
  *
  * SOLID — SRP: only handles auth HTTP concerns.
+ * AGENTS.md: Thin route — no DB or business logic here.
  */
 
 import { Router, type RequestHandler } from "express";
 import { authenticate }  from "@/middleware/authenticate";
-import { prisma }        from "@/db/prisma";
-import bcrypt            from "bcryptjs";
-import { z }             from "zod";
 import { loginSchema }   from "@/types/validations";
+import { authService }   from "@/services/auth.service";
+import { ValidationError } from "@/errors/index";
 
 export const authRoutes = Router();
 
@@ -43,30 +43,10 @@ export const authRoutes = Router();
  *     responses:
  *       200:
  *         description: Login successful
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 user:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                     name:
- *                       type: string
- *                     email:
- *                       type: string
- *                     npk:
- *                       type: string
- *                     role:
- *                       type: string
- *                     division:
- *                       type: string
  *       401:
  *         description: Invalid credentials
  */
-authRoutes.post("/login", (async (req, res) => {
+authRoutes.post("/login", (async (req, res, next) => {
   const parsed = loginSchema.safeParse(req.body);
 
   if (!parsed.success) {
@@ -77,47 +57,15 @@ authRoutes.post("/login", (async (req, res) => {
     return;
   }
 
-  const { npk, password } = parsed.data;
-
   try {
-    const user = await prisma.user.findUnique({
-      where: { npk },
-      select: {
-        id:             true,
-        name:           true,
-        email:          true,
-        npk:            true,
-        division:       true,
-        role:           true,
-        partnerStatus:  true,
-        passwordHash:   true,
-      },
-    });
-
-    if (!user || user.partnerStatus === "RESIGNED") {
-      res.status(401).json({ error: "Invalid credentials." });
-      return;
-    }
-
-    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!passwordMatch) {
-      res.status(401).json({ error: "Invalid credentials." });
-      return;
-    }
-
-    res.json({
-      user: {
-        id:         user.id,
-        name:       user.name,
-        email:      user.email,
-        npk:        user.npk,
-        role:       user.role,
-        division:   user.division,
-      },
-    });
+    const user = await authService.login(parsed.data.npk, parsed.data.password);
+    res.json({ user });
   } catch (err) {
-    console.error("[Auth] Login error:", err);
-    res.status(500).json({ error: "Internal server error." });
+    if (err instanceof ValidationError) {
+      res.status(401).json({ error: err.message });
+      return;
+    }
+    next(err);
   }
 }) as RequestHandler);
 

@@ -8,8 +8,9 @@
 import { Router, type RequestHandler } from "express";
 import { authenticate }         from "@/middleware/authenticate";
 import { authorize }            from "@/middleware/authorize";
-import { RedemptionController } from "@/controllers/redemption.controller";
-import { LoyaltyController }    from "@/controllers/loyalty.controller";
+import { RedemptionController }    from "@/controllers/redemption.controller";
+import { LoyaltyController }        from "@/controllers/loyalty.controller";
+import { RewardCatalogController }  from "@/controllers/reward-catalog.controller";
 
 export const employeeRoutes = Router();
 
@@ -80,4 +81,18 @@ employeeRoutes.get("/token-summary", LoyaltyController.getTokenSummary as Reques
  *         description: Redemption request created
  */
 employeeRoutes.get( "/redemptions", RedemptionController.listMyRedemptions as RequestHandler);
-employeeRoutes.post("/redemptions", RedemptionController.createRequest as RequestHandler);
+employeeRoutes.post("/redemptions", RedemptionController.createRequest      as RequestHandler);
+
+// ── Reward Catalog (read-only for employees) ───────────────────────────────
+/**
+ * @openapi
+ * /api/employee/rewards:
+ *   get:
+ *     tags: [Employee]
+ *     summary: List all active rewards available for redemption
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: List of active rewards retrieved
+ */
+employeeRoutes.get( "/rewards",     RewardCatalogController.listActive       as RequestHandler);

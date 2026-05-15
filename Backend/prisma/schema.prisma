@@ -9,8 +9,8 @@ datasource db {
 // ── Enums ──
 enum UserRole {
   MITRA
-  TEAM_LEAD
-  HC_ADMIN
+  TEAM_LEADER
+  HC_PM
 }
 
 enum DivisionType {
@@ -75,28 +75,32 @@ enum RedemptionStatus {
 
 // ── Identity & Access ──
 model User {
-  id             String         @id @default(uuid())
-  email          String         @unique
-  npk            String         @unique
+  id             String            @id @default(uuid())
+  email          String            @unique
+  npk            String            @unique
   name           String
   passwordHash   String
   division       DivisionType
-  role           UserRole       @default(MITRA)
-  partnerStatus  PartnershipStatus  @default(ACTIVE)
-  membershipTier MemberTierType @default(SAPHIRE)
-  healthBenefit  HealthBenefit  @default(NONE)
+  role           UserRole          @default(MITRA)
+  partnerStatus  PartnershipStatus @default(ACTIVE)
+  membershipTier MemberTierType    @default(SAPHIRE)
+  healthBenefit  HealthBenefit     @default(NONE)
   teamLeadId     String?
-  joinedAt       DateTime       @default(now())
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  joinedAt       DateTime          @default(now())
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
-  teamLead          User?                     @relation("TeamHierarchy", fields: [teamLeadId], references: [id])
-  subordinates      User[]                    @relation("TeamHierarchy")
-  tokenLedger       TokenLedger[]
-  membershipHistory MembershipHistory[]
-  shiftClaims       ShiftClaim[]
-  projectClaims     ProjectClaim[]
-  redemptions       RedemptionRequest[]
+  teamLead                        User?                       @relation("TeamHierarchy", fields: [teamLeadId], references: [id])
+  subordinates                    User[]                      @relation("TeamHierarchy")
+  tokenLedger                     TokenLedger[]
+  membershipHistory               MembershipHistory[]
+  shiftClaims                     ShiftClaim[]
+  projectClaims                   ProjectClaim[]
+  redemptions                     RedemptionRequest[]
+  // Partner Status Confirmation back-relations
+  partnerConfirmationsAsSubject   PartnerStatusConfirmation[] @relation("PartnerConfirmationSubject")
+  partnerConfirmationsAsRequester PartnerStatusConfirmation[] @relation("PartnerConfirmationRequester")
+  partnerConfirmationsAsAssignee  PartnerStatusConfirmation[] @relation("PartnerConfirmationAssignee")
 }
 
 // ── Token Ledger (append-only) ──
@@ -104,13 +108,13 @@ model TokenLedger {
   id           String         @id @default(uuid())
   userId       String
   eventType    TokenEventType
-  amount       Int            // +/-
-  balanceAfter Int            // snapshot
-  referenceId  String?        // FK to shift/project/redemption
-  earnedYear   Int?           // for expiry
-  expiresAt    DateTime?      // Dec 31 of (earnedYear + 3)
-  reason       String?        // required for MANUAL_ADJUSTMENT, penalties
-  performedBy  String         // actor ID
+  amount       Int // +/-
+  balanceAfter Int // snapshot
+  referenceId  String? // FK to shift/project/redemption
+  earnedYear   Int? // for expiry
+  expiresAt    DateTime? // Dec 31 of (earnedYear + 3)
+  reason       String? // required for MANUAL_ADJUSTMENT, penalties
+  performedBy  String // actor ID
   createdAt    DateTime       @default(now())
 
   user User @relation(fields: [userId], references: [id])
@@ -125,8 +129,8 @@ model MembershipHistory {
   userId             String
   previousTier       MemberTierType
   newTier            MemberTierType
-  changeReason       String         // UPGRADE, DOWNGRADE, RESET, MANUAL
-  triggeredBy        String         // actor ID
+  changeReason       String // UPGRADE, DOWNGRADE, RESET, MANUAL
+  triggeredBy        String // actor ID
   tokenBalanceBefore Int
   tokenBalanceAfter  Int
   createdAt          DateTime       @default(now())
@@ -143,7 +147,7 @@ model ShiftClaim {
   slotCount       Int
   shiftDate       DateTime
   status          ClaimStatus @default(PENDING)
-  validatedBy     String?     // actor ID
+  validatedBy     String? // actor ID
   validatedAt     DateTime?
   rejectionReason String?
   createdAt       DateTime    @default(now())
@@ -157,7 +161,7 @@ model ProjectClaim {
   projectName     String
   completedAt     DateTime
   status          ClaimStatus @default(PENDING)
-  validatedBy     String?     // actor ID
+  validatedBy     String? // actor ID
   validatedAt     DateTime?
   rejectionReason String?
   createdAt       DateTime    @default(now())
@@ -172,9 +176,10 @@ model RewardItem {
   description String?
   tokenCost   Int
   imageUrl    String?
+  category    String? // optional eligibility category
   isActive    Boolean  @default(true)
-  stock       Int?     // null = unlimited
-  createdBy   String   // actor ID
+  stock       Int? // null = unlimited
+  createdBy   String // actor ID
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -182,29 +187,30 @@ model RewardItem {
 }
 
 model RedemptionRequest {
-  id                       String           @id @default(uuid())
-  mitraId                  String
-  rewardItemId             String
-  tokenCost                Int              // snapshot
-  status                   RedemptionStatus @default(DRAFT)
-  submittedAt              DateTime         @default(now())
-  verifiedBy               String?          // actor ID
-  verifiedAt               DateTime?
-  rejectionReason          String?
-  pickupScheduledAt        DateTime?
-  completedAt              DateTime?
+  id                      String           @id @default(uuid())
+  mitraId                 String
+  rewardItemId            String
+  tokenCost               Int // snapshot
+  status                  RedemptionStatus @default(DRAFT)
+  submittedAt             DateTime         @default(now())
+  verifiedBy              String? // actor ID
+  verifiedAt              DateTime?
+  rejectionReason         String?
+  pickupScheduledAt       DateTime?
+  completedAt             DateTime?
   // Document verification
-  idCardVerified           Boolean          @default(false)
-  ktpVerified              Boolean          @default(false)
-  npwpVerified             Boolean          @default(false)
-  powerOfAttorneyRequired  Boolean          @default(false)
-  powerOfAttorneyVerified  Boolean?
-  createdAt                DateTime         @default(now())
-  updatedAt                DateTime         @updatedAt
+  idCardVerified          Boolean          @default(false)
+  ktpVerified             Boolean          @default(false)
+  npwpVerified            Boolean          @default(false)
+  powerOfAttorneyRequired Boolean          @default(false)
+  powerOfAttorneyVerified Boolean?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
 
-  mitra      User                      @relation(fields: [mitraId], references: [id])
-  rewardItem RewardItem                @relation(fields: [rewardItemId], references: [id])
-  history    RedemptionStatusHistory[]
+  mitra                User                        @relation(fields: [mitraId], references: [id])
+  rewardItem           RewardItem                  @relation(fields: [rewardItemId], references: [id])
+  history              RedemptionStatusHistory[]
+  partnerConfirmations PartnerStatusConfirmation[]
 }
 
 model RedemptionStatusHistory {
@@ -212,7 +218,7 @@ model RedemptionStatusHistory {
   redemptionRequestId String
   previousStatus      RedemptionStatus
   newStatus           RedemptionStatus
-  changedBy           String           // actor ID
+  changedBy           String // actor ID
   note                String?
   createdAt           DateTime         @default(now())
 
@@ -223,12 +229,51 @@ model RedemptionStatusHistory {
 model AuditLog {
   id               String   @id @default(uuid())
   actorId          String
-  action           String   // e.g. 'TOKEN_MANUAL_ADJUST'
+  action           String // e.g. 'TOKEN_MANUAL_ADJUST'
   targetUserId     String?
   targetEntityType String?
   targetEntityId   String?
   previousValue    Json?
   newValue         Json?
   ipAddress        String?
+  userAgent        String?
   createdAt        DateTime @default(now())
+}
+
+// ── Scheduled Job Idempotency Guard ──
+// PRD §5.3 / AGENTS.md §8
+model JobRun {
+  id         String    @id @default(uuid())
+  jobName    String // stable key e.g. 'token-expiry', 'membership-evaluation'
+  periodKey  String // e.g. '2026-05', '2026-P1'
+  status     String    @default("RUNNING") // RUNNING | SUCCESS | FAILED | SKIPPED
+  summary    Json?
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  @@unique([jobName, periodKey])
+  @@index([jobName, periodKey])
+}
+
+// ── Partner Status Confirmation ──
+// PRD HC-06 / TL-01: HC asks TL to confirm active/resigned status
+model PartnerStatusConfirmation {
+  id                  String    @id @default(uuid())
+  redemptionRequestId String
+  mitraId             String
+  requestedBy         String // HC actor ID
+  assignedTo          String // TL/Lead actor ID
+  status              String    @default("PENDING") // PENDING | CONFIRMED_ACTIVE | CONFIRMED_RESIGNED | CANCELLED
+  note                String?
+  confirmedAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  redemptionRequest RedemptionRequest @relation(fields: [redemptionRequestId], references: [id])
+  mitra             User              @relation("PartnerConfirmationSubject", fields: [mitraId], references: [id])
+  requester         User              @relation("PartnerConfirmationRequester", fields: [requestedBy], references: [id])
+  assignee          User              @relation("PartnerConfirmationAssignee", fields: [assignedTo], references: [id])
+
+  @@index([redemptionRequestId])
+  @@index([assignedTo, status])
 }
