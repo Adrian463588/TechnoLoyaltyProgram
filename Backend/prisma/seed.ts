@@ -166,7 +166,7 @@ async function main() {
   // ============================================================
   console.log("🪙 Adding Token Ledger Entries...");
   const ledgerEntries = [
-    { userId: alice.id, amount: 1500, event: TokenEventType.EARNED_SHIFT, reason: "Initial balance" },
+    { userId: alice.id, amount: 5000, event: TokenEventType.EARNED_SHIFT, reason: "Initial balance" },
     { userId: saphireUser.id, amount: 200, event: TokenEventType.EARNED_SHIFT, reason: "Starter tokens" },
     { userId: emeraldUser.id, amount: 800, event: TokenEventType.EARNED_SHIFT, reason: "Mid-tier rewards" },
     { userId: rubyUser.id, amount: 2500, event: TokenEventType.EARNED_PROJECT, reason: "High-tier rewards" },
