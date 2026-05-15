@@ -69,7 +69,7 @@ export function TokenHeroSection({
         </div>
 
         <div className="mb-6 relative z-10">
-          <p className="text-metric-hero">
+          <p className="text-metric-hero" data-testid="token-counter">
             <AnimatedTokenCount value={tokenBalance} />
           </p>
           <motion.div

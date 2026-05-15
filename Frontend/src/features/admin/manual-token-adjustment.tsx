@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { submitManualAdjustment } from "./actions";
 
 const adjustmentSchema = z.object({
@@ -63,7 +63,7 @@ export function ManualTokenAdjustment() {
         Manual Token Adjustment
       </h3>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-4">
         {/* Mitra ID */}
         <div>
           <label className="text-label block mb-1" htmlFor="adj-mitra-id">
@@ -78,21 +78,16 @@ export function ManualTokenAdjustment() {
             aria-invalid={!!errors.mitraId}
             aria-describedby={errors.mitraId ? "adj-mitra-error" : undefined}
           />
-          <AnimatePresence>
-            {errors.mitraId && (
-              <motion.p
-                id="adj-mitra-error"
-                role="alert"
-                className="text-xs text-[--color-error] mt-1"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.2 }}
-              >
-                {errors.mitraId.message}
-              </motion.p>
+          <p
+            id="adj-mitra-error"
+            role="alert"
+            className={cn(
+              "text-xs text-[--color-error] mt-1 transition-opacity duration-200",
+              errors.mitraId ? "opacity-100" : "opacity-0 pointer-events-none h-0 overflow-hidden"
             )}
-          </AnimatePresence>
+          >
+            {errors.mitraId?.message ?? "\u00a0"}
+          </p>
         </div>
 
         {/* Amount */}
@@ -109,21 +104,16 @@ export function ManualTokenAdjustment() {
             aria-invalid={!!errors.amount}
             aria-describedby={errors.amount ? "adj-amount-error" : undefined}
           />
-          <AnimatePresence>
-            {errors.amount && (
-              <motion.p
-                id="adj-amount-error"
-                role="alert"
-                className="text-xs text-[--color-error] mt-1"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.2 }}
-              >
-                {errors.amount.message}
-              </motion.p>
+          <p
+            id="adj-amount-error"
+            role="alert"
+            className={cn(
+              "text-xs text-[--color-error] mt-1 transition-opacity duration-200",
+              errors.amount ? "opacity-100" : "opacity-0 pointer-events-none h-0 overflow-hidden"
             )}
-          </AnimatePresence>
+          >
+            {errors.amount?.message ?? "\u00a0"}
+          </p>
         </div>
 
         {/* Reason */}
@@ -142,28 +132,24 @@ export function ManualTokenAdjustment() {
             aria-invalid={!!errors.reason}
             aria-describedby={errors.reason ? "adj-reason-error" : undefined}
           />
-          <AnimatePresence>
-            {errors.reason && (
-              <motion.p
-                id="adj-reason-error"
-                role="alert"
-                className="text-xs text-[--color-error] mt-1"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.2 }}
-              >
-                {errors.reason.message}
-              </motion.p>
+          <p
+            id="adj-reason-error"
+            role="alert"
+            className={cn(
+              "text-xs text-[--color-error] mt-1 transition-opacity duration-200",
+              errors.reason ? "opacity-100" : "opacity-0 pointer-events-none h-0 overflow-hidden"
             )}
-          </AnimatePresence>
+          >
+            {errors.reason?.message ?? "\u00a0"}
+          </p>
         </div>
 
         <motion.button
           whileHover={{ scale: isPending ? 1 : 1.02 }}
           whileTap={{ scale: isPending ? 1 : 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          type="submit"
+          type="button"
+          onClick={() => { void handleSubmit(onSubmit)(); }}
           disabled={isPending}
           data-testid="submit-adjustment-btn"
           className="btn-danger w-full py-2.5 rounded-lg font-medium mt-2 flex items-center justify-center gap-2"
@@ -177,7 +163,7 @@ export function ManualTokenAdjustment() {
             "Submit Adjustment"
           )}
         </motion.button>
-      </form>
+      </div>
     </motion.div>
   );
 }
