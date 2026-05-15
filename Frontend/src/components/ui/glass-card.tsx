@@ -6,9 +6,15 @@
  *
  * Principle: OCP — extend via `variant` prop, not by modifying
  * internal class lists across the codebase.
+ *
+ * Motion: Uses framer-motion for lift/arrive animations per DESIGN.md.
+ * Respects prefers-reduced-motion via `useReducedMotion()`.
  */
 
+"use client";
+
 import * as React from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────────
@@ -16,12 +22,14 @@ type GlassVariant = "default" | "elevated" | "subtle";
 
 interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: GlassVariant;
-  /** Blue corporate glow on hover */
+  /** Green glow on hover */
   glow?: boolean;
-  /** Lift effect on hover */
+  /** Lift effect on hover (uses framer-motion when available) */
   lift?: boolean;
-  /** Disable glass entirely (plain white surface) */
+  /** Disable glass entirely (plain surface) */
   flat?: boolean;
+  /** Animate card arrival (stagger index) */
+  index?: number;
 }
 
 // ── Variant class maps ─────────────────────────────────────────
@@ -31,34 +39,65 @@ const VARIANT_CLASSES: Record<GlassVariant, string> = {
   subtle:   "bg-white/50 backdrop-blur-sm border border-white/40 shadow-sm",
 };
 
+/** Spring arrival animation per DESIGN.md §6 */
+function arrivalVariants(index: number, reduced: boolean) {
+  if (reduced) {
+    return {
+      hidden:  { opacity: 1, y: 0, scale: 1 },
+      visible: { opacity: 1, y: 0, scale: 1 },
+    };
+  }
+  return {
+    hidden:  { opacity: 0, y: 16, scale: 0.97 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        type:     "spring" as const,
+        stiffness: 280,
+        damping:   22,
+        delay:     index * 0.06,
+      },
+    },
+  };
+}
+
 // ── GlassCard ─────────────────────────────────────────────────
 export function GlassCard({
   variant = "default",
   glow = true,
   lift = true,
   flat = false,
+  index = 0,
   className,
   children,
   ...props
 }: GlassCardProps) {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
-    <div
+    <motion.div
+      variants={arrivalVariants(index, shouldReduceMotion ?? false)}
+      initial="hidden"
+      animate="visible"
+      whileHover={
+        lift && !shouldReduceMotion
+          ? { y: -3, transition: { type: "spring", stiffness: 400, damping: 20 } }
+          : undefined
+      }
       className={cn(
         "rounded-2xl overflow-hidden",
-        // Visual surface
         flat ? "bg-white border border-slate-200 shadow-sm" : VARIANT_CLASSES[variant],
-        // Micro-interactions
-        "transition-all duration-300 ease-out",
-        lift  && "hover:-translate-y-0.5",
-        glow  && !flat && "hover:glass-glow-blue",
-        // Focus
+        "transition-shadow duration-300",
+        glow && !flat && "hover:glass-glow-blue",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        className
+        className,
       )}
-      {...props}
+      {...(props as React.ComponentProps<typeof motion.div>)}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -73,7 +112,7 @@ export function GlassCardHeader({
       className={cn(
         "flex flex-col space-y-1 p-6 pb-4",
         "border-b border-white/30",
-        className
+        className,
       )}
       {...props}
     >
@@ -92,7 +131,7 @@ export function GlassCardTitle({
     <h3
       className={cn(
         "text-base font-semibold text-foreground leading-tight tracking-tight",
-        className
+        className,
       )}
       {...props}
     >
@@ -122,10 +161,7 @@ export function GlassCardFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn(
-        "flex items-center p-6 pt-0",
-        className
-      )}
+      className={cn("flex items-center p-6 pt-0", className)}
       {...props}
     >
       {children}

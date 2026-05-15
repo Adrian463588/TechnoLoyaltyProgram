@@ -13,12 +13,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import type { Session } from "next-auth";
 
-type Role = "MITRA" | "TEAM_LEAD" | "HC_ADMIN";
+type Role = "MITRA" | "TEAM_LEADER" | "HC_PM";
 
 const ROLE_HIERARCHY: Record<Role, number> = {
-  MITRA:       1,
-  TEAM_LEAD:   2,
-  HC_ADMIN:    3,
+  MITRA:        1,
+  TEAM_LEADER:  2,
+  HC_PM:        3,
 };
 
 /**
@@ -33,7 +33,7 @@ export async function requireRole(
   if (!session || !session.user) {
     return NextResponse.json(
       { error: "Unauthorized", message: "Authentication required." },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -42,13 +42,13 @@ export async function requireRole(
   if (!userRole) {
     return NextResponse.json(
       { error: "Forbidden", message: "No role assigned to this account." },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
   const userLevel = ROLE_HIERARCHY[userRole] ?? 0;
   const hasPermission = allowedRoles.some(
-    (r) => ROLE_HIERARCHY[r] <= userLevel
+    (r) => ROLE_HIERARCHY[r] <= userLevel,
   );
 
   if (!hasPermission) {
@@ -57,7 +57,7 @@ export async function requireRole(
         error: "Forbidden",
         message: `Access requires one of: ${allowedRoles.join(", ")}. Your role: ${userRole}.`,
       },
-      { status: 403 }
+      { status: 403 },
     );
   }
 

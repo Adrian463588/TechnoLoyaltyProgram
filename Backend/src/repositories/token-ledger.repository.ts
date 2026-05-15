@@ -9,7 +9,7 @@
 
 import { prisma } from "@/db/prisma";
 import { TokenEventType } from "@prisma/client";
-import { DomainError } from "@/errors/domain.error";
+import { DomainError } from "@/errors";
 
 export interface AppendTokenEventInput {
   userId:      string;

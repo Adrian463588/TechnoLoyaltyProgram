@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { Upload, Users, ShoppingBag, Coins, ChevronRight } from "lucide-react";

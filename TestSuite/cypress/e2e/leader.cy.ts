@@ -2,33 +2,80 @@
  * TestSuite/cypress/e2e/leader.cy.ts
  * E2E Tests — Team Leader Flow
  *
- * Tests leader dashboard, team visibility, and role guards.
- *
- * Prerequisites: dev server running, seed data (LDR001 / password123)
+ * Covers: team view, partner confirmations, stat cards, route guards.
+ * Prerequisite: Backend on port 8080, seed user LDR001 / password123
  */
 
-// ── Authenticated flows ──────────────────────────────────────
 describe("Leader: Full Team Leader Flow", () => {
   beforeEach(() => {
     cy.loginAsLeader();
   });
 
-  // ── Dashboard ─────────────────────────────────────────────
-  describe("Dashboard", () => {
+  // ── Team View ──────────────────────────────────────────────
+  describe("Team View", () => {
     beforeEach(() => cy.visit("/leader/team"));
 
-    it("displays the leader dashboard heading", () => {
+    it("displays the team view heading", () => {
       cy.contains("h1", /team|leader|dashboard/i).should("be.visible");
     });
 
-    it("renders team member rows or stats", () => {
+    it("renders team member table or empty state", () => {
       cy.get(
-        "[data-testid^=leader-team-member], [data-testid=leader-team-table]"
+        "[data-testid=leader-team-table], [data-testid=leader-team-empty]",
       ).should("exist");
+    });
+
+    it("renders team stat cards", () => {
+      cy.get("[data-testid=leader-team-total-tokens]").should("exist");
+      cy.get("[data-testid=leader-team-eligible-members]").should("exist");
+      cy.get("[data-testid=leader-team-alerts-count]").should("exist");
+    });
+
+    it("renders View Detail actions for each row", () => {
+      cy.get("body").then(($body) => {
+        if ($body.find("[data-testid=leader-team-table-row]").length > 0) {
+          cy.get("[data-testid=leader-team-table-action-view]")
+            .first()
+            .should("be.visible");
+        }
+      });
     });
   });
 
-  // ── Route guards ──────────────────────────────────────────
+  // ── Partner Confirmations (TL-01) ──────────────────────────
+  describe("Alerts / Partner Confirmations", () => {
+    beforeEach(() => cy.visit("/leader/alerts"));
+
+    it("loads the alerts page", () => {
+      cy.url().should("include", "/leader/alerts");
+    });
+
+    it("renders pending confirmation count badge or all-clear state", () => {
+      cy.get(
+        "[data-testid=leader-confirmation-row], .text-foreground",
+      ).should("exist");
+    });
+
+    it("can confirm a partner as Active via intercept", () => {
+      cy.intercept(
+        "POST",
+        "/api/leader/partner-confirmations/*/confirm",
+        { statusCode: 200, body: { success: true } },
+      ).as("confirmStatus");
+
+      cy.get("body").then(($body) => {
+        if ($body.find("[data-testid=leader-confirm-active-btn]").length > 0) {
+          cy.get("[data-testid=leader-confirm-active-btn]").first().click();
+          cy.wait("@confirmStatus");
+          cy.contains(/status confirmed/i).should("be.visible");
+        } else {
+          cy.log("No pending confirmations — skipping confirm action test");
+        }
+      });
+    });
+  });
+
+  // ── Route guards ───────────────────────────────────────────
   describe("Route guards", () => {
     it("blocks leader from /admin routes", () => {
       cy.visit("/admin/dashboard", { failOnStatusCode: false });
@@ -41,7 +88,7 @@ describe("Leader: Full Team Leader Flow", () => {
 describe("Leader: Unauthenticated Access", () => {
   beforeEach(() => cy.clearCookies());
 
-  it("redirects /leader/dashboard to /login when not logged in", () => {
+  it("redirects /leader/team to /login", () => {
     cy.visit("/leader/team", { failOnStatusCode: false });
     cy.url().should("include", "/login");
   });

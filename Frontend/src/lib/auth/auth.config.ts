@@ -18,7 +18,7 @@ export const authConfig = {
       if (user) {
         token.id            = user.id ?? "";
         token.email         = user.email ?? "";
-        token.role          = (user as { role: "MITRA" | "TEAM_LEAD" | "HC_ADMIN" }).role;
+        token.role          = (user as { role: "MITRA" | "TEAM_LEADER" | "HC_PM" }).role;
         token.division      = (user as { division?: string }).division;
         token.partnerStatus = (user as { partnerStatus?: string }).partnerStatus;
       }

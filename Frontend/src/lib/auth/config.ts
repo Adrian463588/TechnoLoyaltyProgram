@@ -44,7 +44,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
               name: string;
               email: string;
               npk: string;
-              role: "MITRA" | "TEAM_LEAD" | "HC_ADMIN";
+              role: "MITRA" | "TEAM_LEADER" | "HC_PM";
               division: string;
               partnerStatus: string;
             };

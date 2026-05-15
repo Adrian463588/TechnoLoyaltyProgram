@@ -118,12 +118,27 @@ export function getOpcentPeriodDates(referenceDate: Date = new Date()): {
 }
 
 /**
- * Checks if the current date is within the evaluation period.
- * Evaluation deadline: December 15
+ * Checks if the current date is within an active evaluation period.
+ * Returns false after Dec 15 (evaluation deadline), even though
+ * Dec 16-31 technically starts P1 of the next cycle.
  */
 export function isWithinOpcentEvaluationPeriod(referenceDate: Date = new Date()): boolean {
-  const { end } = getOpcentPeriodDates(referenceDate);
-  return referenceDate <= end;
+  const year = referenceDate.getFullYear();
+  const month = referenceDate.getMonth(); // 0-indexed
+  const day = referenceDate.getDate();
+
+  // Dec 16-31 is after the Dec 15 deadline — not within evaluation period
+  if (month === 11 && day > 15) return false;
+
+  // P1: Jan 1 - Jun 15
+  if (month < 5) return true;
+  if (month === 5 && day <= 15) return true;
+
+  // P2: Jun 16 - Dec 15
+  if (month > 5 && month < 11) return true;
+  if (month === 11 && day <= 15) return true;
+
+  return false;
 }
 
 /**
