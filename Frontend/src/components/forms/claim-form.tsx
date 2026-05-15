@@ -33,7 +33,7 @@ export function ClaimForm() {
     },
   });
 
-  const onSubmit = (data: ClaimFormValues) => {
+  const onSubmit = (_data: ClaimFormValues) => {
     startTransition(async () => {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 800));

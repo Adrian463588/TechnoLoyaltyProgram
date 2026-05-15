@@ -12,7 +12,6 @@ import {
   User,
   UserRole,
   DivisionType,
-  MemberTierType,
 } from "@prisma/client";
 
 export class UserRepository {

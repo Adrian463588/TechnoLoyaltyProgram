@@ -79,7 +79,7 @@ describe("Employee: Full User Flow", () => {
   describe("Profile dropdown", () => {
     it("opens without throwing Base UI context error", () => {
       dashboard.visit().openProfileDropdown();
-      cy.get('[data-testid="profile-menu-content"]').should("be.visible");
+      cy.get('[data-slot="dropdown-menu-content"]').should("be.visible");
       cy.contains("Alice Optel").should("be.visible");
     });
   });

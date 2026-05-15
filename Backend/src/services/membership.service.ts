@@ -36,13 +36,13 @@ export class MembershipService {
     const tierOrder = LOYALTY_POLICIES.TIER_ORDER;
     const currentIdx = tierOrder.indexOf(tier);
     
-    const nextTier = (currentIdx < tierOrder.length - 1 ? tierOrder[currentIdx + 1] : null) as MemberTierType | null;
-    const pointsToNext = nextTier ? Math.max(0, (thresholds[nextTier] ?? 0) - cumulativeValue) : null;
+    const nextTier = currentIdx < tierOrder.length - 1 ? (tierOrder[currentIdx + 1] ?? null) : null;
+    const pointsToNext = nextTier ? Math.max(0, thresholds[nextTier] - cumulativeValue) : null;
 
     return {
       tier,
       healthBenefit,
-      threshold: thresholds[tier] ?? 0,
+      threshold: thresholds[tier],
       nextTier,
       pointsToNext,
     };

@@ -1,4 +1,4 @@
-import { HealthBenefit, MemberTierType, DivisionType } from "@prisma/client";
+import { HealthBenefit, MemberTierType } from "@prisma/client";
 
 export interface TierCalculationResult {
   tier: MemberTierType;

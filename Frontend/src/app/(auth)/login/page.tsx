@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import type { Route } from "next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/lib/validations";
@@ -20,9 +21,9 @@ const DEMO_CREDENTIALS = [
 ];
 
 const ROLE_REDIRECT: Record<string, string> = {
-  MITRA:     "/employee/dashboard",
-  TEAM_LEAD: "/leader/team",
-  HC_ADMIN:  "/admin/dashboard",
+  MITRA:       "/employee/dashboard",
+  TEAM_LEADER: "/leader/team",
+  HC_PM:       "/admin/dashboard",
 };
 
 export default function LoginPage() {
@@ -60,8 +61,7 @@ export default function LoginPage() {
     const session = await sessionRes.json();
     const role = session?.user?.role as string | undefined;
     const redirectTo = role ? (ROLE_REDIRECT[role] ?? "/employee/dashboard") : "/employee/dashboard";
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    router.push(redirectTo as any);
+    router.push(redirectTo as Route);
   };
 
   return (

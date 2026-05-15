@@ -8,7 +8,7 @@
 
 import { prisma } from "@/db/prisma";
 import bcrypt from "bcryptjs";
-import { NotFoundError, ValidationError } from "@/errors/index";
+import { ValidationError } from "@/errors/index";
 
 export interface AuthenticatedUserPayload {
   id: string;

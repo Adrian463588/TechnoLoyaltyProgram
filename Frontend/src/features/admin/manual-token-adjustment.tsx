@@ -71,6 +71,7 @@ export function ManualTokenAdjustment() {
           </label>
           <input
             id="adj-mitra-id"
+            data-testid="adj-mitra-id"
             {...register("mitraId")}
             className={cn("input-field", errors.mitraId && "input-field--error")}
             disabled={isPending}

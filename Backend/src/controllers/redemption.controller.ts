@@ -8,6 +8,7 @@
  */
 
 import type { RequestHandler } from "express";
+import { z } from "zod";
 import { redemptionService } from "@/services/redemption.service";
 import { redeemRequestSchema, updateStatusSchema, uuidSchema, redemptionVerificationSchema } from "@/types/validations";
 import { ValidationError } from "@/errors/validation-error";
@@ -62,7 +63,7 @@ export const RedemptionController = {
       const parsed = redeemRequestSchema.safeParse(req.body);
 
       if (!parsed.success) {
-        throw new ValidationError("Invalid input", parsed.error.format());
+        throw new ValidationError("Invalid input", z.treeifyError(parsed.error));
       }
 
       const redemption = await redemptionService.submitRequest(
@@ -92,7 +93,7 @@ export const RedemptionController = {
       if (!parsed.success) {
         throw new ValidationError(
           "Invalid status parameters",
-          parsed.error.format(),
+          z.treeifyError(parsed.error),
         );
       }
 
@@ -126,7 +127,7 @@ export const RedemptionController = {
 
       const parsed = redemptionVerificationSchema.safeParse(req.body);
       if (!parsed.success) {
-        throw new ValidationError("Invalid verification data", parsed.error.format());
+        throw new ValidationError("Invalid verification data", z.treeifyError(parsed.error));
       }
 
       const result = await redemptionService.verifyDocuments(

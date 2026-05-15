@@ -12,8 +12,8 @@ export default async function EmployeeLayout({ children }: { children: ReactNode
 
   const role = (session.user as { role?: string }).role;
 
-  // Allow MITRA, TEAM_LEAD, and HC_ADMIN
-  const allowedRoles = ["MITRA", "TEAM_LEAD", "HC_ADMIN"];
+  // Allow MITRA, TEAM_LEADER, and HC_PM.
+  const allowedRoles = ["MITRA", "TEAM_LEADER", "HC_PM"];
   if (role && !allowedRoles.includes(role)) {
     redirect("/login");
   }

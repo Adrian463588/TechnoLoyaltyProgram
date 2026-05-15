@@ -1,8 +1,20 @@
-import { AdminService } from "@/lib/services/mockApi";
 import UploadsClient from "./uploads-client";
+import { adminApi } from "@/lib/api-client";
+import { getServerToken } from "@/lib/auth";
 
 export default async function UploadsPage() {
-  const uploads = await AdminService.getUploads();
+  const token = await getServerToken();
+  const uploads = await adminApi.listUploads(token).then((items) =>
+    items.map((item) => ({
+      id: item.id,
+      filename: item.filename,
+      status: item.status === "FAILED" ? "Failed" as const : item.status === "COMPLETED" ? "Completed" as const : "Processing" as const,
+      uploadedAt: item.createdAt,
+      validRows: item.validRows,
+      errorRows: item.errorRows,
+      issues: [],
+    })),
+  ).catch(() => []);
 
   return (
     <div className="max-w-6xl mx-auto w-full space-y-6">

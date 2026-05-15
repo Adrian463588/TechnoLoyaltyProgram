@@ -10,7 +10,7 @@ export * from "./techno/engine";
 const opcentTeleEngine = new OpcentTeleTokenEngine();
 const technoEngine = new TechnoTokenEngine();
 
-export function getTokenEngine(division: DivisionType | string): TokenEngine {
+export function getTokenEngine(division: DivisionType): TokenEngine {
   if (division === "TECHNO") {
     return technoEngine;
   }

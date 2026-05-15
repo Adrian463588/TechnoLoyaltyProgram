@@ -9,6 +9,7 @@
  */
 
 import { Router, type RequestHandler } from "express";
+import { z } from "zod";
 import { authenticate }  from "@/middleware/authenticate";
 import { loginSchema }   from "@/types/validations";
 import { authService }   from "@/services/auth.service";
@@ -52,7 +53,7 @@ authRoutes.post("/login", (async (req, res, next) => {
   if (!parsed.success) {
     res.status(400).json({
       error:   "Invalid input",
-      details: parsed.error.format(),
+      details: z.treeifyError(parsed.error),
     });
     return;
   }

@@ -10,27 +10,51 @@ vi.mock('@/lib/auth', () => ({
 
 vi.mock('@/lib/api-client', () => ({
   leaderApi: {
-    getTeamSummary: vi.fn(() => Promise.resolve({
-      totalTokens: 17900,
-      eligibleMembers: 3,
-      alertsCount: 2,
-      members: [
-        { id: '1', name: 'Alice Optel' },
-        { id: '2', name: 'Diana Techno' }
-      ]
-    }))
+    getTeamSummary: vi.fn(() => Promise.resolve([
+      {
+        id: '1',
+        name: 'Alice Optel',
+        tokens: 5200,
+        tier: 'EMERALD',
+        status: 'ACTIVE',
+        division: 'OPCENT',
+      },
+      {
+        id: '2',
+        name: 'Diana Techno',
+        tokens: 8500,
+        tier: 'DIAMOND',
+        status: 'ACTIVE',
+        division: 'TECHNO',
+      },
+    ]))
   }
 }))
 
+type MockTeamMember = {
+  id: string;
+  name: string;
+  tokens: number;
+  tier: string;
+  status: string;
+  division: string;
+};
+
 vi.mock('@/components/dashboard/leader-team-client', () => ({
-  LeaderTeamClient: ({ data }: any) => (
+  LeaderTeamClient: ({ data }: { data: MockTeamMember[] | null }) => (
     <div data-testid="leader-team-client">
       <h1>Team View</h1>
-      <div data-testid="leader-team-total-tokens">{data?.totalTokens}</div>
-      <div data-testid="leader-team-eligible-members">{data?.eligibleMembers} Members</div>
-      <div data-testid="leader-team-alerts-count">{data?.alertsCount} Members</div>
+      <div data-testid="leader-team-total-tokens">
+        {data?.reduce((total, member) => total + member.tokens, 0)}
+      </div>
+      <div data-testid="leader-team-eligible-members">
+        {data?.filter((member) => member.tokens >= 2000).length} Members
+      </div>
+      <div data-testid="leader-team-alerts-count">
+        {data?.filter((member) => member.status !== "ACTIVE").length} Members
+      </div>
       <div data-testid="leader-team-table">
-        {data?.members?.map((m: any) => <div key={m.id}>{m.name}</div>)}
+        {data?.map((m) => <div key={m.id}>{m.name}</div>)}
       </div>
     </div>
   )
@@ -48,9 +72,9 @@ describe('TeamLeaderPage', () => {
     })
     
     // Check aggregation
-    expect(screen.getByTestId('leader-team-total-tokens')).toHaveTextContent('17900') 
-    expect(screen.getByTestId('leader-team-eligible-members')).toHaveTextContent('3 Members') 
-    expect(screen.getByTestId('leader-team-alerts-count')).toHaveTextContent('2 Members') 
+    expect(screen.getByTestId('leader-team-total-tokens')).toHaveTextContent('13700') 
+    expect(screen.getByTestId('leader-team-eligible-members')).toHaveTextContent('2 Members') 
+    expect(screen.getByTestId('leader-team-alerts-count')).toHaveTextContent('0 Members') 
 
     expect(screen.getByTestId('leader-team-table')).toBeInTheDocument()
     expect(screen.getByText('Alice Optel')).toBeInTheDocument()

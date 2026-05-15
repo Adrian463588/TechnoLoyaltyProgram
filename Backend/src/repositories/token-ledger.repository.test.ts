@@ -5,7 +5,7 @@
  * Verifies atomicity, balance snapshots, and negative balance rejection.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { tokenLedgerRepository } from "./token-ledger.repository";
 import { prisma } from "@/db/prisma";
 import { TokenEventType } from "@prisma/client";

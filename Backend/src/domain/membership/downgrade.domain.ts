@@ -13,7 +13,8 @@ export type DowngradeTrigger =
   | "rejected_3_projects_within_6_month_window";
 
 export type ResetTrigger =
-  | "no_slots_3_consecutive_months_fully_unavailable";
+  | "no_slots_3_consecutive_months_fully_unavailable"
+  | "rejected_3_projects_within_6_month_window";
 
 export interface DowngradeResult {
   newTier: MemberTierType | "PENDING_STAKEHOLDER_CONFIRMATION";
@@ -60,17 +61,16 @@ export function calculateReset(
     };
   }
 
-  // Opcent / Tele Reset
-  if (trigger === "no_slots_3_consecutive_months_fully_unavailable") {
-    const penaltyAmount = currentBalance; // 100% penalty
-    const newTier = MemberTierType.SAPHIRE;
-    return {
-      newTier,
-      penaltyAmount,
-    };
+  if (trigger !== "no_slots_3_consecutive_months_fully_unavailable") {
+    throw new Error(`Invalid reset trigger ${trigger} for division ${division}`);
   }
 
-  throw new Error(`Invalid reset trigger ${trigger} for division ${division}`);
+  const penaltyAmount = currentBalance;
+  const newTier = MemberTierType.SAPHIRE;
+  return {
+    newTier,
+    penaltyAmount,
+  };
 }
 
 function getOneLevelDown(tier: MemberTierType): MemberTierType {

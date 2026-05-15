@@ -15,7 +15,6 @@ import {
   TokenEngineResult, 
   TokenEngineConfig,
   TIER_ORDER,
-  DEFAULT_HEALTH_BENEFITS,
   calculatePointsToNextTier,
   getHealthBenefitForTier,
   endOfDay 
@@ -123,7 +122,6 @@ export function getOpcentPeriodDates(referenceDate: Date = new Date()): {
  * Dec 16-31 technically starts P1 of the next cycle.
  */
 export function isWithinOpcentEvaluationPeriod(referenceDate: Date = new Date()): boolean {
-  const year = referenceDate.getFullYear();
   const month = referenceDate.getMonth(); // 0-indexed
   const day = referenceDate.getDate();
 

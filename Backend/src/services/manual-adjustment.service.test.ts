@@ -11,6 +11,7 @@ vi.mock("../db/prisma", () => ({
     $transaction: vi.fn(),
     user: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -40,33 +41,35 @@ describe("ManualAdjustmentService", () => {
   it("throws ValidationError if amount is 0", async () => {
     await expect(
       service.adjustTokens("user-1", 0, "reason", "admin-1")
-    ).rejects.toThrowError(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
   it("throws ValidationError if reason is empty", async () => {
     await expect(
       service.adjustTokens("user-1", 100, "   ", "admin-1")
-    ).rejects.toThrowError(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
   it("throws NotFoundError if user does not exist", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
 
     await expect(
       service.adjustTokens("user-1", 100, "reason", "admin-1")
-    ).rejects.toThrowError(NotFoundError);
+    ).rejects.toThrow(NotFoundError);
   });
 
   it("throws ValidationError if balance becomes negative", async () => {
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: "user-1" } as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as any);
     vi.mocked(tokenLedgerRepository.getBalance).mockResolvedValue(50);
 
     await expect(
       service.adjustTokens("user-1", -100, "reason", "admin-1")
-    ).rejects.toThrowError(ValidationError);
+    ).rejects.toThrow(ValidationError);
   });
 
   it("successfully adjusts tokens and logs audit", async () => {
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: "user-1" } as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as any);
     vi.mocked(tokenLedgerRepository.getBalance).mockResolvedValue(50);
     vi.mocked(tokenLedgerRepository.appendTokenEvent).mockResolvedValue({ id: "event-1" } as any);

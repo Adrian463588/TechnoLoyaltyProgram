@@ -8,7 +8,7 @@
  */
 
 import { prisma } from "@/db/prisma";
-import { RedemptionStatus, TokenEventType } from "@prisma/client";
+import { Prisma, RedemptionStatus, TokenEventType, type RedemptionRequest } from "@prisma/client";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
 import { checkRedemptionEligibility } from "./loyalty.service";
 import { logAudit } from "./audit.service";
@@ -33,7 +33,7 @@ export class RedemptionService {
   /**
    * HC Admin: List all redemption requests with filtering.
    */
-  async listAll(status?: RedemptionStatus) {
+  async listAll(status?: RedemptionStatus): Promise<RedemptionRequest[]> {
     return prisma.redemptionRequest.findMany({
       where: status ? { status } : {},
       include: {
@@ -47,7 +47,7 @@ export class RedemptionService {
   /**
    * HC Admin: Get detail of a specific request.
    */
-  async getById(id: string) {
+  async getById(id: string): Promise<RedemptionRequest | null> {
     return prisma.redemptionRequest.findUnique({
       where: { id },
       include: {
@@ -61,7 +61,7 @@ export class RedemptionService {
   /**
    * Mitra: List own redemption requests.
    */
-  async listByMitra(userId: string) {
+  async listByMitra(userId: string): Promise<RedemptionRequest[]> {
     return prisma.redemptionRequest.findMany({
       where: { mitraId: userId },
       include: {
@@ -75,7 +75,7 @@ export class RedemptionService {
    * Submits a new redemption request.
    * Section 13 - Redemption Guard.
    */
-  async submitRequest(userId: string, rewardItemId: string) {
+  async submitRequest(userId: string, rewardItemId: string): Promise<RedemptionRequest> {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundError("User", userId);
 
@@ -135,32 +135,59 @@ export class RedemptionService {
   /**
    * HC Admin: Verify documents for a redemption request.
    */
-  async verifyDocuments(requestId: string, input: { 
+  async verifyDocuments(requestId: string, input: {
     idCardVerified: boolean; 
     ktpVerified: boolean; 
     npwpVerified: boolean;
     powerOfAttorneyVerified?: boolean | undefined; 
-  }, actorId: string) {
+  }, actorId: string): Promise<RedemptionRequest> {
     const request = await prisma.redemptionRequest.findUnique({ where: { id: requestId } });
     if (!request) throw new NotFoundError("RedemptionRequest", requestId);
 
-    // Filter out undefined values to satisfy exactOptionalPropertyTypes: true
-    const updateData: any = {
-      ...input,
+    const updateData: Prisma.RedemptionRequestUpdateInput = {
+      idCardVerified: input.idCardVerified,
+      ktpVerified: input.ktpVerified,
+      npwpVerified: input.npwpVerified,
       updatedAt: new Date(),
     };
-    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+    if (input.powerOfAttorneyVerified !== undefined) {
+      updateData.powerOfAttorneyVerified = input.powerOfAttorneyVerified;
+    }
 
-    return prisma.redemptionRequest.update({
-      where: { id: requestId },
-      data: updateData,
+    return prisma.$transaction(async (tx) => {
+      const updated = await tx.redemptionRequest.update({
+        where: { id: requestId },
+        data: updateData,
+      });
+
+      await logAudit({
+        action: "REDEMPTION_DOCUMENTS_VERIFIED",
+        actorId,
+        targetType: "RedemptionRequest",
+        targetId: requestId,
+        previousValue: {
+          idCardVerified: request.idCardVerified,
+          ktpVerified: request.ktpVerified,
+          npwpVerified: request.npwpVerified,
+          powerOfAttorneyVerified: request.powerOfAttorneyVerified,
+        },
+        newValue: input,
+        tx,
+      });
+
+      return updated;
     });
   }
 
   /**
    * HC Admin updates redemption status.
    */
-  async transitionStatus(requestId: string, newStatus: RedemptionStatus, actorId: string, note?: string) {
+  async transitionStatus(
+    requestId: string,
+    newStatus: RedemptionStatus,
+    actorId: string,
+    note?: string,
+  ): Promise<RedemptionRequest> {
     const request = await prisma.redemptionRequest.findUnique({
       where: { id: requestId },
       include: { rewardItem: true }

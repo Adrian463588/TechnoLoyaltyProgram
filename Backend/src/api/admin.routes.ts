@@ -15,11 +15,23 @@ import { RedemptionController }              from "@/controllers/redemption.cont
 import { ManualAdjustmentController }        from "@/controllers/manual-adjustment.controller";
 import { RewardCatalogController }           from "@/controllers/reward-catalog.controller";
 import { PartnerStatusConfirmationController } from "@/controllers/partner-status-confirmation.controller";
+import {
+  AdminFoundationController,
+  uploadProcessMiddleware,
+} from "@/controllers/admin-foundation.controller";
 
 export const adminRoutes = Router();
 
 // ── Apply auth guards to all admin routes ──────────────────────────────────
 adminRoutes.use(authenticate, authorize("HC_PM"));
+
+adminRoutes.get("/audit", AdminFoundationController.listAuditLogs as RequestHandler);
+adminRoutes.get("/uploads", AdminFoundationController.listUploads as RequestHandler);
+adminRoutes.post(
+  "/uploads/process",
+  uploadProcessMiddleware,
+  AdminFoundationController.processUpload as RequestHandler,
+);
 
 // ── Redemptions ─────────────────────────────────────────────────────────────
 /**

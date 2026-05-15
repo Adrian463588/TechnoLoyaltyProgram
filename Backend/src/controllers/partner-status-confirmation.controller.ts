@@ -16,9 +16,9 @@ import { ValidationError } from "@/errors/index";
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
 const requestConfirmationSchema = z.object({
-  redemptionRequestId: z.string().uuid(),
-  mitraId:             z.string().uuid(),
-  teamLeadId:          z.string().uuid(),
+  redemptionRequestId: z.uuid(),
+  mitraId:             z.uuid(),
+  teamLeadId:          z.uuid(),
 });
 
 const confirmSchema = z.object({
@@ -42,7 +42,7 @@ export const PartnerStatusConfirmationController = {
     try {
       const { user } = req;
       const parsed = requestConfirmationSchema.safeParse(req.body);
-      if (!parsed.success) throw new ValidationError("Invalid input", parsed.error.format());
+      if (!parsed.success) throw new ValidationError("Invalid input", z.treeifyError(parsed.error));
 
       const result = await partnerStatusConfirmationService.requestConfirmation(
         parsed.data.redemptionRequestId,
@@ -102,7 +102,7 @@ export const PartnerStatusConfirmationController = {
       if (!idResult.success) throw new ValidationError("Invalid confirmation ID", {});
 
       const parsed = confirmSchema.safeParse(req.body);
-      if (!parsed.success) throw new ValidationError("Invalid input", parsed.error.format());
+      if (!parsed.success) throw new ValidationError("Invalid input", z.treeifyError(parsed.error));
 
       const result = await partnerStatusConfirmationService.confirm(
         idResult.data,

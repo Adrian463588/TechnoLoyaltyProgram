@@ -23,8 +23,6 @@ export function getTokenEngine(division: DivisionType): TokenEngine {
       return opcentTokenEngine;
     case DivisionType.TECHNO:
       return technoTokenEngine;
-    default:
-      throw new Error(`Unsupported division: ${division}`);
   }
 }
 
@@ -71,7 +69,7 @@ export function validateTokenInput(
   if (isTechnoEngine(engine)) {
     return engine.validateProjectCount(value);
   }
-  
+
   return { valid: false, error: "Unknown engine type" };
 }
 

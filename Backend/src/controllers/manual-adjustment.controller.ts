@@ -11,11 +11,10 @@
 import type { RequestHandler } from "express";
 import { z } from "zod";
 import { manualAdjustmentService } from "@/services/manual-adjustment.service";
-import { uuidSchema } from "@/types/validations";
 import { ValidationError } from "@/errors/index";
 
 const adjustmentSchema = z.object({
-  userId: z.string().uuid(),
+  mitraId: z.string().min(1),
   amount: z.number().int().refine((n) => n !== 0, { message: "Amount cannot be zero" }),
   reason: z.string().min(1).max(500),
 });
@@ -28,11 +27,11 @@ export const ManualAdjustmentController = {
       const { user } = req;
       const parsed = adjustmentSchema.safeParse(req.body);
       if (!parsed.success) {
-        throw new ValidationError("Invalid adjustment payload", parsed.error.format());
+        throw new ValidationError("Invalid adjustment payload", z.treeifyError(parsed.error));
       }
 
       const entry = await manualAdjustmentService.adjustTokens(
-        parsed.data.userId,
+        parsed.data.mitraId,
         parsed.data.amount,
         parsed.data.reason,
         user.id,
@@ -40,7 +39,8 @@ export const ManualAdjustmentController = {
 
       res.status(201).json({
         success: true,
-        message: `Tokens adjusted by ${parsed.data.amount}`,
+        message: `Tokens adjusted by ${String(parsed.data.amount)}`,
+        ledgerEntryId: entry.id,
         entry,
       });
     } catch (err) {

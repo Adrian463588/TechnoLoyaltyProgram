@@ -1,4 +1,5 @@
 # DESIGN.md — Berijalan Employee Loyalty Portal
+
 > Design System Reference for AI Vibecoders and Human Engineers
 > Version 1.0 · May 2026 · Modern Dark Tech Theme
 
@@ -34,71 +35,257 @@ The portal operates as an internal operational hub where clarity and trust are n
 
 ### Guiding Principles
 
-| Principle | Implementation |
-|-----------|---------------|
-| **Spatial Depth** | Background mesh gradients create Z-axis illusion; cards float via blur layers |
-| **Signal over Noise** | Critical numbers (tokens, tier, eligibility) are always largest on screen |
-| **Green as Trust** | `#6BCE53` is reserved exclusively for positive actions and CTA — never decorative |
-| **Motion with Purpose** | Every animation answers a user question: "Did it work? Is it loading? Did my tier change?" |
-| **Frosted Transparency** | Cards are windows into data, not opaque boxes — backdrop blur reinforces this |
+| Principle                | Implementation                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------ |
+| **Spatial Depth**        | Background mesh gradients create Z-axis illusion; cards float via blur layers              |
+| **Signal over Noise**    | Critical numbers (tokens, tier, eligibility) are always largest on screen                  |
+| **Green as Trust**       | `#6BCE53` is reserved exclusively for positive actions and CTA — never decorative          |
+| **Motion with Purpose**  | Every animation answers a user question: "Did it work? Is it loading? Did my tier change?" |
+| **Frosted Transparency** | Cards are windows into data, not opaque boxes — backdrop blur reinforces this              |
 
 ---
 
 ## 2. Color System
 
+This color system is designed for a dark navy web interface with strong readability, clear hierarchy, and consistent interaction states. Text colors should meet WCAG AA contrast targets wherever possible: **4.5:1 for normal text** and **3:1 for large text or non-text UI components**. Dark-theme surfaces should also avoid overly saturated colors, especially for large areas.
+
 ### Primary Palette
 
 ```css
-/* === BACKGROUNDS === */
---color-bg-base:        #1E2938;   /* Deep navy — main page canvas */
---color-bg-deep:        #0F172A;   /* Darker variant for modals, drawers */
---color-bg-surface:     rgba(45, 55, 72, 0.25);  /* Card glass layer (25% opacity) */
---color-bg-surface-md:  rgba(45, 55, 72, 0.35);  /* Medium glass — hover state */
---color-bg-surface-hi:  rgba(45, 55, 72, 0.50);  /* Heavy glass — focused/active card */
+:root {
+  /* =========================================================
+     BACKGROUNDS
+     Dark navy foundation with clear elevation levels
+  ========================================================= */
 
-/* === TEXT === */
---color-text-primary:   #F8FAFC;   /* Off-white — headings, key numbers */
---color-text-secondary: #94A3B8;   /* Muted slate — labels, metadata, captions */
---color-text-disabled:  #475569;   /* Dimmed — placeholder text, inactive items */
+  --color-bg-base: #0f172a; /* Main app background */
+  --color-bg-deep: #020617; /* Deepest layer: modals, drawers, overlays */
+  --color-bg-elevated: #111c33; /* Raised panels and app bars */
+  --color-bg-surface: rgba(30, 41, 59, 0.72); /* Default card / glass surface */
+  --color-bg-surface-md: rgba(
+    51,
+    65,
+    85,
+    0.78
+  ); /* Hovered card / raised surface */
+  --color-bg-surface-hi: rgba(
+    71,
+    85,
+    105,
+    0.82
+  ); /* Active, selected, or focused surface */
 
-/* === ACCENT / ACTION === */
---color-accent:         #6BCE53;   /* Neon green — CTA, success, active states */
---color-accent-hover:   #57B241;   /* Darker green — hover/pressed CTA */
---color-accent-muted:   rgba(107, 206, 83, 0.15); /* Ghost green — soft highlights */
---color-accent-glow:    rgba(107, 206, 83, 0.30); /* Glow ring for glowing buttons */
+  /* =========================================================
+     TEXT
+     Use primary sparingly; secondary is the default body text
+  ========================================================= */
 
-/* === BRAND BLUE === */
---color-brand:          #063175;   /* Dark blue — secondary brand element */
---color-brand-hover:    #0A45A3;   /* Bright blue — hover state for blue elements */
+  --color-text-primary: #f8fafc; /* Headings, important values, primary labels */
+  --color-text-secondary: #cbd5e1; /* Body copy and standard UI text */
+  --color-text-muted: #94a3b8; /* Captions, helper text, metadata */
+  --color-text-disabled: #64748b; /* Disabled text and placeholders */
+  --color-text-inverse: #052e16; /* Text on light green buttons */
 
-/* === SEMANTIC === */
---color-error:          #EF4444;   /* Red — validation errors, rejected states */
---color-warning:        #F59E0B;   /* Amber — warnings, pending states */
---color-info:           #3B82F6;   /* Blue — informational banners */
---color-success:        #6BCE53;   /* Same as accent — consistent success signal */
+  /* =========================================================
+     ACCENT / ACTION
+     Green is the primary action color
+  ========================================================= */
 
-/* === BORDERS === */
---color-border-glass:   rgba(255, 255, 255, 0.10); /* Frosted card border */
---color-border-subtle:  rgba(255, 255, 255, 0.06); /* Very subtle dividers */
---color-border-accent:  rgba(107, 206, 83, 0.40);  /* Green-tinted border on focus */
+  --color-accent: #86efac; /* Primary CTA and active state */
+  --color-accent-hover: #4ade80; /* CTA hover state */
+  --color-accent-pressed: #22c55e; /* CTA pressed state */
+  --color-accent-muted: rgba(134, 239, 172, 0.14); /* Soft accent background */
+  --color-accent-glow: rgba(134, 239, 172, 0.28); /* Focus glow / halo */
+  --color-accent-border: rgba(134, 239, 172, 0.48); /* Accent border */
+
+  /* =========================================================
+     BRAND BLUE
+     Use for links, secondary actions, and informational UI
+  ========================================================= */
+
+  --color-brand: #60a5fa; /* Links and secondary brand actions */
+  --color-brand-hover: #93c5fd; /* Link / secondary action hover */
+  --color-brand-muted: rgba(96, 165, 250, 0.14); /* Soft blue background */
+  --color-brand-border: rgba(96, 165, 250, 0.42); /* Blue-tinted border */
+
+  /* =========================================================
+     SEMANTIC COLORS
+     Use softer colors for text/icons and stronger colors for filled actions
+  ========================================================= */
+
+  --color-error: #fca5a5; /* Error text, icon, border */
+  --color-error-strong: #ef4444; /* Destructive button background */
+  --color-error-muted: rgba(252, 165, 165, 0.14); /* Error alert background */
+
+  --color-warning: #fbbf24; /* Warning text, icon, border */
+  --color-warning-strong: #f59e0b; /* Strong warning action */
+  --color-warning-muted: rgba(
+    251,
+    191,
+    36,
+    0.14
+  ); /* Warning alert background */
+
+  --color-info: #38bdf8; /* Info text, icon, border */
+  --color-info-strong: #0ea5e9; /* Strong info action */
+  --color-info-muted: rgba(56, 189, 248, 0.14); /* Info alert background */
+
+  --color-success: #86efac; /* Success text, icon, border */
+  --color-success-strong: #22c55e; /* Strong success action */
+  --color-success-muted: rgba(
+    134,
+    239,
+    172,
+    0.14
+  ); /* Success alert background */
+
+  /* =========================================================
+     BORDERS / DIVIDERS
+  ========================================================= */
+
+  --color-border-glass: rgba(226, 232, 240, 0.14); /* Card and glass borders */
+  --color-border-subtle: rgba(
+    226,
+    232,
+    240,
+    0.08
+  ); /* Dividers and separators */
+  --color-border-strong: rgba(
+    226,
+    232,
+    240,
+    0.22
+  ); /* Inputs and active panels */
+  --color-border-accent: rgba(
+    134,
+    239,
+    172,
+    0.52
+  ); /* Focused / selected border */
+
+  /* =========================================================
+     FOCUS / SELECTION
+  ========================================================= */
+
+  --color-focus-ring: #86efac;
+  --color-selection-bg: rgba(134, 239, 172, 0.22);
+  --color-selection-text: #f8fafc;
+
+  /* =========================================================
+     BUTTON TOKENS
+  ========================================================= */
+
+  --color-button-primary-bg: #86efac;
+  --color-button-primary-bg-hover: #4ade80;
+  --color-button-primary-bg-active: #22c55e;
+  --color-button-primary-text: #052e16;
+
+  --color-button-secondary-bg: rgba(96, 165, 250, 0.14);
+  --color-button-secondary-bg-hover: rgba(96, 165, 250, 0.22);
+  --color-button-secondary-text: #bfdbfe;
+
+  --color-button-danger-bg: #ef4444;
+  --color-button-danger-bg-hover: #dc2626;
+  --color-button-danger-text: #ffffff;
+}
 ```
 
 ### Mesh Gradient Background
 
-The page canvas uses a layered radial gradient mesh that simulates ambient studio lighting. This is applied to the `<body>` or root layout only — never repeated in components.
+The page canvas uses a layered radial-gradient mesh to simulate ambient studio lighting. Apply this only to the `<body>` or root app layout. Do **not** repeat this background inside cards, sections, modals, or nested components.
 
 ```css
 body {
   background-color: var(--color-bg-base);
   background-image:
-    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(107, 206, 83, 0.08) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 90% 80%, rgba(6, 49, 117, 0.25) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 50% 10%, rgba(107, 206, 83, 0.05) 0%, transparent 50%);
+    radial-gradient(
+      ellipse 80% 60% at 10% 20%,
+      rgba(134, 239, 172, 0.08) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 80% at 90% 80%,
+      rgba(96, 165, 250, 0.18) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 50% 40% at 50% 10%,
+      rgba(134, 239, 172, 0.05) 0%,
+      transparent 50%
+    );
   background-attachment: fixed;
 }
 ```
 
-> **Rule:** Never add `background-image` to individual cards or sections — the mesh must bleed through glass surfaces for spatial depth to work.
+> **Rule:** Keep the mesh background at the page level only. Glass surfaces should sit above it so the background can subtly bleed through and create depth.
+
+### Recommended Usage
+
+```css
+body {
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-base);
+}
+
+h1,
+h2,
+h3,
+.important-number {
+  color: var(--color-text-primary);
+}
+
+.caption,
+.metadata,
+.helper-text {
+  color: var(--color-text-muted);
+}
+
+.card {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-glass);
+  backdrop-filter: blur(16px);
+}
+
+.card:hover {
+  background: var(--color-bg-surface-md);
+}
+
+.card[data-active="true"] {
+  background: var(--color-bg-surface-hi);
+  border-color: var(--color-border-accent);
+}
+
+.button-primary {
+  color: var(--color-button-primary-text);
+  background: var(--color-button-primary-bg);
+}
+
+.button-primary:hover {
+  background: var(--color-button-primary-bg-hover);
+}
+
+.button-primary:active {
+  background: var(--color-button-primary-bg-active);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 3px;
+}
+```
+
+### Design Rules
+
+- Use `--color-bg-base` as the main page background.
+- Use `--color-bg-deep` for overlays, drawers, and modal backdrops.
+- Use `--color-bg-surface` for cards and glass panels.
+- Use `--color-text-secondary` for normal body text.
+- Use `--color-text-primary` only for headings, key numbers, and high-emphasis labels.
+- Use `--color-accent` for primary actions, success states, and active navigation.
+- Use `--color-brand` for links, secondary actions, and informational emphasis.
+- Do not use the mesh gradient inside individual components.
+- Do not use disabled text for important information.
+- Do not place saturated semantic colors on large background areas; use the muted variants instead.
 
 ---
 
@@ -108,13 +295,13 @@ body {
 
 ```css
 /* Display / Headings — Geometric authority */
---font-display: 'Syne', 'Space Grotesk', sans-serif;
+--font-display: "Syne", "Space Grotesk", sans-serif;
 
 /* Body / UI — Clean legibility at small sizes */
---font-body: 'DM Sans', 'Geist', sans-serif;
+--font-body: "DM Sans", "Geist", sans-serif;
 
 /* Mono / Data — Numbers, codes, tokens */
---font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+--font-mono: "JetBrains Mono", "Fira Code", monospace;
 ```
 
 > Install via Google Fonts or Fontsource. Syne is the differentiator — its wide geometric letterforms give the dashboard a tech-editorial feel that Inter cannot.
@@ -122,15 +309,15 @@ body {
 ### Type Scale
 
 ```css
---text-xs:   0.75rem;    /* 12px — badges, timestamps */
---text-sm:   0.875rem;   /* 14px — labels, secondary info */
---text-base: 1rem;       /* 16px — body, table cells */
---text-lg:   1.125rem;   /* 18px — card subtitles */
---text-xl:   1.25rem;    /* 20px — section headings */
---text-2xl:  1.5rem;     /* 24px — card metric values */
---text-3xl:  1.875rem;   /* 30px — dashboard hero numbers */
---text-4xl:  2.25rem;    /* 36px — page headings */
---text-5xl:  3rem;       /* 48px — total token hero stat */
+--text-xs: 0.75rem; /* 12px — badges, timestamps */
+--text-sm: 0.875rem; /* 14px — labels, secondary info */
+--text-base: 1rem; /* 16px — body, table cells */
+--text-lg: 1.125rem; /* 18px — card subtitles */
+--text-xl: 1.25rem; /* 20px — section headings */
+--text-2xl: 1.5rem; /* 24px — card metric values */
+--text-3xl: 1.875rem; /* 30px — dashboard hero numbers */
+--text-4xl: 2.25rem; /* 36px — page headings */
+--text-5xl: 3rem; /* 48px — total token hero stat */
 ```
 
 ### Type Rules
@@ -178,7 +365,7 @@ body {
   background: rgba(45, 55, 72, 0.25);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.25),
@@ -187,7 +374,7 @@ body {
 
 /* === HOVER STATE === */
 .glass-card:hover {
-  background: rgba(45, 55, 72, 0.40);
+  background: rgba(45, 55, 72, 0.4);
   border-color: rgba(255, 255, 255, 0.15);
   box-shadow:
     0 8px 40px rgba(0, 0, 0, 0.35),
@@ -202,37 +389,37 @@ body {
   background: rgba(107, 206, 83, 0.08);
   border-color: rgba(107, 206, 83, 0.25);
   box-shadow:
-    0 4px 24px rgba(107, 206, 83, 0.10),
+    0 4px 24px rgba(107, 206, 83, 0.1),
     0 0 40px rgba(107, 206, 83, 0.05) inset;
 }
 
 /* === ELEVATED GLASS (modals, dropdowns) === */
 .glass-elevated {
-  background: rgba(45, 55, 72, 0.70);
+  background: rgba(45, 55, 72, 0.7);
   backdrop-filter: blur(24px) saturate(200%);
   -webkit-backdrop-filter: blur(24px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.50);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
 }
 ```
 
 ### Glass Variants Reference
 
-| Variant | Use Case | Opacity | Blur |
-|---------|----------|---------|------|
-| `glass-card` | Standard bento cards | 25% | 16px |
+| Variant              | Use Case                   | Opacity       | Blur |
+| -------------------- | -------------------------- | ------------- | ---- |
+| `glass-card`         | Standard bento cards       | 25%           | 16px |
 | `glass-card--accent` | Token/tier highlight cards | 8% green tint | 16px |
-| `glass-card:hover` | Interactive card hover | 40% | 16px |
-| `glass-elevated` | Modals, command palette | 70% | 24px |
-| `glass-nav` | Top navbar | 15% | 20px |
-| `glass-tooltip` | Tooltips | 80% | 12px |
+| `glass-card:hover`   | Interactive card hover     | 40%           | 16px |
+| `glass-elevated`     | Modals, command palette    | 70%           | 24px |
+| `glass-nav`          | Top navbar                 | 15%           | 20px |
+| `glass-tooltip`      | Tooltips                   | 80%           | 12px |
 
 ### Navbar Glass
 
 ```css
 .glass-nav {
-  background: rgba(30, 41, 56, 0.80);
+  background: rgba(30, 41, 56, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -340,10 +527,10 @@ col-span-4 row-span-2 → Tall card  — redemption history, team leaderboard
 ### Easing Reference
 
 ```css
---ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);  /* Bouncy arrival */
---ease-smooth:   cubic-bezier(0.4, 0, 0.2, 1);        /* Standard smooth */
---ease-in:       cubic-bezier(0.4, 0, 1, 1);           /* Departing elements */
---ease-out:      cubic-bezier(0, 0, 0.2, 1);           /* Arriving elements */
+--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy arrival */
+--ease-smooth: cubic-bezier(0.4, 0, 0.2, 1); /* Standard smooth */
+--ease-in: cubic-bezier(0.4, 0, 1, 1); /* Departing elements */
+--ease-out: cubic-bezier(0, 0, 0.2, 1); /* Arriving elements */
 ```
 
 ### Button Hover States
@@ -352,7 +539,7 @@ col-span-4 row-span-2 → Tall card  — redemption history, team leaderboard
 /* === PRIMARY CTA BUTTON (Green) === */
 .btn-primary {
   background: var(--color-accent);
-  color: #0F172A;
+  color: #0f172a;
   font-family: var(--font-display);
   font-weight: 600;
   padding: 10px 24px;
@@ -368,7 +555,7 @@ col-span-4 row-span-2 → Tall card  — redemption history, team leaderboard
 }
 
 .btn-primary::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: rgba(255, 255, 255, 0);
@@ -377,7 +564,9 @@ col-span-4 row-span-2 → Tall card  — redemption history, team leaderboard
 
 .btn-primary:hover {
   background: var(--color-accent-hover);
-  box-shadow: 0 0 0 4px var(--color-accent-glow), 0 4px 16px rgba(107, 206, 83, 0.35);
+  box-shadow:
+    0 0 0 4px var(--color-accent-glow),
+    0 4px 16px rgba(107, 206, 83, 0.35);
   transform: translateY(-1px);
 }
 
@@ -406,8 +595,8 @@ col-span-4 row-span-2 → Tall card  — redemption history, team leaderboard
 }
 
 .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(255, 255, 255, 0.20);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-1px);
 }
 
@@ -419,14 +608,14 @@ col-span-4 row-span-2 → Tall card  — redemption history, team leaderboard
 /* === DESTRUCTIVE BUTTON === */
 .btn-danger {
   background: rgba(239, 68, 68, 0.15);
-  color: #FCA5A5;
-  border: 1px solid rgba(239, 68, 68, 0.30);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
   transition: all 0.2s var(--ease-smooth);
 }
 
 .btn-danger:hover {
   background: rgba(239, 68, 68, 0.25);
-  border-color: rgba(239, 68, 68, 0.50);
+  border-color: rgba(239, 68, 68, 0.5);
   box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
 }
 
@@ -473,7 +662,7 @@ col-span-4 row-span-2 → Tall card  — redemption history, team leaderboard
     border-color 0.25s var(--ease-smooth),
     box-shadow 0.25s var(--ease-smooth),
     transform 0.25s var(--ease-spring);
-  
+
   will-change: transform;
   cursor: default;
 }
@@ -484,20 +673,27 @@ col-span-4 row-span-2 → Tall card  — redemption history, team leaderboard
 
 .bento-card[data-interactive="true"]:hover {
   background: var(--color-bg-surface-md);
-  border-color: rgba(107, 206, 83, 0.20);
+  border-color: rgba(107, 206, 83, 0.2);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.30),
+    0 8px 32px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(107, 206, 83, 0.08);
   transform: translateY(-3px);
 }
 
 /* Subtle green top-border glow on hover */
 .bento-card[data-interactive="true"]:hover::before {
-  content: '';
+  content: "";
   position: absolute;
-  top: 0; left: 10%; right: 10%;
+  top: 0;
+  left: 10%;
+  right: 10%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-accent),
+    transparent
+  );
   opacity: 0.6;
 }
 ```
@@ -535,7 +731,7 @@ col-span-4 row-span-2 → Tall card  — redemption history, team leaderboard
 
 /* Error */
 .input-field--error {
-  border-color: rgba(239, 68, 68, 0.60);
+  border-color: rgba(239, 68, 68, 0.6);
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
 }
 
@@ -580,7 +776,7 @@ col-span-4 row-span-2 → Tall card  — redemption history, team leaderboard
 }
 
 .badge-live::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -3px;
   border-radius: 50%;
@@ -589,9 +785,18 @@ col-span-4 row-span-2 → Tall card  — redemption history, team leaderboard
 }
 
 @keyframes pulse-ring {
-  0%   { transform: scale(0.8); opacity: 0.8; }
-  70%  { transform: scale(1.6); opacity: 0; }
-  100% { transform: scale(1.6); opacity: 0; }
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
 }
 ```
 
@@ -629,13 +834,29 @@ function useCountUp(target: number, duration = 1200) {
 ### Tier Badge
 
 ```tsx
-type Tier = 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
+type Tier = "Bronze" | "Silver" | "Gold" | "Platinum";
 
 const tierConfig: Record<Tier, { color: string; bg: string; glow: string }> = {
-  Bronze:   { color: '#CD7F32', bg: 'rgba(205, 127, 50, 0.15)',  glow: 'rgba(205, 127, 50, 0.30)' },
-  Silver:   { color: '#C0C0C0', bg: 'rgba(192, 192, 192, 0.15)', glow: 'rgba(192, 192, 192, 0.30)' },
-  Gold:     { color: '#FFD700', bg: 'rgba(255, 215, 0, 0.15)',   glow: 'rgba(255, 215, 0, 0.30)' },
-  Platinum: { color: '#6BCE53', bg: 'rgba(107, 206, 83, 0.15)',  glow: 'rgba(107, 206, 83, 0.30)' },
+  Bronze: {
+    color: "#CD7F32",
+    bg: "rgba(205, 127, 50, 0.15)",
+    glow: "rgba(205, 127, 50, 0.30)",
+  },
+  Silver: {
+    color: "#C0C0C0",
+    bg: "rgba(192, 192, 192, 0.15)",
+    glow: "rgba(192, 192, 192, 0.30)",
+  },
+  Gold: {
+    color: "#FFD700",
+    bg: "rgba(255, 215, 0, 0.15)",
+    glow: "rgba(255, 215, 0, 0.30)",
+  },
+  Platinum: {
+    color: "#6BCE53",
+    bg: "rgba(107, 206, 83, 0.15)",
+    glow: "rgba(107, 206, 83, 0.30)",
+  },
 };
 
 // Style:
@@ -673,25 +894,34 @@ Cancelled           rgba(71, 85, 105, 0.25)     #475569
 .progress-fill {
   height: 100%;
   border-radius: 99px;
-  background: linear-gradient(90deg, #57B241, #6BCE53, #8EE56C);
-  box-shadow: 0 0 8px rgba(107, 206, 83, 0.50);
+  background: linear-gradient(90deg, #57b241, #6bce53, #8ee56c);
+  box-shadow: 0 0 8px rgba(107, 206, 83, 0.5);
   transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
 }
 
 /* Shimmer sweep on progress bar */
 .progress-fill::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+  background: linear-gradient(
+    90deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 70%
+  );
   animation: shimmer-sweep 2s ease-in-out infinite;
   background-size: 200% 100%;
 }
 
 @keyframes shimmer-sweep {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 ```
 
@@ -723,10 +953,18 @@ Cancelled           rgba(71, 85, 105, 0.25)     #475569
 }
 
 @keyframes bounce-gentle {
-  0%   { transform: translateY(0); }
-  40%  { transform: translateY(-8px); }
-  70%  { transform: translateY(-3px); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+  70% {
+    transform: translateY(-3px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 ```
 
@@ -734,7 +972,7 @@ Cancelled           rgba(71, 85, 105, 0.25)     #475569
 
 ```css
 .toast {
-  background: rgba(45, 55, 72, 0.90);
+  background: rgba(45, 55, 72, 0.9);
   backdrop-filter: blur(16px);
   border: 1px solid var(--color-border-glass);
   border-radius: 12px;
@@ -743,20 +981,32 @@ Cancelled           rgba(71, 85, 105, 0.25)     #475569
   align-items: center;
   gap: 12px;
   min-width: 300px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.40);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
 
   /* Entrance animation */
   animation: toast-in 0.35s var(--ease-spring) forwards;
 }
 
 @keyframes toast-in {
-  from { opacity: 0; transform: translateY(16px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes toast-out {
-  from { opacity: 1; transform: translateY(0) scale(1); }
-  to   { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
 }
 ```
 
@@ -828,6 +1078,7 @@ function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
 ### Micro-Interaction Rule
 
 Each breadcrumb ancestor link has:
+
 - `transition: color 150ms ease`
 - On hover: text color transitions from secondary → primary
 - On hover: `text-decoration: underline` appears (do not use `border-bottom` — breaks baseline)
@@ -835,15 +1086,15 @@ Each breadcrumb ancestor link has:
 
 ### Breadcrumb by Role
 
-| Route | Breadcrumb |
-|-------|-----------|
-| `/dashboard` | Dashboard |
-| `/rewards` | Dashboard / Rewards |
-| `/rewards/[id]` | Dashboard / Rewards / Item Name |
-| `/admin/uploads` | Admin / Monthly Uploads |
-| `/admin/uploads/[id]` | Admin / Monthly Uploads / Upload #42 |
-| `/admin/redemptions/[id]` | Admin / Redemption Requests / REQ-0042 |
-| `/team/members/[id]` | Team Overview / Members / Employee Name |
+| Route                     | Breadcrumb                              |
+| ------------------------- | --------------------------------------- |
+| `/dashboard`              | Dashboard                               |
+| `/rewards`                | Dashboard / Rewards                     |
+| `/rewards/[id]`           | Dashboard / Rewards / Item Name         |
+| `/admin/uploads`          | Admin / Monthly Uploads                 |
+| `/admin/uploads/[id]`     | Admin / Monthly Uploads / Upload #42    |
+| `/admin/redemptions/[id]` | Admin / Redemption Requests / REQ-0042  |
+| `/team/members/[id]`      | Team Overview / Members / Employee Name |
 
 ---
 
@@ -870,7 +1121,7 @@ Skeleton screens must be used on every async data view. Never use a spinner alon
 }
 
 .skeleton::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(
@@ -886,8 +1137,12 @@ Skeleton screens must be used on every async data view. Never use a spinner alon
 }
 
 @keyframes skeleton-sweep {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 ```
 
@@ -920,11 +1175,21 @@ function TableRowSkeleton({ rows = 5 }: { rows?: number }) {
     <>
       {Array.from({ length: rows }).map((_, i) => (
         <tr key={i} className="border-b border-[--color-border-subtle]">
-          <td className="p-4"><div className="skeleton h-4 w-32 rounded" /></td>
-          <td className="p-4"><div className="skeleton h-4 w-20 rounded" /></td>
-          <td className="p-4"><div className="skeleton h-4 w-16 rounded" /></td>
-          <td className="p-4"><div className="skeleton h-6 w-24 rounded-full" /></td>
-          <td className="p-4"><div className="skeleton h-4 w-8 rounded ml-auto" /></td>
+          <td className="p-4">
+            <div className="skeleton h-4 w-32 rounded" />
+          </td>
+          <td className="p-4">
+            <div className="skeleton h-4 w-20 rounded" />
+          </td>
+          <td className="p-4">
+            <div className="skeleton h-4 w-16 rounded" />
+          </td>
+          <td className="p-4">
+            <div className="skeleton h-6 w-24 rounded-full" />
+          </td>
+          <td className="p-4">
+            <div className="skeleton h-4 w-8 rounded ml-auto" />
+          </td>
         </tr>
       ))}
     </>
@@ -990,14 +1255,14 @@ const contentVariants = {
       duration: 0.35,
       ease: [0, 0, 0.2, 1],
       staggerChildren: 0.06, // stagger each bento card
-    }
-  }
+    },
+  },
 };
 
 // Wrap each card with motion.div using cardVariant
 const cardVariant = {
   hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 ```
 
@@ -1010,28 +1275,35 @@ const cardVariant = {
 Use **Lucide React** as the primary icon set. It is already in the required stack via shadcn/ui and has consistent 24px optical sizing with 1.5px strokes — ideal for the dark glass aesthetic.
 
 ```tsx
-import { Coins, Award, ShoppingBag, Upload, Users, TrendingUp } from 'lucide-react';
+import {
+  Coins,
+  Award,
+  ShoppingBag,
+  Upload,
+  Users,
+  TrendingUp,
+} from "lucide-react";
 
 // Standard icon sizes
-const iconSm  = { size: 14 };  // Badge icons, inline text
-const iconMd  = { size: 18 };  // Button icons, table actions
-const iconLg  = { size: 24 };  // Card labels, nav items
-const iconXl  = { size: 32 };  // Feature section icons (with bg)
+const iconSm = { size: 14 }; // Badge icons, inline text
+const iconMd = { size: 18 }; // Button icons, table actions
+const iconLg = { size: 24 }; // Card labels, nav items
+const iconXl = { size: 32 }; // Feature section icons (with bg)
 ```
 
 ### Icon + Color Mapping
 
-| Icon | Context | Color |
-|------|---------|-------|
-| `Coins` | Token count | `#6BCE53` |
-| `Award` | Tier badge | Tier color (see tier config) |
-| `ShoppingBag` | Rewards | `#93C5FD` |
-| `Upload` | File upload | `#94A3B8` |
-| `Users` | Team view | `#94A3B8` |
-| `TrendingUp` | Token growth | `#6BCE53` |
-| `AlertCircle` | Warnings | `#FCD34D` |
-| `XCircle` | Errors / Rejected | `#FCA5A5` |
-| `CheckCircle2` | Success / Verified | `#6BCE53` |
+| Icon           | Context            | Color                        |
+| -------------- | ------------------ | ---------------------------- |
+| `Coins`        | Token count        | `#6BCE53`                    |
+| `Award`        | Tier badge         | Tier color (see tier config) |
+| `ShoppingBag`  | Rewards            | `#93C5FD`                    |
+| `Upload`       | File upload        | `#94A3B8`                    |
+| `Users`        | Team view          | `#94A3B8`                    |
+| `TrendingUp`   | Token growth       | `#6BCE53`                    |
+| `AlertCircle`  | Warnings           | `#FCD34D`                    |
+| `XCircle`      | Errors / Rejected  | `#FCA5A5`                    |
+| `CheckCircle2` | Success / Verified | `#6BCE53`                    |
 
 ### Spacing Scale (Tailwind remapped)
 
@@ -1070,15 +1342,16 @@ lg (1024px):       grid-cols-12   Full bento layout
 
 ### Sidebar Navigation
 
-| Breakpoint | Nav Behavior |
-|------------|-------------|
-| Mobile `< lg` | Hidden by default; hamburger icon opens a `glass-elevated` drawer from the left |
-| Desktop `>= lg` | Fixed sidebar, 240px wide, glass surface |
-| Desktop collapsed | 64px icon-only sidebar; labels revealed on hover via tooltip |
+| Breakpoint        | Nav Behavior                                                                    |
+| ----------------- | ------------------------------------------------------------------------------- |
+| Mobile `< lg`     | Hidden by default; hamburger icon opens a `glass-elevated` drawer from the left |
+| Desktop `>= lg`   | Fixed sidebar, 240px wide, glass surface                                        |
+| Desktop collapsed | 64px icon-only sidebar; labels revealed on hover via tooltip                    |
 
 ### Card Priority on Mobile
 
 On mobile, bento cards reorder by priority:
+
 1. Total tokens
 2. Tier / Eligibility
 3. Redemption CTA
@@ -1096,13 +1369,13 @@ Every component must pass WCAG 2.1 AA at minimum.
 
 ### Contrast Ratios
 
-| Combination | Ratio | Status |
-|-------------|-------|--------|
-| `#F8FAFC` on `#1E2938` | 11.5:1 | ✅ AAA |
-| `#6BCE53` on `#1E2938` | 6.8:1 | ✅ AA |
-| `#94A3B8` on `#1E2938` | 4.6:1 | ✅ AA |
-| `#6BCE53` on `rgba(45,55,72,0.25)` | ≈5.2:1 | ✅ AA |
-| `#475569` on `#1E2938` | 2.1:1 | ⚠️ Use only for truly decorative text |
+| Combination                        | Ratio  | Status                                |
+| ---------------------------------- | ------ | ------------------------------------- |
+| `#F8FAFC` on `#1E2938`             | 11.5:1 | ✅ AAA                                |
+| `#6BCE53` on `#1E2938`             | 6.8:1  | ✅ AA                                 |
+| `#94A3B8` on `#1E2938`             | 4.6:1  | ✅ AA                                 |
+| `#6BCE53` on `rgba(45,55,72,0.25)` | ≈5.2:1 | ✅ AA                                 |
+| `#475569` on `#1E2938`             | 2.1:1  | ⚠️ Use only for truly decorative text |
 
 ### Focus Ring (Keyboard Navigation)
 
@@ -1164,71 +1437,71 @@ Add this to `src/app/globals.css` or the root layout:
 ```css
 :root {
   /* Backgrounds */
-  --color-bg-base:       #1E2938;
-  --color-bg-deep:       #0F172A;
-  --color-bg-surface:    rgba(45, 55, 72, 0.25);
+  --color-bg-base: #1e2938;
+  --color-bg-deep: #0f172a;
+  --color-bg-surface: rgba(45, 55, 72, 0.25);
   --color-bg-surface-md: rgba(45, 55, 72, 0.35);
-  --color-bg-surface-hi: rgba(45, 55, 72, 0.50);
+  --color-bg-surface-hi: rgba(45, 55, 72, 0.5);
 
   /* Text */
-  --color-text-primary:   #F8FAFC;
-  --color-text-secondary: #94A3B8;
-  --color-text-disabled:  #475569;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-disabled: #475569;
 
   /* Accent */
-  --color-accent:         #6BCE53;
-  --color-accent-hover:   #57B241;
-  --color-accent-muted:   rgba(107, 206, 83, 0.15);
-  --color-accent-glow:    rgba(107, 206, 83, 0.30);
+  --color-accent: #6bce53;
+  --color-accent-hover: #57b241;
+  --color-accent-muted: rgba(107, 206, 83, 0.15);
+  --color-accent-glow: rgba(107, 206, 83, 0.3);
 
   /* Brand */
-  --color-brand:          #063175;
-  --color-brand-hover:    #0A45A3;
+  --color-brand: #063175;
+  --color-brand-hover: #0a45a3;
 
   /* Semantic */
-  --color-error:   #EF4444;
-  --color-warning: #F59E0B;
-  --color-info:    #3B82F6;
-  --color-success: #6BCE53;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+  --color-success: #6bce53;
 
   /* Borders */
-  --color-border-glass:  rgba(255, 255, 255, 0.10);
+  --color-border-glass: rgba(255, 255, 255, 0.1);
   --color-border-subtle: rgba(255, 255, 255, 0.06);
-  --color-border-accent: rgba(107, 206, 83, 0.40);
+  --color-border-accent: rgba(107, 206, 83, 0.4);
 
   /* Typography */
-  --font-display: 'Syne', sans-serif;
-  --font-body:    'DM Sans', sans-serif;
-  --font-mono:    'JetBrains Mono', monospace;
+  --font-display: "Syne", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
   /* Type Scale */
-  --text-xs:   0.75rem;
-  --text-sm:   0.875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
   --text-base: 1rem;
-  --text-lg:   1.125rem;
-  --text-xl:   1.25rem;
-  --text-2xl:  1.5rem;
-  --text-3xl:  1.875rem;
-  --text-4xl:  2.25rem;
-  --text-5xl:  3rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
 
   /* Motion */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-in:     cubic-bezier(0.4, 0, 1, 1);
-  --ease-out:    cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
 
   /* Border radius */
-  --radius-sm:   6px;
-  --radius-md:   10px;
-  --radius-lg:   16px;
-  --radius-xl:   20px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
   --radius-full: 9999px;
 
   /* Glass */
-  --glass-blur:     blur(16px) saturate(180%);
-  --glass-blur-lg:  blur(24px) saturate(200%);
-  --glass-blur-sm:  blur(12px) saturate(160%);
+  --glass-blur: blur(16px) saturate(180%);
+  --glass-blur-lg: blur(24px) saturate(200%);
+  --glass-blur-sm: blur(12px) saturate(160%);
 }
 ```
 
@@ -1236,35 +1509,35 @@ Add this to `src/app/globals.css` or the root layout:
 
 ```ts
 // tailwind.config.ts
-import type { Config } from 'tailwindcss';
+import type { Config } from "tailwindcss";
 
 const config: Config = {
-  content: ['./src/**/*.{ts,tsx}'],
+  content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
         bg: {
-          base:    '#1E2938',
-          deep:    '#0F172A',
+          base: "#1E2938",
+          deep: "#0F172A",
         },
-        accent:    '#6BCE53',
-        brand:     '#063175',
+        accent: "#6BCE53",
+        brand: "#063175",
       },
       fontFamily: {
-        display: ['Syne', 'sans-serif'],
-        body:    ['DM Sans', 'sans-serif'],
-        mono:    ['JetBrains Mono', 'monospace'],
+        display: ["Syne", "sans-serif"],
+        body: ["DM Sans", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
       },
       backdropBlur: {
-        glass: '16px',
-        'glass-lg': '24px',
+        glass: "16px",
+        "glass-lg": "24px",
       },
       animation: {
-        'skeleton-sweep':  'skeleton-sweep 1.8s ease-in-out infinite',
-        'pulse-ring':      'pulse-ring 2s ease-out infinite',
-        'shimmer-sweep':   'shimmer-sweep 2s ease-in-out infinite',
-        'toast-in':        'toast-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-        'bounce-gentle':   'bounce-gentle 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        "skeleton-sweep": "skeleton-sweep 1.8s ease-in-out infinite",
+        "pulse-ring": "pulse-ring 2s ease-out infinite",
+        "shimmer-sweep": "shimmer-sweep 2s ease-in-out infinite",
+        "toast-in": "toast-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+        "bounce-gentle": "bounce-gentle 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
     },
   },
@@ -1401,4 +1674,4 @@ full            9999px (status chips, avatars)
 
 ---
 
-*This document is the single source of design truth for the Berijalan Loyalty Portal. When in doubt: glass over solid, green for action, numbers above the fold.*
+_This document is the single source of design truth for the Berijalan Loyalty Portal. When in doubt: glass over solid, green for action, numbers above the fold._

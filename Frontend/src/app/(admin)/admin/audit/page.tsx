@@ -1,6 +1,7 @@
-import { AdminService } from "@/lib/services/mockApi";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Badge } from "@/components/ui/badge";
+import { adminApi } from "@/lib/api-client";
+import { getServerToken } from "@/lib/auth";
 import {
   Table,
   TableBody,
@@ -69,7 +70,8 @@ function formatDetails(details: unknown): string {
 }
 
 async function AuditTable() {
-  const logs = await AdminService.getAuditLogs();
+  const token = await getServerToken();
+  const logs = await adminApi.getAuditLogs(token).catch(() => []);
 
   if (logs.length === 0) {
     return (

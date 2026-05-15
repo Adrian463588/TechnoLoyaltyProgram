@@ -14,7 +14,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatCard } from "@/components/shared/stat-card";
-import { TierBadge, EmployeeStatusBadge } from "@/components/shared/status-badge";
+import {
+  TierBadge,
+  EmployeeStatusBadge,
+  type MembershipTier,
+  type PartnerStatus,
+} from "@/components/shared/status-badge";
 import {
   ColumnDef,
   flexRender,
@@ -24,7 +29,7 @@ import {
   getFilteredRowModel,
 } from "@tanstack/react-table";
 import { AlertTriangle, Coins, Search, Users } from "lucide-react";
-import { Division, TierStatus } from "@/types";
+import { Division } from "@/types";
 import { motion } from "framer-motion";
 import type { TeamSummaryResponse } from "@/lib/api-client";
 
@@ -33,30 +38,56 @@ type TeamMember = {
   name: string;
   division: Division;
   tokens: number;
-  tier: string;
-  status: string;
+  tier: MembershipTier;
+  status: PartnerStatus;
 };
 
 const mockTeamData: TeamMember[] = [
-  { id: "EMP-001", name: "Alice Optel", division: "Optel", tokens: 5200, tier: "Gold", status: "Active" },
-  { id: "EMP-005", name: "Bob Techno", division: "Techno", tokens: 1200, tier: "Silver", status: "Downgraded" },
-  { id: "EMP-012", name: "Charlie Optel", division: "Optel", tokens: 0, tier: "Bronze", status: "Reset" },
-  { id: "EMP-018", name: "Diana Techno", division: "Techno", tokens: 8500, tier: "Platinum", status: "Active" },
-  { id: "EMP-022", name: "Eve Optel", division: "Optel", tokens: 3000, tier: "Silver", status: "Active" },
+  { id: "EMP-001", name: "Alice Optel", division: "Optel", tokens: 5200, tier: "DIAMOND", status: "ACTIVE" },
+  { id: "EMP-005", name: "Bob Techno", division: "Techno", tokens: 1200, tier: "EMERALD", status: "DOWNGRADED" },
+  { id: "EMP-012", name: "Charlie Optel", division: "Optel", tokens: 0, tier: "SAPHIRE", status: "RESET" },
+  { id: "EMP-018", name: "Diana Techno", division: "Techno", tokens: 8500, tier: "DIAMOND", status: "ACTIVE" },
+  { id: "EMP-022", name: "Eve Optel", division: "Optel", tokens: 3000, tier: "RUBY", status: "ACTIVE" },
 ];
+
+function toMembershipTier(value: string): MembershipTier {
+  const normalized = value.toUpperCase();
+  if (
+    normalized === "SAPHIRE" ||
+    normalized === "EMERALD" ||
+    normalized === "RUBY" ||
+    normalized === "DIAMOND"
+  ) {
+    return normalized;
+  }
+  return "SAPHIRE";
+}
+
+function toPartnerStatus(value: string): PartnerStatus {
+  const normalized = value.toUpperCase();
+  if (
+    normalized === "ACTIVE" ||
+    normalized === "DOWNGRADED" ||
+    normalized === "RESET" ||
+    normalized === "INACTIVE"
+  ) {
+    return normalized;
+  }
+  return "ACTIVE";
+}
 
 export function LeaderTeamClient({ data }: { data: TeamSummaryResponse[] | null }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [divisionFilter, setDivisionFilter] = useState<"All" | Division>("All");
-  const [statusFilter, setStatusFilter] = useState<"All" | "Active" | "Downgraded" | "Reset">("All");
+  const [statusFilter, setStatusFilter] = useState<"All" | PartnerStatus>("All");
 
   const teamData: TeamMember[] = data ? data.map(m => ({
     id: m.id,
     name: m.name,
-    division: (m.division === "OPTEL" ? "Optel" : "Techno") as Division,
+    division: m.division === "TECHNO" ? "Techno" : "Optel",
     tokens: m.tokens,
-    tier: (m.tier.charAt(0).toUpperCase() + m.tier.slice(1).toLowerCase()) as TierStatus,
-    status: (m.status.charAt(0).toUpperCase() + m.status.slice(1).toLowerCase()) as "Active" | "Downgraded" | "Reset",
+    tier: toMembershipTier(m.tier),
+    status: toPartnerStatus(m.status),
   })) : mockTeamData;
 
   const filteredData = useMemo(() => {
@@ -106,13 +137,13 @@ export function LeaderTeamClient({ data }: { data: TeamSummaryResponse[] | null 
     {
       accessorKey: "tier",
       header: "Current Tier",
-      cell: ({ row }) => <TierBadge tier={row.getValue("tier") as any} />,
+      cell: ({ row }) => <TierBadge tier={row.original.tier} />,
     },
     {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
-        <EmployeeStatusBadge status={row.getValue("status") as string} />
+        <EmployeeStatusBadge status={row.original.status} />
       ),
     },
     {
@@ -143,7 +174,7 @@ export function LeaderTeamClient({ data }: { data: TeamSummaryResponse[] | null 
 
   const totalTokens = teamData.reduce((acc, curr) => acc + curr.tokens, 0);
   const eligibleMembers = teamData.filter((m) => m.tokens >= 2000).length;
-  const alertsCount = teamData.filter((m) => m.status !== "Active").length;
+  const alertsCount = teamData.filter((m) => m.status !== "ACTIVE").length;
 
   return (
     <div className="max-w-6xl mx-auto w-full space-y-6 animate-fade-up-in">
@@ -208,7 +239,7 @@ export function LeaderTeamClient({ data }: { data: TeamSummaryResponse[] | null 
             </Button>
           ))}
           <div className="h-8 w-px bg-border mx-1" />
-          {(["All", "Active", "Downgraded", "Reset"] as const).map((status) => (
+          {(["All", "ACTIVE", "DOWNGRADED", "RESET"] as const).map((status) => (
             <Button
               key={status}
               variant={statusFilter === status ? "default" : "outline"}
