@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { TierBadge, MembershipTier, EligibilityChip } from "@/components/shared/status-badge";
 import { TokenCardSkeleton } from "@/components/shared/skeleton-card";

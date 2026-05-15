@@ -4,17 +4,33 @@
  * Provides manual token adjustment capabilities for HC Admins.
  */
 
+import { TokenEventType, type TokenLedger } from "@prisma/client";
 import { prisma } from "../db/prisma";
 import { tokenLedgerRepository } from "../repositories/token-ledger.repository";
 import { logAudit } from "./audit.service";
 import { NotFoundError, ValidationError } from "../errors/index";
 
 export class ManualAdjustmentService {
+  private async resolveUserId(identifier: string): Promise<string> {
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { id: identifier },
+          { npk: identifier },
+          { email: identifier },
+        ],
+      },
+      select: { id: true },
+    });
+    if (!user) throw new NotFoundError("User not found");
+    return user.id;
+  }
+
   /**
    * Adjusts tokens for a user manually.
    * Only HC Admin should be able to call this (enforced by route).
    */
-  async adjustTokens(userId: string, amount: number, reason: string, performedBy: string) {
+  async adjustTokens(identifier: string, amount: number, reason: string, performedBy: string): Promise<TokenLedger> {
     if (amount === 0) {
       throw new ValidationError("Adjustment amount cannot be zero");
     }
@@ -22,11 +38,13 @@ export class ManualAdjustmentService {
       throw new ValidationError("A reason is required for manual adjustment");
     }
 
+    const userId = await this.resolveUserId(identifier);
+
     return prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { id: userId } });
       if (!user) throw new NotFoundError("User not found");
 
-      const currentBalance = await tokenLedgerRepository.getBalance(userId);
+      const currentBalance = await tokenLedgerRepository.getBalance(userId, tx);
       const balanceAfter = currentBalance + amount;
 
       if (balanceAfter < 0) {
@@ -36,7 +54,7 @@ export class ManualAdjustmentService {
       // 1. Append ledger event
       const entry = await tokenLedgerRepository.appendTokenEvent({
         userId,
-        eventType: "MANUAL_ADJUSTMENT",
+        eventType: TokenEventType.MANUAL_ADJUSTMENT,
         amount,
         reason,
         performedBy,

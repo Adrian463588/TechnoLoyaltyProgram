@@ -11,7 +11,7 @@ import type { RequestHandler } from "express";
 import { rewardCatalogService } from "@/services/reward-catalog.service";
 import { z } from "zod";
 import { uuidSchema } from "@/types/validations";
-import { ValidationError, NotFoundError } from "@/errors/index";
+import { ValidationError } from "@/errors/index";
 
 // ── Zod Schemas ───────────────────────────────────────────────────────────────
 
@@ -19,7 +19,7 @@ const createRewardSchema = z.object({
   name:        z.string().min(1).max(200),
   description: z.string().max(1000).optional(),
   tokenCost:   z.number().int().positive(),
-  imageUrl:    z.string().url().optional(),
+  imageUrl:    z.url().optional(),
   category:    z.string().max(100).optional(),
   stock:       z.number().int().nonnegative().nullable().optional(),
 });
@@ -57,7 +57,7 @@ export const RewardCatalogController = {
       const { user } = req;
       const parsed = createRewardSchema.safeParse(req.body);
       if (!parsed.success) {
-        throw new ValidationError("Invalid reward data", parsed.error.format());
+        throw new ValidationError("Invalid reward data", z.treeifyError(parsed.error));
       }
       const item = await rewardCatalogService.create(parsed.data, user.id);
       res.status(201).json(item);
@@ -74,7 +74,7 @@ export const RewardCatalogController = {
       if (!idResult.success) throw new ValidationError("Invalid reward ID", {});
 
       const parsed = updateRewardSchema.safeParse(req.body);
-      if (!parsed.success) throw new ValidationError("Invalid reward data", parsed.error.format());
+      if (!parsed.success) throw new ValidationError("Invalid reward data", z.treeifyError(parsed.error));
 
       const item = await rewardCatalogService.update(idResult.data, parsed.data, user.id);
       res.json(item);

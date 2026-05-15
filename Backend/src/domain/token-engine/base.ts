@@ -61,10 +61,6 @@ export function calculatePointsToNextTier(
   }
   
   const nextThreshold = tierThresholds[nextTier];
-  if (nextThreshold === undefined) {
-    return null;
-  }
-  
   const pointsNeeded = nextThreshold - currentValue;
   return Math.max(0, pointsNeeded);
 }
@@ -76,7 +72,7 @@ export function getHealthBenefitForTier(
   tier: MemberTierType,
   healthBenefits: Record<MemberTierType, HealthBenefit>
 ): HealthBenefit {
-  return healthBenefits[tier] ?? HealthBenefit.NONE;
+  return healthBenefits[tier];
 }
 
 /**

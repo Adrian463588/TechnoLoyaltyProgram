@@ -10,12 +10,12 @@
 
 export class LeaderDashboardPage {
   // ── Navigation ────────────────────────────────────────────────────────────
-  visit(): Cypress.Chainable<AUTWindow> {
+  visit() {
     return cy.visit("/leader/team");
   }
 
   // ── Assertions ────────────────────────────────────────────────────────────
-  getHeading(): Cypress.Chainable<JQuery<HTMLElement>> {
+  getHeading() {
     return cy.contains("h1", /team|leader|dashboard/i);
   }
 

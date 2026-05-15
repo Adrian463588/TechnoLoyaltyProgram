@@ -41,14 +41,6 @@ const pulseVariants: Variants = {
   },
 };
 
-const shimmerVariants: Variants = {
-  initial: { x: "-100%" },
-  animate: {
-    x: "100%",
-    transition: { duration: 1.5, repeat: Infinity, ease: "linear" },
-  },
-};
-
 const tokenHistoryData = [
   { id: 1, title: "Monthly Token Award", date: "Oct 2024", division: "Opcent Division", amount: 120, icon: TrendingUp },
   { id: 2, title: "Project Completion Bonus", date: "Sep 2024", division: "Techno Center", amount: 250, icon: Gift },
@@ -150,7 +142,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
               5 Mos
             </motion.p>
             <div className="mt-4 space-y-2">
-              <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden" data-testid="employee-dashboard-tier-progress">
                 <motion.div
                   className="h-full bg-gradient-to-r from-[--color-accent] to-[--color-accent-hover] rounded-full"
                   initial={{ width: "60%" }}
@@ -197,7 +189,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
             </motion.p>
             <div className="mt-4">
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button className="w-full" size="sm">
+                <Button className="w-full" size="sm" data-testid="employee-dashboard-redeem-button">
                   Browse Catalog
                   <ArrowUpRight className="ml-1 h-3 w-3" />
                 </Button>

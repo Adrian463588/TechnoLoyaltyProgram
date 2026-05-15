@@ -9,15 +9,15 @@
 
 export class AdminDashboardPage {
   // ── Navigation ────────────────────────────────────────────────────────────
-  visit(): Cypress.Chainable<AUTWindow> {
+  visit() {
     return cy.visit("/admin/dashboard");
   }
 
-  visitRedemptions(): Cypress.Chainable<AUTWindow> {
+  visitRedemptions() {
     return cy.visit("/admin/redemptions");
   }
 
-  visitUploads(): Cypress.Chainable<AUTWindow> {
+  visitUploads() {
     return cy.visit("/admin/uploads");
   }
 

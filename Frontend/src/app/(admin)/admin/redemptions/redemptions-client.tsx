@@ -153,7 +153,7 @@ export default function RedemptionsClient({
 
       <BentoCard className="p-0 overflow-hidden" glow={false}>
         <div className="overflow-x-auto">
-          <Table>
+          <Table data-testid="redemptions-table">
             <TableHeader className="bg-muted/30">
               <TableRow className="hover:bg-transparent border-border">
                 <TableHead className="w-[100px]">ID</TableHead>

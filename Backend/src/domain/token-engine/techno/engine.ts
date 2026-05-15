@@ -16,7 +16,6 @@ import {
   TIER_ORDER,
   calculatePointsToNextTier,
   getHealthBenefitForTier,
-  endOfDay 
 } from "../base";
 
 // ============================================================

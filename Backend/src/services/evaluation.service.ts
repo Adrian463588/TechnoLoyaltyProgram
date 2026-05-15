@@ -11,13 +11,12 @@
 import { prisma } from "@/db/prisma";
 import { DivisionType, MemberTierType, PartnershipStatus, TokenEventType } from "@prisma/client";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
-import { membershipService } from "./membership.service";
 import { LOYALTY_POLICIES } from "@/policies/loyalty.policy";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function buildPeriodKey(year: number, month: number): string {
-  return `${year}-${String(month + 1).padStart(2, "0")}`;
+  return `${String(year)}-${String(month + 1).padStart(2, "0")}`;
 }
 
 /**
@@ -111,7 +110,7 @@ export class EvaluationService {
           const totalAttempts = await prisma.shiftClaim.count({
             where: {
               mitraId:   mitra.id,
-              shiftDate: { gte: months[2]!.start, lte: months[0]!.end },
+              shiftDate: { gte: months[2]?.start ?? today, lte: months[0]?.end ?? today },
             },
           });
           const isReset = totalAttempts === 0;
@@ -203,7 +202,7 @@ export class EvaluationService {
   async runTokenExpiryJob(forceYear?: number) {
     const today = new Date();
     const targetYear = forceYear ?? today.getFullYear();
-    const periodKey  = `${targetYear}-token-expiry`;
+    const periodKey  = `${String(targetYear)}-token-expiry`;
     const JOB_NAME   = "token-expiry";
 
     const runId = await acquireJobRun(JOB_NAME, periodKey);
@@ -244,7 +243,7 @@ export class EvaluationService {
             where: {
               userId:    user.id,
               eventType: TokenEventType.EXPIRED,
-              reason:    { contains: `Cohort ${year}` },
+              reason:    { contains: `Cohort ${String(year)}` },
             },
             _sum: { amount: true },
           });
@@ -284,7 +283,7 @@ export class EvaluationService {
               userId:      user.id,
               eventType:   TokenEventType.EXPIRED,
               amount:      -remainingInCohort,
-              reason:      `Token expired (Cohort ${year})`,
+              reason:      `Token expired (Cohort ${String(year)})`,
               performedBy: "SYSTEM",
               earnedYear:  year,
             });

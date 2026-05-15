@@ -6,7 +6,7 @@
  */
 
 import type { ErrorRequestHandler } from "express";
-import { AppError, ValidationError, NotFoundError, ConflictError } from "@/errors";
+import { AppError, ValidationError, NotFoundError } from "@/errors";
 
 export const errorHandler: ErrorRequestHandler = (err: unknown, _req, res, _next): void => {
   const isDev = process.env.NODE_ENV !== "production";

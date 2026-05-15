@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import type { Route } from "next";
 import React from "react";
 import { cn } from "@/lib/utils";
 
@@ -67,7 +68,7 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
             </span>
           ) : isNavigable ? (
             <Link
-              href={href as any}
+              href={href as Route}
               className="text-sm text-[--color-text-secondary] underline-offset-2 hover:underline hover:text-[--color-text-primary] transition-colors duration-150"
             >
               {label}

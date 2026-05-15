@@ -30,17 +30,17 @@ const PUBLIC_PREFIXES = [
   "/robots.txt",
 ];
 
-type Role = "MITRA" | "TEAM_LEAD" | "HC_ADMIN";
+type Role = "MITRA" | "TEAM_LEADER" | "HC_PM";
 
 const ROUTE_ROLE_MAP: Array<{ prefix: string; roles: Role[] }> = [
-  { prefix: "/admin",       roles: ["HC_ADMIN"] },
-  { prefix: "/api/admin",   roles: ["HC_ADMIN"] },
-  { prefix: "/leader",      roles: ["TEAM_LEAD", "HC_ADMIN"] },
-  { prefix: "/employee",    roles: ["MITRA", "TEAM_LEAD", "HC_ADMIN"] },
+  { prefix: "/admin",       roles: ["HC_PM"] },
+  { prefix: "/api/admin",   roles: ["HC_PM"] },
+  { prefix: "/leader",      roles: ["TEAM_LEADER", "HC_PM"] },
+  { prefix: "/employee",    roles: ["MITRA", "TEAM_LEADER", "HC_PM"] },
 ];
 
 const ROLE_HIERARCHY: Record<Role, number> = {
-  MITRA: 1, TEAM_LEAD: 2, HC_ADMIN: 3,
+  MITRA: 1, TEAM_LEADER: 2, HC_PM: 3,
 };
 
 // NextAuth v5: export auth as the middleware function directly
@@ -70,8 +70,8 @@ export default auth((req) => {
       const hasAccess = roles.some((r) => ROLE_HIERARCHY[r] <= userLevel);
       if (!hasAccess) {
         const fallback =
-          userRole === "HC_ADMIN"      ? "/admin/dashboard"
-          : userRole === "TEAM_LEAD"   ? "/leader/team"
+          userRole === "HC_PM"         ? "/admin/dashboard"
+          : userRole === "TEAM_LEADER" ? "/leader/team"
           : "/employee/dashboard";
         return NextResponse.redirect(new URL(fallback, req.url));
       }

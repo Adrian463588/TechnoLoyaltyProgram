@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,6 @@ import {
   CheckSquare,
   X,
   LogOut,
-  Settings,
   ChevronRight,
   Sparkles,
 } from "lucide-react";
@@ -26,13 +26,13 @@ interface SidebarProps {
 }
 
 const navItems = {
-  HC_ADMIN: [
+  HC_PM: [
     { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/uploads", label: "Monthly Uploads", icon: FileUp },
     { href: "/admin/redemptions", label: "Redemptions", icon: CheckSquare },
     { href: "/admin/audit", label: "Audit Log", icon: History },
   ],
-  TEAM_LEAD: [
+  TEAM_LEADER: [
     { href: "/leader/team", label: "Team Overview", icon: Users },
     { href: "/employee/dashboard", label: "My Dashboard", icon: LayoutDashboard },
     { href: "/employee/rewards", label: "Rewards", icon: ShoppingBag },
@@ -47,7 +47,7 @@ const navItems = {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const role = (session?.user?.role as "MITRA" | "TEAM_LEAD" | "HC_ADMIN") || "MITRA";
+  const role = (session?.user?.role as "MITRA" | "TEAM_LEADER" | "HC_PM") || "MITRA";
   const [hoveredLink, setHoveredLink] = useState<string | null>(null);
 
   const links = navItems[role] || navItems.MITRA;
@@ -130,7 +130,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   onMouseLeave={() => setHoveredLink(null)}
                 >
                   <Link
-                    href={link.href as any}
+                    href={link.href as Route}
                     onClick={() => onClose()}
                     className={cn(
                       "relative flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 text-sm font-medium overflow-hidden group",
@@ -206,25 +206,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* Footer with user info and settings */}
           <div className="border-t border-[--color-border-subtle] p-4 space-y-2">
             {/* Settings Link */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Link
-                href={"/settings" as any}
-                onClick={() => onClose()}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[--color-text-secondary] hover:text-[--color-text-primary] hover:bg-[--color-border-subtle] transition-all duration-200 group"
-              >
-                <motion.div
-                  whileHover={{ rotate: 90 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  <Settings size={18} />
-                </motion.div>
-                <span>Settings</span>
-              </Link>
-            </motion.div>
+            {/* Settings removed - not in Sprint 2.1 scope */}
 
             {/* User Info */}
             <motion.div

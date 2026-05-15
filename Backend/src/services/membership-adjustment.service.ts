@@ -8,18 +8,35 @@ import { prisma } from "@/db/prisma";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
 import { logAudit } from "@/services/audit.service";
 import { calculateDowngrade, calculateReset, DowngradeTrigger, ResetTrigger } from "@/domain/membership/downgrade.domain";
-import { DomainError, NotFoundError } from "@/errors";
+import { MemberTierType } from "@prisma/client";
+import { NotFoundError } from "@/errors";
+
+type MembershipAdjustmentResult =
+  | {
+      status: "PENDING";
+      newTier: MemberTierType | "PENDING_STAKEHOLDER_CONFIRMATION";
+      penaltyAmount: number | "PENDING_STAKEHOLDER_CONFIRMATION";
+    }
+  | {
+      status: "APPLIED";
+      newTier: MemberTierType;
+      penaltyAmount: number;
+    };
 
 export class MembershipAdjustmentService {
   /**
    * Applies a downgrade penalty to a user's membership.
    */
-  async downgradeMembership(userId: string, trigger: DowngradeTrigger, performedBy: string) {
+  async downgradeMembership(
+    userId: string,
+    trigger: DowngradeTrigger,
+    performedBy: string,
+  ): Promise<MembershipAdjustmentResult> {
     return prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { id: userId } });
       if (!user) throw new NotFoundError("User not found");
 
-      const currentBalance = await tokenLedgerRepository.getBalance(userId);
+      const currentBalance = await tokenLedgerRepository.getBalance(userId, tx);
 
       const { newTier, penaltyAmount } = calculateDowngrade(
         user.division,
@@ -60,7 +77,7 @@ export class MembershipAdjustmentService {
         data: {
           userId,
           previousTier: user.membershipTier,
-          newTier: newTier as any,
+          newTier,
           changeReason: `DOWNGRADE: ${trigger}`,
           triggeredBy: performedBy,
           tokenBalanceBefore: currentBalance,
@@ -71,7 +88,7 @@ export class MembershipAdjustmentService {
       // 3. Update user tier
       await tx.user.update({
         where: { id: userId },
-        data: { membershipTier: newTier as any },
+        data: { membershipTier: newTier },
       });
 
       // 4. Audit
@@ -92,12 +109,16 @@ export class MembershipAdjustmentService {
   /**
    * Applies a reset penalty to a user's membership.
    */
-  async resetMembership(userId: string, trigger: ResetTrigger, performedBy: string) {
+  async resetMembership(
+    userId: string,
+    trigger: ResetTrigger,
+    performedBy: string,
+  ): Promise<MembershipAdjustmentResult> {
     return prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { id: userId } });
       if (!user) throw new NotFoundError("User not found");
 
-      const currentBalance = await tokenLedgerRepository.getBalance(userId);
+      const currentBalance = await tokenLedgerRepository.getBalance(userId, tx);
 
       const { newTier, penaltyAmount } = calculateReset(
         user.division,
@@ -135,7 +156,7 @@ export class MembershipAdjustmentService {
         data: {
           userId,
           previousTier: user.membershipTier,
-          newTier: newTier as any,
+          newTier,
           changeReason: `RESET: ${trigger}`,
           triggeredBy: performedBy,
           tokenBalanceBefore: currentBalance,
@@ -145,7 +166,7 @@ export class MembershipAdjustmentService {
 
       await tx.user.update({
         where: { id: userId },
-        data: { membershipTier: newTier as any },
+        data: { membershipTier: newTier },
       });
 
       await logAudit({

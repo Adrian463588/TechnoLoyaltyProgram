@@ -8,7 +8,7 @@
  */
 
 import { prisma } from "@/db/prisma";
-import { TokenEventType } from "@prisma/client";
+import { Prisma, TokenEventType, type TokenLedger } from "@prisma/client";
 import { DomainError } from "@/errors";
 
 export interface AppendTokenEventInput {
@@ -29,8 +29,11 @@ export class TokenLedgerRepository {
    *
    * @throws DomainError if balance becomes negative.
    */
-  async appendTokenEvent(input: AppendTokenEventInput, externalTx?: any) {
-    const operation = async (tx: any) => {
+  async appendTokenEvent(
+    input: AppendTokenEventInput,
+    externalTx?: Prisma.TransactionClient,
+  ): Promise<TokenLedger> {
+    const operation = async (tx: Prisma.TransactionClient): Promise<TokenLedger> => {
       // 1. Lock the User record to serialize transactions for this specific user.
       // This prevents race conditions when appending ledger entries concurrently.
       await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${input.userId} FOR UPDATE`;
@@ -38,7 +41,7 @@ export class TokenLedgerRepository {
       // 2. Fetch current balance
       const lastEntry = await tx.tokenLedger.findFirst({
         where: { userId: input.userId },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       });
 
       const currentBalance = lastEntry?.balanceAfter ?? 0;
@@ -78,10 +81,10 @@ export class TokenLedgerRepository {
   /**
    * Gets current token balance for a user.
    */
-  async getBalance(userId: string): Promise<number> {
-    const lastEntry = await prisma.tokenLedger.findFirst({
+  async getBalance(userId: string, client: Prisma.TransactionClient | typeof prisma = prisma): Promise<number> {
+    const lastEntry = await client.tokenLedger.findFirst({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       select: { balanceAfter: true },
     });
     return lastEntry?.balanceAfter ?? 0;
@@ -90,10 +93,10 @@ export class TokenLedgerRepository {
   /**
    * Gets paginated ledger history for a user.
    */
-  async getHistory(userId: string, limit = 20, offset = 0) {
+  async getHistory(userId: string, limit = 20, offset = 0): Promise<TokenLedger[]> {
     return prisma.tokenLedger.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: limit,
       skip: offset,
     });

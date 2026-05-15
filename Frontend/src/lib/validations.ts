@@ -9,7 +9,7 @@ import { z } from "zod";
 // SHARED ENUMS
 // ============================================================
 
-export const UserRoleEnum = z.enum(["MITRA", "TEAM_LEAD", "HC_ADMIN"]);
+export const UserRoleEnum = z.enum(["MITRA", "TEAM_LEADER", "HC_PM"]);
 export const DivisionEnum = z.enum(["OPCENT", "TELE", "TECHNO"]);
 export const PartnerStatusEnum = z.enum(["ACTIVE", "INACTIVE", "RESIGNED"]);
 export const MembershipTierEnum = z.enum(["SAPHIRE", "EMERALD", "RUBY", "DIAMOND"]);

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Menu, LogOut, User, Bell, Search, ChevronDown, Settings, CreditCard } from "lucide-react";
+import { Menu, LogOut, User, Bell, Search, ChevronDown, CreditCard } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {

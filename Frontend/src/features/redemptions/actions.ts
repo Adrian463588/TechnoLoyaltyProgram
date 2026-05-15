@@ -7,8 +7,7 @@
 
 "use server";
 
-import { auth } from "@/lib/auth";
-import { getServerToken } from "@/lib/auth";
+import { auth, getServerToken } from "@/lib/auth";
 import { employeeApi, adminApi } from "@/lib/api-client";
 import { revalidatePath } from "next/cache";
 import { redeemRequestSchema, updateStatusSchema, redemptionVerificationSchema } from "@/lib/validations";

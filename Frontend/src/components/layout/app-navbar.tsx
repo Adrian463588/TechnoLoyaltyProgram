@@ -145,27 +145,30 @@ export function AppNavbar({
               <span className="sr-only">Toggle user menu</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52 glass-card border-0 shadow-lg">
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>{profileLabel}</DropdownMenuLabel>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" /> Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" /> Settings
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                  onClick={() => signOut({ callbackUrl: "/login" })}
-                >
-                  <LogOut className="mr-2 h-4 w-4" /> Logout
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
+              <div data-testid="profile-menu-content">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>{profileLabel}</DropdownMenuLabel>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" /> Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" /> Settings
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    data-testid="profile-logout"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" /> Logout
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

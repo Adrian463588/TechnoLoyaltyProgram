@@ -10,13 +10,10 @@
 import { prisma } from "@/db/prisma";
 import { membershipService } from "./membership.service";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
-import { checkRedemptionEligibility } from "./loyalty.service";
 import type {
   EmployeeDashboardData,
   TokenSummary,
-  RewardRequest,
 } from "@/types/domain.types";
-import { PartnershipStatus } from "@prisma/client";
 
 /**
  * Returns the token summary for a specific employee.

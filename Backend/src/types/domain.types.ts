@@ -12,12 +12,11 @@ import type {
   DivisionType as PrismaDivision,
   MemberTierType,
   RedemptionStatus,
-  UploadStatus,
   PartnershipStatus,
 } from "@prisma/client";
 
 // ── Re-exported Prisma enum types ────────────────────────────
-export type Role = UserRole;                        // MITRA | TEAM_LEAD | HC_ADMIN
+export type Role = UserRole;                        // MITRA | TEAM_LEADER | HC_PM
 export type DivisionType = PrismaDivision;          // OPCENT | TELE | TECHNO
 export type TierStatus = MemberTierType;            // SAPHIRE | EMERALD | RUBY | DIAMOND
 export type RewardRequestStatus = RedemptionStatus; // DRAFT | PENDING_VERIFICATION | ...

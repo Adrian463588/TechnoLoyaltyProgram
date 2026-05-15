@@ -4,16 +4,12 @@
  * Data access layer for RedemptionRequest entities.
  */
 
-import {
-  PrismaClient,
-  RedemptionRequest,
-  RedemptionStatus,
-} from "@prisma/client";
+import { PrismaClient, type RedemptionRequest } from "@prisma/client";
 
 export class RedemptionRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findAll() {
+  async findAll(): Promise<RedemptionRequest[]> {
     return this.prisma.redemptionRequest.findMany({
       include: {
         mitra: { select: { id: true, name: true, email: true } },
@@ -24,7 +20,7 @@ export class RedemptionRepository {
     });
   }
 
-  async findById(requestId: string) {
+  async findById(requestId: string): Promise<RedemptionRequest | null> {
     return this.prisma.redemptionRequest.findUnique({
       where: { id: requestId },
       include: {
@@ -35,7 +31,7 @@ export class RedemptionRepository {
     });
   }
 
-  async findByMitraId(mitraId: string) {
+  async findByMitraId(mitraId: string): Promise<RedemptionRequest[]> {
     return this.prisma.redemptionRequest.findMany({
       where: { mitraId },
       include: {
