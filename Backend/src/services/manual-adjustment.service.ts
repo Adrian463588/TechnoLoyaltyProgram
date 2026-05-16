@@ -9,6 +9,7 @@ import { prisma } from "../db/prisma";
 import { tokenLedgerRepository } from "../repositories/token-ledger.repository";
 import { logAudit } from "./audit.service";
 import { NotFoundError, ValidationError } from "../errors/index";
+import { cacheInvalidationService } from "../utils/cache/cache-invalidation.service";
 
 export class ManualAdjustmentService {
   private async resolveUserId(identifier: string): Promise<string> {
@@ -40,7 +41,7 @@ export class ManualAdjustmentService {
 
     const userId = await this.resolveUserId(identifier);
 
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { id: userId } });
       if (!user) throw new NotFoundError("User not found");
 
@@ -73,6 +74,10 @@ export class ManualAdjustmentService {
 
       return entry;
     });
+
+    await CacheService.invalidate({ type: "TOKEN_MUTATED", userId });
+
+    return result;
   }
 }
 

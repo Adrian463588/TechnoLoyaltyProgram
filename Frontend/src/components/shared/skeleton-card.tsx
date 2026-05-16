@@ -4,7 +4,7 @@ import React from "react";
 
 export function TokenCardSkeleton() {
   return (
-    <div className="glass-card p-6 space-y-4">
+    <div className="bento-card p-6 space-y-4">
       {/* Label */}
       <div className="skeleton h-3 w-24 rounded" />
       {/* Hero number */}
@@ -44,14 +44,14 @@ export function DashboardSkeleton() {
       aria-busy="true"
     >
       {/* Welcome banner */}
-      <div className="col-span-12 glass-card p-6">
+      <div className="col-span-12 bento-card p-6">
         <div className="skeleton h-6 w-64 rounded mb-2" />
         <div className="skeleton h-4 w-48 rounded" />
       </div>
 
       {/* Stat cards x3 */}
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="col-span-12 md:col-span-4 glass-card p-6 space-y-4">
+        <div key={i} className="col-span-12 md:col-span-4 bento-card p-6 space-y-4">
           <div className="skeleton h-3 w-20 rounded" />
           <div className="skeleton h-10 w-32 rounded" />
           <div className="skeleton h-3 w-28 rounded" />
@@ -59,13 +59,13 @@ export function DashboardSkeleton() {
       ))}
 
       {/* Chart area */}
-      <div className="col-span-12 lg:col-span-8 glass-card p-6">
+      <div className="col-span-12 lg:col-span-8 bento-card p-6">
         <div className="skeleton h-4 w-40 rounded mb-4" />
         <div className="skeleton h-40 w-full rounded-lg" />
       </div>
 
       {/* Side panel */}
-      <div className="col-span-12 lg:col-span-4 glass-card p-6 space-y-3">
+      <div className="col-span-12 lg:col-span-4 bento-card p-6 space-y-3">
         <div className="skeleton h-4 w-32 rounded mb-4" />
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="flex items-center gap-3 mb-3">

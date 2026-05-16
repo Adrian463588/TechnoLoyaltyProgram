@@ -68,45 +68,32 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
 
         {/* Sidebar */}
-        <motion.aside
-          initial={{ x: -280 }}
-          animate={{
-            x:
-              isOpen || (typeof window !== "undefined" && window.innerWidth >= 1024)
-                ? 0
-                : -280,
-          }}
-          exit={{ x: -280 }}
-          transition={{
-            type: "spring",
-            stiffness: 300,
-            damping: 30,
-            opacity: { duration: 0.2 },
-          }}
+        <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-50 w-64 glass-elevated lg:glass-card border-l-0 border-t-0 border-b-0 rounded-none lg:relative transform flex flex-col shrink-0",
+            "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-border transform flex flex-col shrink-0",
+            "transition-transform duration-300 ease-in-out",
             "lg:translate-x-0",
-            isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+            isOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
           {/* Logo Header */}
-          <div className="h-16 flex items-center justify-between px-6 border-b border-[--color-border-subtle] shrink-0">
+          <div className="h-16 flex items-center justify-between px-6 border-b border-border shrink-0">
             <Link href="/" className="flex items-center gap-3 group">
               <motion.div
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 whileTap={{ scale: 0.95 }}
-                className="h-9 w-9 rounded-xl bg-[--color-accent] flex items-center justify-center text-[#0F172A] shadow-lg shadow-[--color-accent]/30"
+                className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/30"
               >
                 <LayoutDashboard size={20} />
               </motion.div>
-              <span className="font-display font-bold text-xl text-[--color-text-primary] tracking-tight">
+              <span className="font-display font-bold text-xl text-foreground tracking-tight">
                 Berijalan
               </span>
             </Link>
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="lg:hidden p-2 text-[--color-text-secondary] hover:text-[--color-text-primary] rounded-lg hover:bg-[--color-border-subtle] transition-colors"
+              className="lg:hidden p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-slate-100 transition-colors"
               onClick={onClose}
             >
               <X size={20} />
@@ -135,13 +122,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     className={cn(
                       "relative flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 text-sm font-medium overflow-hidden group",
                       isActive
-                        ? "bg-[--color-accent-muted] text-[--color-accent] border border-[--color-border-accent]"
-                        : "text-[--color-text-secondary] hover:text-[--color-text-primary] border border-transparent"
+                        ? "bg-primary/10 text-primary border border-primary/20"
+                        : "text-muted-foreground hover:text-foreground border border-transparent"
                     )}
                   >
                     {/* Hover background effect */}
                     <motion.div
-                      className="absolute inset-0 bg-[--color-accent]/5 rounded-xl"
+                      className="absolute inset-0 bg-primary/5 rounded-xl"
                       initial={{ scale: 0, opacity: 0 }}
                       whileHover={{ scale: 1, opacity: 1 }}
                       transition={{ duration: 0.2 }}
@@ -151,7 +138,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     {isActive && (
                       <motion.div
                         layoutId="activeIndicator"
-                        className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[--color-accent] rounded-r-full"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                       />
@@ -168,8 +155,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         className={cn(
                           "transition-colors duration-200",
                           isActive
-                            ? "text-[--color-accent]"
-                            : "text-[--color-text-secondary] group-hover:text-[--color-text-primary]"
+                            ? "text-primary"
+                            : "text-muted-foreground group-hover:text-foreground"
                         )}
                       />
                     </motion.div>
@@ -179,7 +166,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                     {/* Arrow indicator on hover */}
                     <motion.span
-                      className="absolute right-4 text-[--color-accent] opacity-0"
+                      className="absolute right-4 text-primary opacity-0"
                       initial={{ x: -10, opacity: 0 }}
                       animate={{ x: isHovered ? 0 : -10, opacity: isHovered ? 1 : 0 }}
                       transition={{ duration: 0.2 }}
@@ -190,7 +177,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     {/* Sparkle effect on active */}
                     {isActive && (
                       <motion.div
-                        className="absolute right-10 text-[--color-accent]"
+                        className="absolute right-10 text-primary"
                         animate={{ opacity: [0.5, 1, 0.5] }}
                         transition={{ duration: 2, repeat: Infinity }}
                       >
@@ -204,40 +191,37 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </nav>
 
           {/* Footer with user info and settings */}
-          <div className="border-t border-[--color-border-subtle] p-4 space-y-2">
-            {/* Settings Link */}
-            {/* Settings removed - not in Sprint 2.1 scope */}
-
+          <div className="border-t border-border p-4 space-y-2">
             {/* User Info */}
             <motion.div
-              className="flex items-center gap-3 px-3 py-2 rounded-xl bg-[--color-border-subtle]/50 cursor-pointer hover:bg-[--color-border-subtle] transition-colors"
+              className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
               whileHover={{ scale: 1.02 }}
             >
-              <div className="h-9 w-9 rounded-full bg-[--color-accent-muted] flex items-center justify-center border border-[--color-border-accent]">
-                <span className="text-[--color-accent] font-bold text-sm">
+              <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                <span className="text-primary font-bold text-sm">
                   {session?.user?.name?.charAt(0) || "U"}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[--color-text-primary] truncate">
+                <p className="text-sm font-medium text-foreground truncate">
                   {session?.user?.name || "User"}
                 </p>
-                <p className="text-[10px] text-[--color-text-secondary] font-mono">
+                <p className="text-[10px] text-muted-foreground font-mono">
                   {role}
                 </p>
               </div>
               <motion.div
                 whileHover={{ x: 2 }}
-                className="text-[--color-text-secondary]"
+                className="text-muted-foreground"
               >
                 <LogOut size={14} />
               </motion.div>
             </motion.div>
           </div>
-        </motion.aside>
+        </aside>
       </>
     </AnimatePresence>
   );

@@ -19,20 +19,6 @@ export {
 export { membershipService }                        from "./membership.service";
 export { evaluationService }                        from "./evaluation.service";
 
-// export { PeriodService }                            from "./period.service";
 export { redemptionService }                        from "./redemption.service";
-
-/*
-export {
-  parseOptelCSV,
-  parseTechnoCSV,
-  buildUploadSummary,
-  UploadProcessingService,
-}                                                   from "./upload.service";
-
-export {
-  parseOptelXLSX,
-  parseTechnoXLSX,
-  detectDivisionFromXLSX,
-}                                                   from "./upload-xlsx.service";
-*/
+export { tokenLedgerService }                       from "./token-ledger.service";
+export { CacheService }                             from "./cache.service";

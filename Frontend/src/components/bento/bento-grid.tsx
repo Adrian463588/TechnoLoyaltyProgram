@@ -96,7 +96,7 @@ export function BentoPanel({
         // Shape
         "rounded-2xl overflow-hidden",
         // Glassmorphism base
-        glass && (elevated ? "glass-card-elevated" : "glass-card"),
+        glass && (elevated ? "bento-card-elevated" : "bento-card"),
         // Hover transitions
         "transition-all duration-300 ease-out",
         "hover:-translate-y-0.5",

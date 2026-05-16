@@ -171,46 +171,50 @@ function AuditTableSkeleton() {
 
 export default function AuditLogPage() {
   return (
-    <div className="max-w-7xl mx-auto w-full space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Audit Log</h1>
-          <p className="text-muted-foreground mt-1">
-            Immutable record of all system events and administrative actions.
-          </p>
+    <main className="p-6 max-w-[1600px] w-full mx-auto space-y-6">
+      <div className="bento-grid">
+        {/* Header */}
+        <div className="bento-span-12 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Audit Log</h1>
+            <p className="text-muted-foreground mt-1">
+              Immutable record of all system events and administrative actions.
+            </p>
+          </div>
+        </div>
+
+        {/* Action Type Legend */}
+        <div className="bento-span-12 flex flex-wrap gap-3">
+          {[
+            { icon: <FileSpreadsheet className="w-3.5 h-3.5 text-secondary" />, label: "Upload",       color: "bg-secondary/10 border-secondary/20" },
+            { icon: <CheckCircle     className="w-3.5 h-3.5 text-primary" />,   label: "Verification", color: "bg-primary/10 border-primary/20"   },
+            { icon: <ShieldAlert     className="w-3.5 h-3.5 text-destructive" />, label: "Rejection",  color: "bg-destructive/10 border-destructive/20" },
+            { icon: <Activity        className="w-3.5 h-3.5 text-muted-foreground" />, label: "System", color: "bg-muted/40 border-border"         },
+          ].map(({ icon, label, color }) => (
+            <div key={label} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${color}`}>
+              {icon}
+              <span className="font-medium text-foreground">{label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Audit Table — Suspense boundary for streaming */}
+        <div className="bento-span-12">
+          <Suspense fallback={<AuditTableSkeleton />}>
+            <AuditTable />
+          </Suspense>
+        </div>
+
+        {/* Info banner */}
+        <div className="bento-span-12 flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border border-border">
+          <Info className="w-4 h-4 mt-0.5 shrink-0" />
+          <span>
+            Audit logs are append-only and cannot be modified. Every admin action,
+            system event, and status change is captured here for compliance and traceability.
+            Showing last 100 events.
+          </span>
         </div>
       </div>
-
-      {/* Action Type Legend */}
-      <div className="flex flex-wrap gap-3">
-        {[
-          { icon: <FileSpreadsheet className="w-3.5 h-3.5 text-secondary" />, label: "Upload",       color: "bg-secondary/10 border-secondary/20" },
-          { icon: <CheckCircle     className="w-3.5 h-3.5 text-primary" />,   label: "Verification", color: "bg-primary/10 border-primary/20"   },
-          { icon: <ShieldAlert     className="w-3.5 h-3.5 text-destructive" />, label: "Rejection",  color: "bg-destructive/10 border-destructive/20" },
-          { icon: <Activity        className="w-3.5 h-3.5 text-muted-foreground" />, label: "System", color: "bg-muted/40 border-border"         },
-        ].map(({ icon, label, color }) => (
-          <div key={label} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${color}`}>
-            {icon}
-            <span className="font-medium text-foreground">{label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Audit Table — Suspense boundary for streaming */}
-      <Suspense fallback={<AuditTableSkeleton />}>
-        <AuditTable />
-      </Suspense>
-
-      {/* Info banner */}
-      <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border border-border">
-        <Info className="w-4 h-4 mt-0.5 shrink-0" />
-        <span>
-          Audit logs are append-only and cannot be modified. Every admin action,
-          system event, and status change is captured here for compliance and traceability.
-          Showing last 100 events.
-        </span>
-      </div>
-    </div>
+    </main>
   );
 }

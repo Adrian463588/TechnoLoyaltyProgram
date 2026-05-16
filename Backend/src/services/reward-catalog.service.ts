@@ -11,6 +11,9 @@
 import { prisma } from "@/db/prisma";
 import { logAudit } from "./audit.service";
 import { NotFoundError, ValidationError } from "@/errors/index";
+import { CacheService } from "./cache.service";
+import { CacheKeys } from "@/utils/cache/cache-key.registry";
+import type { RewardItem } from "@prisma/client";
 
 export interface CreateRewardInput {
   name:         string;
@@ -32,22 +35,32 @@ export interface UpdateRewardInput {
 
 export class RewardCatalogService {
   /** List all rewards (active only by default). */
-  async listAll(includeInactive = false) {
-    return prisma.rewardItem.findMany({
+  async listAll(includeInactive = false): Promise<RewardItem[]> {
+    const cacheKey = includeInactive 
+      ? CacheKeys.rewardCatalogAdmin() 
+      : CacheKeys.rewardCatalogActive();
+
+    const cached = await CacheService.get<RewardItem[]>(cacheKey);
+    if (cached) return cached;
+
+    const items = await prisma.rewardItem.findMany({
       where: includeInactive ? {} : { isActive: true },
       orderBy: { createdAt: "desc" },
     });
+
+    await CacheService.set(cacheKey, items);
+    return items;
   }
 
   /** Get a single reward by ID. Throws NotFoundError if missing. */
-  async getById(id: string) {
+  async getById(id: string): Promise<RewardItem> {
     const item = await prisma.rewardItem.findUnique({ where: { id } });
     if (!item) throw new NotFoundError("RewardItem", id);
     return item;
   }
 
   /** Create a new reward item. HC actor required. */
-  async create(input: CreateRewardInput, actorId: string) {
+  async create(input: CreateRewardInput, actorId: string): Promise<RewardItem> {
     if (input.tokenCost <= 0) {
       throw new ValidationError("tokenCost must be a positive integer.");
     }
@@ -73,11 +86,13 @@ export class RewardCatalogService {
       newValue:  { name: item.name, tokenCost: item.tokenCost },
     });
 
+    await CacheService.invalidate({ type: "REWARD_CATALOG_MUTATED" });
+
     return item;
   }
 
   /** Update reward item fields. HC actor required. */
-  async update(id: string, input: UpdateRewardInput, actorId: string) {
+  async update(id: string, input: UpdateRewardInput, actorId: string): Promise<RewardItem> {
     const existing = await this.getById(id);
 
     if (input.tokenCost !== undefined && input.tokenCost <= 0) {
@@ -103,6 +118,8 @@ export class RewardCatalogService {
       newValue:      { ...input },
     });
 
+    await CacheService.invalidate({ type: "REWARD_CATALOG_MUTATED" });
+
     return updated;
   }
 
@@ -110,7 +127,7 @@ export class RewardCatalogService {
    * Soft-deactivate a reward item.
    * Does NOT delete — existing redemptions reference it.
    */
-  async deactivate(id: string, actorId: string) {
+  async deactivate(id: string, actorId: string): Promise<RewardItem> {
     const existing = await this.getById(id);
 
     if (!existing.isActive) {
@@ -130,6 +147,8 @@ export class RewardCatalogService {
       previousValue: { isActive: true },
       newValue:      { isActive: false },
     });
+
+    await CacheService.invalidate({ type: "REWARD_CATALOG_MUTATED" });
 
     return updated;
   }

@@ -78,7 +78,7 @@ export function AppNavbar({
       <header
         className={cn(
           "sticky top-0 z-20 flex h-16 items-center gap-4 px-4 md:px-6",
-          "glass-nav"
+          "app-nav"
         )}
       >
         {/* Mobile hamburger */}
@@ -86,7 +86,7 @@ export function AppNavbar({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="flex md:hidden items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-black/5 transition-colors"
+          className="flex md:hidden items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-slate-100 transition-colors"
           onClick={() => setMobileOpen((o) => !o)}
           aria-label="Toggle menu"
         >
@@ -116,7 +116,7 @@ export function AppNavbar({
                 "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200",
                 isActive(href)
                   ? "bg-primary/10 text-primary shadow-sm shadow-primary/10"
-                  : "text-muted-foreground hover:bg-black/5 hover:text-foreground"
+                  : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
               )}
             >
               <Icon className="w-4 h-4" />
@@ -144,24 +144,24 @@ export function AppNavbar({
               <CircleUser className="h-5 w-5" />
               <span className="sr-only">Toggle user menu</span>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52 glass-card border-0 shadow-lg">
+            <DropdownMenuContent align="end" className="w-52 bg-white border border-border shadow-lg rounded-xl">
               <div data-testid="profile-menu-content">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>{profileLabel}</DropdownMenuLabel>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer hover:bg-slate-100 focus:bg-slate-100">
                     <User className="mr-2 h-4 w-4" /> Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer hover:bg-slate-100 focus:bg-slate-100">
                     <Settings className="mr-2 h-4 w-4" /> Settings
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                    className="cursor-pointer text-destructive focus:text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
                     onClick={() => signOut({ callbackUrl: "/login" })}
                     data-testid="profile-logout"
                   >
@@ -176,7 +176,7 @@ export function AppNavbar({
 
       {/* ── Mobile Slide-Down Nav ─────────────────────── */}
       {mobileOpen && (
-        <div className="md:hidden glass-nav border-t border-white/20 px-4 py-3 space-y-1">
+        <div className="md:hidden app-nav border-t border-border px-4 py-3 space-y-1">
           {navItems.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
@@ -187,7 +187,7 @@ export function AppNavbar({
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors w-full",
                 isActive(href)
                   ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-black/5 hover:text-foreground"
+                  : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
               )}
             >
               <Icon className="w-4 h-4" />

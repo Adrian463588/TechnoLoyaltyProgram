@@ -35,7 +35,7 @@ export function RewardCatalog({ userTokens }: { userTokens: number }) {
             <div 
               key={reward.id} 
               className={cn(
-                "glass-card p-5 flex flex-col justify-between animate-fade-up-in",
+                "bento-card p-5 flex flex-col justify-between animate-fade-up-in",
                 !canAfford && "opacity-75 grayscale-[30%]"
               )}
               style={{ animationDelay: `${i * 60}ms` }}

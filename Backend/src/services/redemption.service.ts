@@ -10,9 +10,12 @@
 import { prisma } from "@/db/prisma";
 import { Prisma, RedemptionStatus, TokenEventType, type RedemptionRequest } from "@prisma/client";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
+import { tokenLedgerService } from "./token-ledger.service";
 import { checkRedemptionEligibility } from "./loyalty.service";
 import { logAudit } from "./audit.service";
 import { NotFoundError, ValidationError } from "@/errors/index";
+import { CacheService } from "./cache.service";
+import { CacheKeys } from "../utils/cache/cache-key.registry";
 
 /**
  * Valid transitions for redemption request status.
@@ -72,7 +75,39 @@ export class RedemptionService {
   }
 
   /**
+   * Gets UX-only eligibility preview.
+   * Requirement 12.1, 12.3: UX-only cache. Server revalidates on submit.
+   */
+  async getEligibilityPreview(userId: string): Promise<{ isEligible: boolean; reasons: string[] }> {
+    const cacheKey = CacheKeys.redemptionEligibility(userId);
+    const cached = await CacheService.get<{ isEligible: boolean; reasons: string[] }>(cacheKey);
+    if (cached) return cached;
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundError("User", userId);
+
+    const tokenBalance = await tokenLedgerRepository.getBalance(userId);
+
+    // Simplified general guard: must be ACTIVE partner and have enough for the cheapest reward or an arbitrary threshold (e.g. 2000).
+    // The exact check depends on the catalog, but generally we check if partnerStatus is ACTIVE.
+    const reasons: string[] = [];
+    if (user.partnerStatus !== "ACTIVE") {
+      reasons.push("Only active partners are eligible for redemption.");
+    }
+    
+    // As a simple generic check, assume a base threshold of 2000 tokens for the dashboard preview
+    if (tokenBalance < 2000) {
+      reasons.push(`Earn ${(2000 - tokenBalance).toLocaleString()} more tokens to unlock rewards.`);
+    }
+
+    const result = { isEligible: reasons.length === 0, reasons };
+    await CacheService.set(cacheKey, result, 120);
+    return result;
+  }
+
+  /**
    * Submits a new redemption request.
+
    * Section 13 - Redemption Guard.
    */
   async submitRequest(userId: string, rewardItemId: string): Promise<RedemptionRequest> {
@@ -96,7 +131,7 @@ export class RedemptionService {
       throw new ValidationError(eligibility.reasons.join(", "));
     }
 
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       // 1. Create request
       const request = await tx.redemptionRequest.create({
         data: {
@@ -130,6 +165,9 @@ export class RedemptionService {
 
       return request;
     });
+
+    await CacheService.invalidate({ type: "REDEMPTION_MUTATED", userId });
+    return result;
   }
 
   /**
@@ -154,7 +192,7 @@ export class RedemptionService {
       updateData.powerOfAttorneyVerified = input.powerOfAttorneyVerified;
     }
 
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const updated = await tx.redemptionRequest.update({
         where: { id: requestId },
         data: updateData,
@@ -177,6 +215,9 @@ export class RedemptionService {
 
       return updated;
     });
+
+    await CacheService.invalidate({ type: "REDEMPTION_MUTATED", userId: request.mitraId });
+    return result;
   }
 
   /**
@@ -212,10 +253,11 @@ export class RedemptionService {
       }
     }
 
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       // If moving to VERIFIED, debit tokens
+      // Requirement 3.7, 3.8, 3.9: Must use authoritative DB state, never cached balance
       if (newStatus === "VERIFIED") {
-        const currentBalance = await tokenLedgerRepository.getBalance(request.mitraId);
+        const currentBalance = await tokenLedgerService.getTokenBalanceForUpdate(request.mitraId, tx);
         if (currentBalance < request.tokenCost) {
           throw new ValidationError("Insufficient tokens at verification time");
         }
@@ -258,6 +300,13 @@ export class RedemptionService {
 
       return updated;
     });
+
+    await CacheService.invalidate({ type: "REDEMPTION_MUTATED", userId: request.mitraId });
+    if (newStatus === "VERIFIED") {
+      await CacheService.invalidate({ type: "TOKEN_MUTATED", userId: request.mitraId });
+    }
+
+    return result;
   }
 }
 

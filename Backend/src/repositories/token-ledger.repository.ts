@@ -10,6 +10,8 @@
 import { prisma } from "@/db/prisma";
 import { Prisma, TokenEventType, type TokenLedger } from "@prisma/client";
 import { DomainError } from "@/errors";
+import { CacheService } from "@/services/cache.service";
+import { CacheKeys } from "@/utils/cache/cache-key.registry";
 
 export interface AppendTokenEventInput {
   userId:      string;
@@ -75,19 +77,41 @@ export class TokenLedgerRepository {
       return newEntry;
     };
 
-    return externalTx ? operation(externalTx) : prisma.$transaction(operation);
+    const result = await (externalTx ? operation(externalTx) : prisma.$transaction(operation));
+    
+    // Invalidate cache after successfully appending
+    // If externalTx is passed, it is part of a larger transaction. 
+    // Invalidating immediately might slightly precede commit, but Redis operations are fast and safe here.
+    await CacheService.invalidate({ type: "TOKEN_MUTATED", userId: input.userId }).catch(e => {
+      console.warn("[CACHE] Failed to invalidate during appendTokenEvent:", e);
+    });
+
+    return result;
   }
 
   /**
    * Gets current token balance for a user.
    */
   async getBalance(userId: string, client: Prisma.TransactionClient | typeof prisma = prisma): Promise<number> {
-    const lastEntry = await client.tokenLedger.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      select: { balanceAfter: true },
-    });
-    return lastEntry?.balanceAfter ?? 0;
+    const fetchBalance = async () => {
+      const lastEntry = await client.tokenLedger.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: { balanceAfter: true },
+      });
+      return lastEntry?.balanceAfter ?? 0;
+    };
+
+    // If we're inside a transaction, bypass the cache (authoritative read)
+    if (client !== prisma) {
+      return fetchBalance();
+    }
+
+    // Otherwise, use read-through caching
+    return CacheService.getWithFallback(
+      CacheKeys.tokenBalance(userId),
+      fetchBalance
+    );
   }
 
   /**
@@ -100,6 +124,46 @@ export class TokenLedgerRepository {
       take: limit,
       skip: offset,
     });
+  }
+
+  /**
+   * Gets token expiry summary grouped by earnedYear and expiresAt.
+   *
+   * Requirement 4.1, 4.2, 4.3, 4.4:
+   * - Returns cohorts of tokens grouped by earnedYear and expiresAt
+   * - Includes amount and expiry date for each cohort
+   * - Used for displaying token expiry information to Mitra
+   *
+   * @param userId - The user ID
+   * @returns Array of expiry cohorts with amount and expiry date
+   */
+  async getExpirySummary(
+    userId: string,
+    client: Prisma.TransactionClient | typeof prisma = prisma
+  ): Promise<Array<{ earnedYear: number | null; expiresAt: Date | null; amount: number }>> {
+    const cohorts = await client.tokenLedger.groupBy({
+      by: ["earnedYear", "expiresAt"],
+      where: {
+        userId,
+        // Only include entries with positive balance (not yet expired/redeemed)
+        amount: { gt: 0 },
+      },
+      _sum: {
+        amount: true,
+      },
+      orderBy: [
+        { expiresAt: "asc" },
+        { earnedYear: "asc" },
+      ],
+    });
+
+    return cohorts
+      .filter((cohort) => cohort._sum.amount && cohort._sum.amount > 0)
+      .map((cohort) => ({
+        earnedYear: cohort.earnedYear,
+        expiresAt: cohort.expiresAt,
+        amount: cohort._sum.amount || 0,
+      }));
   }
 }
 

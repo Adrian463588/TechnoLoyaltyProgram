@@ -13,7 +13,7 @@ export default function Loading() {
         <div className="skeleton h-4 w-80 rounded" />
       </div>
 
-      <div className="glass-card overflow-hidden">
+      <div className="bento-card overflow-hidden">
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <div className="skeleton h-5 w-40 rounded" />
           <div className="skeleton h-8 w-24 rounded-lg" />

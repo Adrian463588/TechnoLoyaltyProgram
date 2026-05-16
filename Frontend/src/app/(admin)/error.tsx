@@ -15,7 +15,7 @@ export default function Error({
 }) {
   return (
     <div className="max-w-7xl mx-auto w-full flex items-center justify-center min-h-[60vh]">
-      <div className="glass-card p-10 flex flex-col items-center text-center space-y-5 max-w-md">
+      <div className="bento-card p-10 flex flex-col items-center text-center space-y-5 max-w-md">
         <div className="p-4 rounded-full bg-[--color-error]/10 text-[--color-error] ring-2 ring-[--color-error]/20">
           <AlertTriangle className="w-8 h-8" />
         </div>

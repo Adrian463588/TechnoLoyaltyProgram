@@ -10,6 +10,7 @@ import { logAudit } from "@/services/audit.service";
 import { calculateDowngrade, calculateReset, DowngradeTrigger, ResetTrigger } from "@/domain/membership/downgrade.domain";
 import { MemberTierType } from "@prisma/client";
 import { NotFoundError } from "@/errors";
+import { CacheService } from "@/services/cache.service";
 
 type MembershipAdjustmentResult =
   | {
@@ -32,7 +33,7 @@ export class MembershipAdjustmentService {
     trigger: DowngradeTrigger,
     performedBy: string,
   ): Promise<MembershipAdjustmentResult> {
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { id: userId } });
       if (!user) throw new NotFoundError("User not found");
 
@@ -56,7 +57,7 @@ export class MembershipAdjustmentService {
           newValue: { tier: newTier, penalty: penaltyAmount },
           tx,
         });
-        return { status: "PENDING", newTier, penaltyAmount };
+        return { status: "PENDING" as const, newTier, penaltyAmount };
       }
 
       // 1. Deduct tokens via append-only ledger
@@ -102,8 +103,18 @@ export class MembershipAdjustmentService {
         tx,
       });
 
-      return { status: "APPLIED", newTier, penaltyAmount };
+      return { status: "APPLIED" as const, newTier, penaltyAmount };
     });
+
+    if (result.status === "APPLIED") {
+      await CacheService.invalidate({ 
+        type: "MEMBERSHIP_MUTATED", 
+        userId, 
+        tokenPenaltyApplied: result.penaltyAmount > 0 
+      });
+    }
+
+    return result;
   }
 
   /**
@@ -114,7 +125,7 @@ export class MembershipAdjustmentService {
     trigger: ResetTrigger,
     performedBy: string,
   ): Promise<MembershipAdjustmentResult> {
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { id: userId } });
       if (!user) throw new NotFoundError("User not found");
 
@@ -137,7 +148,7 @@ export class MembershipAdjustmentService {
           newValue: { tier: newTier, penalty: penaltyAmount },
           tx,
         });
-        return { status: "PENDING", newTier, penaltyAmount };
+        return { status: "PENDING" as const, newTier, penaltyAmount };
       }
 
       if (penaltyAmount > 0) {
@@ -179,8 +190,18 @@ export class MembershipAdjustmentService {
         tx,
       });
 
-      return { status: "APPLIED", newTier, penaltyAmount };
+      return { status: "APPLIED" as const, newTier, penaltyAmount };
     });
+
+    if (result.status === "APPLIED") {
+      await CacheService.invalidate({ 
+        type: "MEMBERSHIP_MUTATED", 
+        userId, 
+        tokenPenaltyApplied: result.penaltyAmount > 0 
+      });
+    }
+
+    return result;
   }
 }
 

@@ -17,7 +17,7 @@ export default function AdminDashboardPage() {
       <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto">
         <div className="bento-grid">
           {/* Active Period Banner */}
-          <div className="col-span-12 glass-card p-6 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
+          <div className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
             <div>
               <h1 className="text-card-heading text-2xl mb-1">HC Admin Dashboard</h1>
               <p className="text-[--color-text-secondary]">Active Earning Period: P2 (Jun 16 → Dec 15)</p>
@@ -28,7 +28,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* KPI Cards */}
-          <div className="col-span-12 md:col-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-1">
+          <div className="bento-span-12 md:bento-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-1">
             <h3 className="text-label flex items-center gap-2 mb-4">
               <Upload className="h-[14px] w-[14px] text-[--color-text-secondary]" />
               Uploads This Month
@@ -36,7 +36,7 @@ export default function AdminDashboardPage() {
             <p className="text-metric-hero text-[--color-text-primary]">4</p>
           </div>
 
-          <div className="col-span-12 md:col-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-2" data-interactive="true">
+          <div className="bento-span-12 md:bento-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-2" data-interactive="true">
             <h3 className="text-label flex items-center gap-2 mb-4">
               <ShoppingBag className="h-[14px] w-[14px] text-[--color-warning]" />
               Pending Redeem
@@ -44,7 +44,7 @@ export default function AdminDashboardPage() {
             <p className="text-metric-hero text-[--color-warning]">12</p>
           </div>
 
-          <div className="col-span-12 md:col-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-3">
+          <div className="bento-span-12 md:bento-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-3">
             <h3 className="text-label flex items-center gap-2 mb-4">
               <Users className="h-[14px] w-[14px] text-[--color-info]" />
               Active Partners
@@ -52,7 +52,7 @@ export default function AdminDashboardPage() {
             <p className="text-metric-hero text-[--color-info]">248</p>
           </div>
 
-          <div className="col-span-12 md:col-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-4">
+          <div className="bento-span-12 md:bento-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-4">
             <h3 className="text-label flex items-center gap-2 mb-4">
               <Coins className="h-[14px] w-[14px] text-[--color-accent]" />
               Tokens Issued
@@ -61,7 +61,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Upload Activity Table */}
-          <div className="col-span-12 lg:col-span-8 glass-card p-6 animate-fade-up-in stagger-5 min-h-[300px]">
+          <div className="bento-span-12 lg:bento-span-8 bento-card p-6 animate-fade-up-in stagger-5 min-h-[300px]">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-card-heading">Recent Upload Activity</h3>
             </div>
@@ -98,8 +98,8 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Quick Actions & Manual Adjustment */}
-          <div className="col-span-12 lg:col-span-4 animate-fade-up-in stagger-5 flex flex-col gap-6">
-            <div className="glass-card p-6">
+          <div className="bento-span-12 lg:bento-span-4 animate-fade-up-in stagger-5 flex flex-col gap-6">
+            <div className="bento-card p-6">
               <h3 className="text-card-heading mb-6">Quick Actions</h3>
               <div className="space-y-4">
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} className="btn-primary w-full text-left flex justify-between items-center px-4 py-3">
@@ -122,7 +122,7 @@ export default function AdminDashboardPage() {
           </div>
           
           {/* Redemption Queue Table */}
-          <div className="col-span-12 glass-card p-6 animate-fade-up-in stagger-5 min-h-[300px]">
+          <div className="bento-span-12 bento-card p-6 animate-fade-up-in stagger-5 min-h-[300px]">
             <h3 className="text-card-heading mb-6">Redemption Queue</h3>
             <RedemptionQueueTable />
           </div>
