@@ -76,6 +76,13 @@ export const employeeApi = {
       headers: withAuth(token),
       next: { revalidate: 30 },
     } as RequestInit),
+
+  changePassword: (token: string, payload: Record<string, string>) =>
+    apiFetch<{ success: boolean }>("/api/employee/profile/change-password", {
+      method: "POST",
+      headers: withAuth(token),
+      body: JSON.stringify(payload),
+    }),
 };
 
 // ── Admin API ──────────────────────────────────────────────────────────────

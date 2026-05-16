@@ -213,7 +213,10 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                 </p>
               </div>
               <Select value={division} onValueChange={(v) => setDivision(v ?? "")}>
-                <SelectTrigger className="w-full sm:w-[220px]" data-testid="division-select">
+                <SelectTrigger 
+                  className="w-full sm:w-[220px]" 
+                  data-testid="division-select"
+                >
                   <SelectValue placeholder="Auto-detect" />
                 </SelectTrigger>
                 <SelectContent>
@@ -501,7 +504,7 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                           <span className="text-sm font-medium text-foreground">{upload.filename}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                      <TableCell suppressHydrationWarning className="text-xs text-muted-foreground whitespace-nowrap">
                         {formatDate(upload.uploadedAt)}
                       </TableCell>
                       <TableCell className="text-right font-mono text-sm">

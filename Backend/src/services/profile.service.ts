@@ -6,6 +6,8 @@
  */
 
 import { prisma } from "@/db/prisma";
+import bcrypt from "bcryptjs";
+import { ValidationError } from "@/errors/index";
 
 export const ProfileService = {
   async getProfile(userId: string) {
@@ -40,5 +42,33 @@ export const ProfileService = {
       },
     });
     return updated;
+  },
+
+  async changePassword(userId: string, currentPassword?: string, newPassword?: string) {
+    if (!currentPassword || !newPassword) {
+      throw new ValidationError("Current password and new password are required.");
+    }
+    
+    if (currentPassword === newPassword) {
+      throw new ValidationError("New password must be different from current password.");
+    }
+
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { passwordHash: true }
+    });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      throw new ValidationError("Invalid current password.");
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newHash }
+    });
+
+    return { success: true };
   },
 };
