@@ -5,7 +5,7 @@
   "private": true,
   "main": "dist/app.js",
   "scripts": {
-    "dev": "NODE_OPTIONS=--max-old-space-size=512 tsx watch --tsconfig tsconfig.json src/app.ts",
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=512 tsx watch --tsconfig tsconfig.json src/app.ts",
     "build": "tsc --project tsconfig.json",
     "start": "node dist/app.js",
     "lint": "eslint \"src/**/*.ts\"",
@@ -46,6 +46,7 @@
     "@types/pg": "^8.20.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "jsdom": "^29.1.1",
     "ts-node": "^10.9.2",

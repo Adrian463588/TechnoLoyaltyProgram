@@ -10,13 +10,10 @@ const nextConfig: NextConfig = {
   ...(process.env.NODE_ENV === "production" && { output: "standalone" }),
 
   // ── Prevent framer-motion from being server-side bundled ─────────────────
-  // Keeps it in the client chunk only, reduces SSR memory footprint.
-  serverExternalPackages: ["framer-motion"],
+  // (Removed serverExternalPackages: breaks SSR context due to 'use client' boundary bypass)
 
   // ── Type-safe routing ────────────────────────────────────────────────────
-  experimental: {
-    typedRoutes: true,
-  },
+  typedRoutes: true,
 
   // ── Server-only env vars passed to client ───────────────────────────────
   env: {
