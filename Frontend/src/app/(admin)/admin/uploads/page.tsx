@@ -17,12 +17,10 @@ export default async function UploadsPage() {
   ).catch(() => []);
 
   return (
-    <div className="max-w-6xl mx-auto w-full space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Monthly Uploads</h1>
-          <p className="text-muted-foreground mt-1">Upload and validate Optel & Techno point distributions.</p>
-        </div>
+    <div className="max-w-[1600px] mx-auto w-full space-y-8 p-6 lg:p-8">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-section-title">Monthly Uploads</h1>
+        <p className="text-body max-w-2xl">Upload and validate Optel & Techno point distributions.</p>
       </div>
 
       <UploadsClient history={uploads} />

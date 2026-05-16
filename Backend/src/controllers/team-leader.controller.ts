@@ -15,6 +15,8 @@ import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
 import { LoyaltyCalculationService } from "@/services/loyalty-calculation.service";
 import { uuidSchema } from "@/types/validations";
 import { NotFoundError, ValidationError, ForbiddenError } from "@/errors/index";
+import { CacheService } from "@/services/cache.service";
+import { CacheKeys } from "@/utils/cache/cache-key.registry";
 
 export const TeamLeaderController = {
 
@@ -26,6 +28,13 @@ export const TeamLeaderController = {
   getTeamSummary: (async (req, res, next) => {
     try {
       const { user } = req;
+      const cacheKey = CacheKeys.teamTokenSummary(user.id);
+      
+      const cached = await CacheService.get(cacheKey);
+      if (cached) {
+        res.json(cached);
+        return;
+      }
 
       const members = await prisma.user.findMany({
         where: {
@@ -51,7 +60,10 @@ export const TeamLeaderController = {
         })),
       );
 
-      res.json({ teamLeadId: user.id, members: summaries, count: summaries.length });
+      const result = { teamLeadId: user.id, members: summaries, count: summaries.length };
+      await CacheService.set(cacheKey, result);
+      
+      res.json(result);
     } catch (err) {
       next(err);
     }

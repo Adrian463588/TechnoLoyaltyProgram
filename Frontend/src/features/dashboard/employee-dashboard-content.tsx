@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { GlassCard } from "@/components/ui/glass-card";
+import { GlassCard } from "@/components/ui/bento-card";
 import { useCountUp } from "@/hooks/use-count-up";
 import { buttonVariants } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";

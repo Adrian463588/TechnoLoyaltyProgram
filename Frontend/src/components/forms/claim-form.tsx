@@ -43,7 +43,7 @@ export function ClaimForm() {
   };
 
   return (
-    <div className="glass-card p-6 w-full max-w-md mx-auto">
+    <div className="bento-card p-6 w-full max-w-md mx-auto">
       <h3 className="text-card-heading mb-6">Submit Claim</h3>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

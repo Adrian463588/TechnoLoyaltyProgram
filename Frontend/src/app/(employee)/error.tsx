@@ -15,7 +15,7 @@ export default function Error({
 
   return (
     <div className="flex flex-col min-h-screen items-center justify-center p-6">
-      <div className="glass-card p-8 max-w-md w-full text-center">
+      <div className="bento-card p-8 max-w-md w-full text-center">
         <h2 className="text-xl font-bold text-[--color-text-primary] mb-2">
           Something went wrong
         </h2>

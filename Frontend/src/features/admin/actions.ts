@@ -15,7 +15,7 @@ export async function submitManualAdjustment(payload: {
   reason: string;
 }): Promise<{ success: true; ledgerEntryId: string } | { success: false; error: string }> {
   const session = await auth();
-  if (!session || (session.user?.role !== "HC_ADMIN" && session.user?.role !== "HC_PM")) {
+  if (!session || session.user?.role !== "HC_PM") {
     return { success: false, error: "Unauthorized" };
   }
 

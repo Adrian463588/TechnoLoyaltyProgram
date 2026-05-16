@@ -56,7 +56,7 @@ export function DocumentVerificationDrawer({ request, onClose }: { request: any;
 
       {/* Drawer Panel */}
       <div
-        className="relative w-full max-w-md h-full glass-elevated border-l border-[--color-border-glass] p-6 flex flex-col overflow-y-auto"
+        className="relative w-full max-w-md h-full bg-white shadow-xl border border-border rounded-xl border-l border-[--color-border-glass] p-6 flex flex-col overflow-y-auto"
         style={{
           transform: isVisible ? "translateX(0)" : "translateX(100%)",
           transition: "transform 300ms cubic-bezier(0.34, 1.10, 0.64, 1)",

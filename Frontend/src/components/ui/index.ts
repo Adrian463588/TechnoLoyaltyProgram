@@ -3,9 +3,5 @@
  * Barrel export — Frontend UI primitives
  */
 export {
-  GlassCard,
-  GlassCardHeader,
-  GlassCardTitle,
-  GlassCardContent,
-  GlassCardFooter,
-} from "./glass-card";
+  BentoCard,
+} from "./bento-card";

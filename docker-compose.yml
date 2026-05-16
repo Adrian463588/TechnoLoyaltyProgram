@@ -1,0 +1,81 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: loyalty_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     loyalty_user
+      POSTGRES_PASSWORD: loyalty_pass
+      POSTGRES_DB:       loyalty_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U loyalty_user -d loyalty_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: loyalty_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    container_name: loyalty_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      NODE_ENV:           development
+      PORT:               8080
+      DATABASE_URL:       postgresql://loyalty_user:loyalty_pass@postgres:5432/loyalty_db
+      NEXTAUTH_SECRET:    dev-secret-change-in-production-min-32-chars
+      FRONTEND_ORIGIN:    http://localhost:3000
+      REDIS_ENABLED:      "true"
+      REDIS_HOST:         redis
+      REDIS_PORT:         6379
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./Backend/src:/app/src:ro
+    command: npm run dev
+    working_dir: /app
+
+  frontend:
+    container_name: loyalty_frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      NODE_ENV:           development
+      NEXTAUTH_URL:       http://localhost:3000
+      NEXTAUTH_SECRET:    dev-secret-change-in-production-min-32-chars
+      BACKEND_URL:        http://localhost:8080
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./Frontend/src:/app/src:ro
+    command: npm run dev
+    working_dir: /app
+
+volumes:
+  postgres_data:
+  redis_data:

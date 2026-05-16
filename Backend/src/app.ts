@@ -61,7 +61,7 @@ app.use("/api/leader",   leaderRoutes);
 app.use(errorHandler);
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────
-const PORT = Number(process.env.PORT ?? 4000);
+const PORT = Number(process.env.PORT ?? 8080);
 
 app.listen(PORT, () => {
   console.warn(`[Backend] Server running on port ${String(PORT)} — env: ${process.env.NODE_ENV ?? "development"}`);

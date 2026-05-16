@@ -80,7 +80,7 @@ export default function RewardsClient({ rewards, userTokens, isEligible }: Rewar
   }
 
   return (
-    <div className="space-y-6 animate-fade-up-in">
+    <div className="space-y-6 p-6 animate-fade-up-in">
       <Breadcrumb />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

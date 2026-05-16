@@ -1,291 +1,164 @@
 # DESIGN.md — Berijalan Employee Loyalty Portal
 
-> Design System Reference for AI Vibecoders and Human Engineers
-> Version 1.0 · May 2026 · Modern Dark Tech Theme
+> Design System Reference for AI Vibecoders and Human Engineers  
+> Version 2.0 · May 2026 · Modern Clean Professional · Bento Card System
 
 ---
 
 ## Table of Contents
 
-1. [Design Philosophy](#1-design-philosophy)
-2. [Color System](#2-color-system)
+1. [Design Direction](#1-design-direction)
+2. [Color System — The Midnight Arctic](#2-color-system--the-midnight-arctic)
 3. [Typography](#3-typography)
-4. [Glassmorphism Specification](#4-glassmorphism-specification)
+4. [Layout Foundation](#4-layout-foundation)
 5. [Bento Grid System](#5-bento-grid-system)
-6. [Micro-Interactions & Motion](#6-micro-interactions--motion)
-7. [Component Library](#7-component-library)
-8. [Breadcrumb Navigation](#8-breadcrumb-navigation)
+6. [Component Library](#6-component-library)
+7. [Micro-Interactions & Motion](#7-micro-interactions--motion)
+8. [Responsive Web App Rules](#8-responsive-web-app-rules)
 9. [Skeleton Screens](#9-skeleton-screens)
-10. [Iconography & Spacing](#10-iconography--spacing)
-11. [Responsive Behavior](#11-responsive-behavior)
-12. [Accessibility Standards](#12-accessibility-standards)
-13. [Dark Mode Architecture](#13-dark-mode-architecture)
-14. [Implementation Tokens (CSS Variables)](#14-implementation-tokens-css-variables)
+10. [Navigation & Breadcrumbs](#10-navigation--breadcrumbs)
+11. [Accessibility Standards](#11-accessibility-standards)
+12. [Dark Mode Architecture](#12-dark-mode-architecture)
+13. [Implementation Tokens](#13-implementation-tokens)
+14. [Tailwind Config Extension](#14-tailwind-config-extension)
 15. [AI Vibecoder Prompt Patterns](#15-ai-vibecoder-prompt-patterns)
+16. [Quick Reference Cheat Sheet](#16-quick-reference-cheat-sheet)
 
 ---
 
-## 1. Design Philosophy
+## 1. Design Direction
 
-### Core Direction: **Modern Dark Tech — Frosted Spatial Depth**
+### Core Theme: **Functional Elegance — Modern Clean Bento**
 
-The portal operates as an internal operational hub where clarity and trust are non-negotiable. The design language marries **Bento Grid structure** (organized, scannable, modular) with **Glassmorphism depth** (layered, premium, futuristic) against a deep navy mesh-lit canvas.
+Berijalan Employee Loyalty Portal is an operational dashboard. The interface must feel calm, premium, trustworthy, and fast. The visual direction moves away from heavy glassmorphism and decorative dark gradients into a cleaner professional product language:
 
-> **The one thing a user will remember:** Numbers that glow green inside frosted glass panels — their token count immediately legible before they even fully load the page.
+- **Light-first canvas** with strong hierarchy and generous negative space.
+- **Bento cards** for dense operational information that remains scannable.
+- **Electric Indigo** for primary actions and brand moments.
+- **Cyan Glow** only for small active/hover highlights, never large surfaces.
+- **Dark slate text** for professional credibility and high readability.
+- **Motion that feels tactile**, not flashy.
+
+### The One Thing Users Should Remember
+
+> “My token balance, tier status, and redemption eligibility are instantly clear inside clean bento cards.”
 
 ### Guiding Principles
 
-| Principle                | Implementation                                                                             |
-| ------------------------ | ------------------------------------------------------------------------------------------ |
-| **Spatial Depth**        | Background mesh gradients create Z-axis illusion; cards float via blur layers              |
-| **Signal over Noise**    | Critical numbers (tokens, tier, eligibility) are always largest on screen                  |
-| **Green as Trust**       | `#6BCE53` is reserved exclusively for positive actions and CTA — never decorative          |
-| **Motion with Purpose**  | Every animation answers a user question: "Did it work? Is it loading? Did my tier change?" |
-| **Frosted Transparency** | Cards are windows into data, not opaque boxes — backdrop blur reinforces this              |
+| Principle | Implementation |
+| --- | --- |
+| **Clarity first** | Key numbers are large, labels are short, and supporting copy is muted. |
+| **Bento hierarchy** | Card size reflects importance: balance and eligibility get larger cards. |
+| **Accessible polish** | Minimum contrast targets, visible focus rings, 48px touch targets. |
+| **Quiet confidence** | No heavy neon, no excessive glow, no over-animated UI. |
+| **Professional rhythm** | Spacing follows an 8px scale; border radius and shadows are consistent. |
 
 ---
 
-## 2. Color System
+## 2. Color System — The Midnight Arctic
 
-This color system is designed for a dark navy web interface with strong readability, clear hierarchy, and consistent interaction states. Text colors should meet WCAG AA contrast targets wherever possible: **4.5:1 for normal text** and **3:1 for large text or non-text UI components**. Dark-theme surfaces should also avoid overly saturated colors, especially for large areas.
+This palette combines the professionalism of dark slate with the freshness of electric indigo and cyan. It is designed for SaaS dashboards, corporate portals, and modern internal tools.
 
-### Primary Palette
+### Brand Palette
+
+| Token | Name | Hex | Usage |
+| --- | --- | --- | --- |
+| `--color-primary` | Electric Indigo | `#4F46E5` | CTA, active navigation, brand identity |
+| `--color-primary-hover` | Indigo Pulse | `#4338CA` | CTA hover and pressed action |
+| `--color-secondary` | Arctic Frost | `#F8FAFC` | Main app background |
+| `--color-accent` | Cyan Glow | `#06B6D4` | Hover accent, info highlight, decorative micro-line |
+| `--color-text-primary` | Ink Deep | `#0F172A` | Headings, key labels, primary text |
+| `--color-text-secondary` | Slate Mist | `#64748B` | Body copy, descriptions, icons |
+| `--color-surface` | Pure White | `#FFFFFF` | Cards, modals, navigation |
+| `--color-border` | Frost Border | `#E2E8F0` | Dividers and card borders |
+
+### Semantic Colors
+
+| Token | Hex | Usage |
+| --- | --- | --- |
+| `--color-success` | `#16A34A` | Approved, completed, eligible |
+| `--color-warning` | `#D97706` | Pending, attention needed |
+| `--color-error` | `#DC2626` | Rejected, destructive action |
+| `--color-info` | `#0284C7` | Informational states |
+
+### Core CSS Variables
 
 ```css
 :root {
-  /* =========================================================
-     BACKGROUNDS
-     Dark navy foundation with clear elevation levels
-  ========================================================= */
+  /* Canvas */
+  --color-bg: #f8fafc;
+  --color-bg-subtle: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-muted: #f8fafc;
 
-  --color-bg-base: #0f172a; /* Main app background */
-  --color-bg-deep: #020617; /* Deepest layer: modals, drawers, overlays */
-  --color-bg-elevated: #111c33; /* Raised panels and app bars */
-  --color-bg-surface: rgba(30, 41, 59, 0.72); /* Default card / glass surface */
-  --color-bg-surface-md: rgba(
-    51,
-    65,
-    85,
-    0.78
-  ); /* Hovered card / raised surface */
-  --color-bg-surface-hi: rgba(
-    71,
-    85,
-    105,
-    0.82
-  ); /* Active, selected, or focused surface */
+  /* Text */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-text-disabled: #cbd5e1;
+  --color-text-inverse: #ffffff;
 
-  /* =========================================================
-     TEXT
-     Use primary sparingly; secondary is the default body text
-  ========================================================= */
+  /* Brand */
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-pressed: #3730a3;
+  --color-primary-soft: rgba(79, 70, 229, 0.10);
+  --color-primary-ring: rgba(79, 70, 229, 0.22);
 
-  --color-text-primary: #f8fafc; /* Headings, important values, primary labels */
-  --color-text-secondary: #cbd5e1; /* Body copy and standard UI text */
-  --color-text-muted: #94a3b8; /* Captions, helper text, metadata */
-  --color-text-disabled: #64748b; /* Disabled text and placeholders */
-  --color-text-inverse: #052e16; /* Text on light green buttons */
+  /* Accent */
+  --color-accent: #06b6d4;
+  --color-accent-hover: #0891b2;
+  --color-accent-soft: rgba(6, 182, 212, 0.10);
+  --color-accent-ring: rgba(6, 182, 212, 0.22);
 
-  /* =========================================================
-     ACCENT / ACTION
-     Green is the primary action color
-  ========================================================= */
+  /* Semantic */
+  --color-success: #16a34a;
+  --color-success-soft: rgba(22, 163, 74, 0.10);
+  --color-warning: #d97706;
+  --color-warning-soft: rgba(217, 119, 6, 0.12);
+  --color-error: #dc2626;
+  --color-error-soft: rgba(220, 38, 38, 0.10);
+  --color-info: #0284c7;
+  --color-info-soft: rgba(2, 132, 199, 0.10);
 
-  --color-accent: #86efac; /* Primary CTA and active state */
-  --color-accent-hover: #4ade80; /* CTA hover state */
-  --color-accent-pressed: #22c55e; /* CTA pressed state */
-  --color-accent-muted: rgba(134, 239, 172, 0.14); /* Soft accent background */
-  --color-accent-glow: rgba(134, 239, 172, 0.28); /* Focus glow / halo */
-  --color-accent-border: rgba(134, 239, 172, 0.48); /* Accent border */
+  /* Borders */
+  --color-border: #e2e8f0;
+  --color-border-subtle: #edf2f7;
+  --color-border-strong: #cbd5e1;
 
-  /* =========================================================
-     BRAND BLUE
-     Use for links, secondary actions, and informational UI
-  ========================================================= */
-
-  --color-brand: #60a5fa; /* Links and secondary brand actions */
-  --color-brand-hover: #93c5fd; /* Link / secondary action hover */
-  --color-brand-muted: rgba(96, 165, 250, 0.14); /* Soft blue background */
-  --color-brand-border: rgba(96, 165, 250, 0.42); /* Blue-tinted border */
-
-  /* =========================================================
-     SEMANTIC COLORS
-     Use softer colors for text/icons and stronger colors for filled actions
-  ========================================================= */
-
-  --color-error: #fca5a5; /* Error text, icon, border */
-  --color-error-strong: #ef4444; /* Destructive button background */
-  --color-error-muted: rgba(252, 165, 165, 0.14); /* Error alert background */
-
-  --color-warning: #fbbf24; /* Warning text, icon, border */
-  --color-warning-strong: #f59e0b; /* Strong warning action */
-  --color-warning-muted: rgba(
-    251,
-    191,
-    36,
-    0.14
-  ); /* Warning alert background */
-
-  --color-info: #38bdf8; /* Info text, icon, border */
-  --color-info-strong: #0ea5e9; /* Strong info action */
-  --color-info-muted: rgba(56, 189, 248, 0.14); /* Info alert background */
-
-  --color-success: #86efac; /* Success text, icon, border */
-  --color-success-strong: #22c55e; /* Strong success action */
-  --color-success-muted: rgba(
-    134,
-    239,
-    172,
-    0.14
-  ); /* Success alert background */
-
-  /* =========================================================
-     BORDERS / DIVIDERS
-  ========================================================= */
-
-  --color-border-glass: rgba(226, 232, 240, 0.14); /* Card and glass borders */
-  --color-border-subtle: rgba(
-    226,
-    232,
-    240,
-    0.08
-  ); /* Dividers and separators */
-  --color-border-strong: rgba(
-    226,
-    232,
-    240,
-    0.22
-  ); /* Inputs and active panels */
-  --color-border-accent: rgba(
-    134,
-    239,
-    172,
-    0.52
-  ); /* Focused / selected border */
-
-  /* =========================================================
-     FOCUS / SELECTION
-  ========================================================= */
-
-  --color-focus-ring: #86efac;
-  --color-selection-bg: rgba(134, 239, 172, 0.22);
-  --color-selection-text: #f8fafc;
-
-  /* =========================================================
-     BUTTON TOKENS
-  ========================================================= */
-
-  --color-button-primary-bg: #86efac;
-  --color-button-primary-bg-hover: #4ade80;
-  --color-button-primary-bg-active: #22c55e;
-  --color-button-primary-text: #052e16;
-
-  --color-button-secondary-bg: rgba(96, 165, 250, 0.14);
-  --color-button-secondary-bg-hover: rgba(96, 165, 250, 0.22);
-  --color-button-secondary-text: #bfdbfe;
-
-  --color-button-danger-bg: #ef4444;
-  --color-button-danger-bg-hover: #dc2626;
-  --color-button-danger-text: #ffffff;
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 10px 24px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 18px 48px rgba(15, 23, 42, 0.10);
 }
 ```
 
-### Mesh Gradient Background
+### Page Background
 
-The page canvas uses a layered radial-gradient mesh to simulate ambient studio lighting. Apply this only to the `<body>` or root app layout. Do **not** repeat this background inside cards, sections, modals, or nested components.
-
-```css
-body {
-  background-color: var(--color-bg-base);
-  background-image:
-    radial-gradient(
-      ellipse 80% 60% at 10% 20%,
-      rgba(134, 239, 172, 0.08) 0%,
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse 60% 80% at 90% 80%,
-      rgba(96, 165, 250, 0.18) 0%,
-      transparent 55%
-    ),
-    radial-gradient(
-      ellipse 50% 40% at 50% 10%,
-      rgba(134, 239, 172, 0.05) 0%,
-      transparent 50%
-    );
-  background-attachment: fixed;
-}
-```
-
-> **Rule:** Keep the mesh background at the page level only. Glass surfaces should sit above it so the background can subtly bleed through and create depth.
-
-### Recommended Usage
+Use a subtle arctic gradient on the root layout only. Do not repeat it inside cards.
 
 ```css
 body {
   color: var(--color-text-secondary);
-  background-color: var(--color-bg-base);
-}
-
-h1,
-h2,
-h3,
-.important-number {
-  color: var(--color-text-primary);
-}
-
-.caption,
-.metadata,
-.helper-text {
-  color: var(--color-text-muted);
-}
-
-.card {
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border-glass);
-  backdrop-filter: blur(16px);
-}
-
-.card:hover {
-  background: var(--color-bg-surface-md);
-}
-
-.card[data-active="true"] {
-  background: var(--color-bg-surface-hi);
-  border-color: var(--color-border-accent);
-}
-
-.button-primary {
-  color: var(--color-button-primary-text);
-  background: var(--color-button-primary-bg);
-}
-
-.button-primary:hover {
-  background: var(--color-button-primary-bg-hover);
-}
-
-.button-primary:active {
-  background: var(--color-button-primary-bg-active);
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 3px;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(79, 70, 229, 0.08), transparent 28rem),
+    radial-gradient(circle at 95% 10%, rgba(6, 182, 212, 0.10), transparent 26rem),
+    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  background-attachment: fixed;
 }
 ```
 
-### Design Rules
+### Color Rules
 
-- Use `--color-bg-base` as the main page background.
-- Use `--color-bg-deep` for overlays, drawers, and modal backdrops.
-- Use `--color-bg-surface` for cards and glass panels.
-- Use `--color-text-secondary` for normal body text.
-- Use `--color-text-primary` only for headings, key numbers, and high-emphasis labels.
-- Use `--color-accent` for primary actions, success states, and active navigation.
-- Use `--color-brand` for links, secondary actions, and informational emphasis.
-- Do not use the mesh gradient inside individual components.
-- Do not use disabled text for important information.
-- Do not place saturated semantic colors on large background areas; use the muted variants instead.
+- Use `--color-bg` for the main canvas.
+- Use `--color-surface` for cards, navigation, drawers, and modals.
+- Use `--color-primary` for the most important action only.
+- Use `--color-accent` for hover lines, active chips, chart highlights, and small decorative details.
+- Use semantic soft backgrounds for alerts instead of saturated blocks.
+- Never use cyan and indigo at full saturation in the same large surface.
+- Avoid pure black text. Use `Ink Deep` for a softer professional look.
 
 ---
 
@@ -293,141 +166,155 @@ h3,
 
 ### Font Stack
 
+Use a variable font stack for performance and flexibility.
+
 ```css
-/* Display / Headings — Geometric authority */
---font-display: "Syne", "Space Grotesk", sans-serif;
-
-/* Body / UI — Clean legibility at small sizes */
---font-body: "DM Sans", "Geist", sans-serif;
-
-/* Mono / Data — Numbers, codes, tokens */
---font-mono: "JetBrains Mono", "Fira Code", monospace;
+:root {
+  --font-display: "Plus Jakarta Sans", "Inter Tight", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+}
 ```
 
-> Install via Google Fonts or Fontsource. Syne is the differentiator — its wide geometric letterforms give the dashboard a tech-editorial feel that Inter cannot.
+### Fluid Type Scale
 
-### Type Scale
+Use `clamp()` for responsive typography. This avoids hard jumps between breakpoints and keeps headings balanced across screens.
 
 ```css
---text-xs: 0.75rem; /* 12px — badges, timestamps */
---text-sm: 0.875rem; /* 14px — labels, secondary info */
---text-base: 1rem; /* 16px — body, table cells */
---text-lg: 1.125rem; /* 18px — card subtitles */
---text-xl: 1.25rem; /* 20px — section headings */
---text-2xl: 1.5rem; /* 24px — card metric values */
---text-3xl: 1.875rem; /* 30px — dashboard hero numbers */
---text-4xl: 2.25rem; /* 36px — page headings */
---text-5xl: 3rem; /* 48px — total token hero stat */
+:root {
+  --text-xs: clamp(0.75rem, 0.72rem + 0.10vw, 0.8125rem);
+  --text-sm: clamp(0.875rem, 0.84rem + 0.12vw, 0.9375rem);
+  --text-base: clamp(1rem, 0.95rem + 0.18vw, 1.0625rem);
+  --text-lg: clamp(1.125rem, 1.04rem + 0.28vw, 1.25rem);
+  --text-xl: clamp(1.25rem, 1.12rem + 0.42vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.28rem + 0.78vw, 2rem);
+  --text-3xl: clamp(1.875rem, 1.48rem + 1.35vw, 2.75rem);
+  --text-4xl: clamp(2.25rem, 1.65rem + 2vw, 4.5rem);
+}
+```
+
+### Typography Classes
+
+```css
+.text-hero {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  line-height: 0.98;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--color-text-primary);
+}
+
+.text-section-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--color-text-primary);
+}
+
+.text-card-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--color-text-primary);
+}
+
+.text-body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.65;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+.text-label {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.text-metric {
+  font-family: var(--font-mono);
+  font-size: clamp(2rem, 1.5rem + 2vw, 4rem);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  color: var(--color-text-primary);
+}
 ```
 
 ### Type Rules
 
-```css
-/* Hero metric — token count, etc. */
-.text-metric-hero {
-  font-family: var(--font-mono);
-  font-size: var(--text-5xl);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--color-accent);
-  line-height: 1;
-}
-
-/* Card heading */
-.text-card-heading {
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  letter-spacing: -0.01em;
-}
-
-/* Label / metadata */
-.text-label {
-  font-family: var(--font-body);
-  font-size: var(--text-xs);
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-```
+- H1 should be large but not decorative.
+- Body text line-height should stay between `1.55` and `1.7`.
+- Metric numbers use mono for alignment and data confidence.
+- Labels are uppercase only when short: max 2–3 words.
+- Avoid more than two font families in actual UI rendering.
 
 ---
 
-## 4. Glassmorphism Specification
+## 4. Layout Foundation
 
-### Core Glass Recipe
+### Spacing Scale
+
+All layout values must use multiples of 8px.
+
+| Token | Value | Usage |
+| --- | ---: | --- |
+| `--space-1` | 4px | Micro gap, icon offset |
+| `--space-2` | 8px | Small chip padding |
+| `--space-3` | 12px | Button inner gap |
+| `--space-4` | 16px | Mobile card padding |
+| `--space-6` | 24px | Desktop card padding |
+| `--space-8` | 32px | Bento grid gap / section padding |
+| `--space-12` | 48px | Page section gap |
+| `--space-16` | 64px | Large page spacing |
+
+### Radius
 
 ```css
-/* === BASE GLASS CARD === */
-.glass-card {
-  background: rgba(45, 55, 72, 0.25);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.25),
-    0 1px 0px rgba(255, 255, 255, 0.05) inset;
-}
-
-/* === HOVER STATE === */
-.glass-card:hover {
-  background: rgba(45, 55, 72, 0.4);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow:
-    0 8px 40px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(107, 206, 83, 0.12),
-    0 1px 0px rgba(255, 255, 255, 0.08) inset;
-  transform: translateY(-2px);
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* === ACCENT GLASS (active/highlighted card) === */
-.glass-card--accent {
-  background: rgba(107, 206, 83, 0.08);
-  border-color: rgba(107, 206, 83, 0.25);
-  box-shadow:
-    0 4px 24px rgba(107, 206, 83, 0.1),
-    0 0 40px rgba(107, 206, 83, 0.05) inset;
-}
-
-/* === ELEVATED GLASS (modals, dropdowns) === */
-.glass-elevated {
-  background: rgba(45, 55, 72, 0.7);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+:root {
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
 }
 ```
 
-### Glass Variants Reference
+Rules:
 
-| Variant              | Use Case                   | Opacity       | Blur |
-| -------------------- | -------------------------- | ------------- | ---- |
-| `glass-card`         | Standard bento cards       | 25%           | 16px |
-| `glass-card--accent` | Token/tier highlight cards | 8% green tint | 16px |
-| `glass-card:hover`   | Interactive card hover     | 40%           | 16px |
-| `glass-elevated`     | Modals, command palette    | 70%           | 24px |
-| `glass-nav`          | Top navbar                 | 15%           | 20px |
-| `glass-tooltip`      | Tooltips                   | 80%           | 12px |
+- Cards: `16px`
+- Modals / drawers: `24px`
+- Buttons / inputs: `12px`
+- Chips / badges: `9999px`
+- Avoid ultra-rounded cards unless the component is intentionally playful.
 
-### Navbar Glass
+### Border & Shadow
 
 ```css
-.glass-nav {
-  background: rgba(30, 41, 56, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  position: sticky;
-  top: 0;
-  z-index: 50;
+.card-border {
+  border: 1px solid var(--color-border);
+}
+
+.card-shadow {
+  box-shadow: var(--shadow-sm);
+}
+
+.card-shadow-hover {
+  box-shadow: var(--shadow-md);
 }
 ```
+
+Use shadows only for elevated or interactive surfaces. Static cards can rely on border and background.
 
 ---
 
@@ -435,236 +322,30 @@ h3,
 
 ### Grid Philosophy
 
-The Bento Grid treats the dashboard as a **magazine layout** — not a list of cards. Each card has semantic size based on the importance of its content, not arbitrary column counts.
+A bento grid is not a generic card wall. It is a hierarchy system. Important information receives larger cards and stronger placement.
 
 ### Base Grid
 
 ```css
 .bento-grid {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-auto-rows: minmax(120px, auto);
-  gap: 16px;
-  padding: 24px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(1rem, 1.5vw, 2rem);
+  container-type: inline-size;
 }
-```
 
-### Standard Bento Sizes (Tailwind)
-
-```
-col-span-12        → Full width    — page title, primary alerts
-col-span-8         → 2/3 width     — main activity chart, upload table
-col-span-6         → Half width    — token summary, tier progress
-col-span-4         → 1/3 width     — quick stats (tokens, tier badge, eligibility)
-col-span-3         → 1/4 width     — micro-stats, streak counters
-col-span-4 row-span-2 → Tall card  — redemption history, team leaderboard
-```
-
-### Employee Dashboard Layout Blueprint
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  col-12 · WELCOME BANNER + period status                │
-├──────────────┬──────────────┬───────────────────────────┤
-│  col-4       │  col-4       │  col-4                    │
-│  TOTAL       │  CURRENT     │  CAN REDEEM?              │
-│  TOKENS      │  TIER        │  YES / NO + reason        │
-│  [hero num]  │  [badge]     │  [CTA button]             │
-├──────────────┴──────────────┼───────────────────────────┤
-│  col-8 · TOKEN HISTORY      │  col-4 · UPCOMING         │
-│  Sparkline or bar chart     │  REWARDS                  │
-│  over last 6 months         │  Scrollable mini-catalog  │
-│                             │  (row-span-2)             │
-├─────────────────────────────┤                           │
-│  col-8 · TIER PROGRESS BAR  │                           │
-│  Progress toward next tier  │                           │
-│  + milestone breakdown      │                           │
-└─────────────────────────────┴───────────────────────────┘
-```
-
-### Admin Dashboard Layout Blueprint
-
-```
-┌──────────────────────────────────────────────────────────┐
-│  col-12 · ACTIVE PERIOD STATUS + snapshot indicator      │
-├──────────┬───────────┬───────────┬───────────────────────┤
-│ col-3    │ col-3     │ col-3     │ col-3                 │
-│ Uploads  │ Pending   │ Active    │ This Period           │
-│ This Mo  │ Redeem    │ Partners  │ Tokens Issued         │
-├──────────┴───────────┴───────────┴───────────────────────┤
-│  col-8 · RECENT UPLOAD ACTIVITY (table)                  │
-│  col-4 · QUICK ACTIONS panel (Upload / Process / Export) │
-├──────────────────────────────────────────────────────────┤
-│  col-12 · REDEMPTION QUEUE (tabbed table)                │
-└──────────────────────────────────────────────────────────┘
-```
-
-### Bento Card Anatomy
-
-```
-┌─────────────────────────────────────┐  ← 1px white/10% border
-│  [ICON]  Card Label          [···]  │  ← Label (text-label) + overflow menu
-│                                     │
-│  ████████████████                   │  ← Hero metric (text-metric-hero)
-│  Sub-value or delta badge           │
-│                                     │
-│  ─────────────────────────────────  │  ← 1px border-subtle divider
-│  Supporting info or sparkline       │  ← text-secondary
-└─────────────────────────────────────┘  ← border-radius: 16px
-```
-
----
-
-## 6. Micro-Interactions & Motion
-
-### Motion Principles
-
-1. **Purposeful** — every animation communicates a state change, not decoration.
-2. **Fast defaults** — most transitions under 250ms; enter animations up to 400ms.
-3. **Spring physics** — use `cubic-bezier(0.34, 1.56, 0.64, 1)` for elements that "arrive" (cards, modals).
-4. **Ease-out exits** — departing elements use `cubic-bezier(0.4, 0, 1, 1)` — no bounce on close.
-
-### Easing Reference
-
-```css
---ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy arrival */
---ease-smooth: cubic-bezier(0.4, 0, 0.2, 1); /* Standard smooth */
---ease-in: cubic-bezier(0.4, 0, 1, 1); /* Departing elements */
---ease-out: cubic-bezier(0, 0, 0.2, 1); /* Arriving elements */
-```
-
-### Button Hover States
-
-```css
-/* === PRIMARY CTA BUTTON (Green) === */
-.btn-primary {
-  background: var(--color-accent);
-  color: #0f172a;
-  font-family: var(--font-display);
-  font-weight: 600;
-  padding: 10px 24px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
+.bento-card {
   position: relative;
   overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 94%, white 6%);
+  box-shadow: var(--shadow-xs);
   transition:
-    background 0.2s var(--ease-smooth),
-    box-shadow 0.2s var(--ease-smooth),
-    transform 0.15s var(--ease-spring);
-}
-
-.btn-primary::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0);
-  transition: background 0.2s var(--ease-smooth);
-}
-
-.btn-primary:hover {
-  background: var(--color-accent-hover);
-  box-shadow:
-    0 0 0 4px var(--color-accent-glow),
-    0 4px 16px rgba(107, 206, 83, 0.35);
-  transform: translateY(-1px);
-}
-
-.btn-primary:hover::before {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.btn-primary:active {
-  transform: translateY(0) scale(0.98);
-  box-shadow: 0 0 0 2px var(--color-accent-glow);
-  transition-duration: 0.08s;
-}
-
-/* === GHOST BUTTON (Glass surface) === */
-.btn-ghost {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border-glass);
-  padding: 10px 24px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition:
-    background 0.2s var(--ease-smooth),
-    border-color 0.2s var(--ease-smooth),
-    transform 0.15s var(--ease-spring);
-}
-
-.btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-}
-
-.btn-ghost:active {
-  transform: scale(0.97);
-  transition-duration: 0.08s;
-}
-
-/* === DESTRUCTIVE BUTTON === */
-.btn-danger {
-  background: rgba(239, 68, 68, 0.15);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  transition: all 0.2s var(--ease-smooth);
-}
-
-.btn-danger:hover {
-  background: rgba(239, 68, 68, 0.25);
-  border-color: rgba(239, 68, 68, 0.5);
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
-}
-
-/* === ICON BUTTON === */
-.btn-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition:
-    background 0.15s var(--ease-smooth),
-    color 0.15s var(--ease-smooth),
-    border-color 0.15s var(--ease-smooth),
-    transform 0.15s var(--ease-spring);
-}
-
-.btn-icon:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--color-border-glass);
-  color: var(--color-text-primary);
-  transform: scale(1.05);
-}
-```
-
-### Card Hover (Full Specification)
-
-```css
-.bento-card {
-  /* Base glass */
-  background: var(--color-bg-surface);
-  backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid var(--color-border-glass);
-  border-radius: 16px;
-
-  /* Transition all interactive properties */
-  transition:
-    background 0.25s var(--ease-smooth),
-    border-color 0.25s var(--ease-smooth),
-    box-shadow 0.25s var(--ease-smooth),
-    transform 0.25s var(--ease-spring);
-
-  will-change: transform;
-  cursor: default;
+    transform 220ms var(--ease-smooth),
+    border-color 220ms var(--ease-smooth),
+    box-shadow 220ms var(--ease-smooth),
+    background 220ms var(--ease-smooth);
 }
 
 .bento-card[data-interactive="true"] {
@@ -672,398 +353,559 @@ col-span-4 row-span-2 → Tall card  — redemption history, team leaderboard
 }
 
 .bento-card[data-interactive="true"]:hover {
-  background: var(--color-bg-surface-md);
-  border-color: rgba(107, 206, 83, 0.2);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(107, 206, 83, 0.08);
   transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--color-primary) 32%, var(--color-border));
+  box-shadow: var(--shadow-md);
 }
 
-/* Subtle green top-border glow on hover */
-.bento-card[data-interactive="true"]:hover::before {
+.bento-card[data-featured="true"]::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 10%;
-  right: 10%;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-accent),
-    transparent
-  );
-  opacity: 0.6;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
 }
 ```
 
-### Form Input States
+### Bento Size Utilities
 
 ```css
-/* Base input */
-.input-field {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--color-border-glass);
-  border-radius: 10px;
-  color: var(--color-text-primary);
-  padding: 10px 14px;
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  width: 100%;
-  transition:
-    background 0.2s var(--ease-smooth),
-    border-color 0.2s var(--ease-smooth),
-    box-shadow 0.2s var(--ease-smooth);
+.bento-span-12 { grid-column: span 12; }
+.bento-span-8 { grid-column: span 8; }
+.bento-span-6 { grid-column: span 6; }
+.bento-span-4 { grid-column: span 4; }
+.bento-span-3 { grid-column: span 3; }
+.bento-row-2 { grid-row: span 2; }
+
+@media (max-width: 1023px) {
+  .bento-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .bento-span-8,
+  .bento-span-6,
+  .bento-span-4,
+  .bento-span-3 { grid-column: span 6; }
 }
 
-.input-field::placeholder {
-  color: var(--color-text-disabled);
-}
-
-/* Focus */
-.input-field:focus {
-  outline: none;
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px var(--color-accent-muted);
-}
-
-/* Error */
-.input-field--error {
-  border-color: rgba(239, 68, 68, 0.6);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
-}
-
-/* Filled */
-.input-field:not(:placeholder-shown) {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.14);
+@media (max-width: 639px) {
+  .bento-grid { grid-template-columns: 1fr; }
+  .bento-span-12,
+  .bento-span-8,
+  .bento-span-6,
+  .bento-span-4,
+  .bento-span-3 { grid-column: 1 / -1; }
 }
 ```
 
-### Row Hover (Tables)
+### Employee Dashboard Blueprint
 
-```css
-.table-row {
-  transition: background 0.12s var(--ease-smooth);
-  cursor: pointer;
-}
-
-.table-row:hover {
-  background: rgba(107, 206, 83, 0.05);
-}
-
-.table-row:hover .table-cell-action {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.table-cell-action {
-  opacity: 0;
-  transform: translateX(8px);
-  transition:
-    opacity 0.15s var(--ease-smooth),
-    transform 0.15s var(--ease-out);
-}
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ col-12 · Welcome Banner + Current Period                      │
+├──────────────────────┬──────────────────────┬────────────────┤
+│ col-4 · Total Tokens │ col-4 · Current Tier │ col-4 · Redeem? │
+│ large metric         │ badge + progress     │ CTA + reason    │
+├──────────────────────┴──────────────────────┬────────────────┤
+│ col-8 · Token History Chart                  │ col-4 row-2    │
+│ monthly trend + delta                         │ Reward Preview │
+├──────────────────────────────────────────────┤ quick catalog   │
+│ col-8 · Tier Progress                         │                │
+│ milestones + next requirement                 │                │
+└──────────────────────────────────────────────┴────────────────┘
 ```
 
-### Status Badge Pulse (Active / Live indicators)
+### Admin Dashboard Blueprint
 
-```css
-.badge-live {
-  position: relative;
-}
-
-.badge-live::before {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  animation: pulse-ring 2s ease-out infinite;
-}
-
-@keyframes pulse-ring {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.8;
-  }
-  70% {
-    transform: scale(1.6);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1.6);
-    opacity: 0;
-  }
-}
+```text
+┌───────────────────────────────────────────────────────────────┐
+│ col-12 · Active Period Status + Snapshot                       │
+├───────────────┬───────────────┬───────────────┬───────────────┤
+│ col-3 Uploads │ col-3 Pending │ col-3 Active  │ col-3 Tokens  │
+├───────────────┴───────────────┴───────────────┬───────────────┤
+│ col-8 · Recent Upload Activity Table           │ col-4 Actions │
+├────────────────────────────────────────────────┴───────────────┤
+│ col-12 · Redemption Queue                                      │
+└────────────────────────────────────────────────────────────────┘
 ```
 
-### Number Count-Up Animation
+### Bento Card Anatomy
 
-Use on hero metrics (total tokens, etc.) when data loads.
-
-```typescript
-// React hook
-function useCountUp(target: number, duration = 1200) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    const startTime = performance.now();
-    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
-
-    const frame = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      setCount(Math.floor(easeOut(progress) * target));
-      if (progress < 1) requestAnimationFrame(frame);
-    };
-
-    requestAnimationFrame(frame);
-  }, [target, duration]);
-
-  return count;
-}
+```text
+┌───────────────────────────────────────┐
+│ [Icon] Label                    [···] │
+│                                       │
+│ Main metric / title                   │
+│ Supporting explanation                │
+│                                       │
+│ ───────────────────────────────────── │
+│ Footer insight, progress, or CTA      │
+└───────────────────────────────────────┘
 ```
 
 ---
 
-## 7. Component Library
+## 6. Component Library
 
-### Tier Badge
+### Primary Button
+
+```css
+.btn-primary {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  font: 700 var(--text-sm) / 1 var(--font-body);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.18);
+  transition:
+    transform 180ms var(--ease-smooth),
+    background 180ms var(--ease-smooth),
+    box-shadow 180ms var(--ease-smooth);
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.24);
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+  background: var(--color-primary-pressed);
+}
+
+.btn-primary:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+```
+
+### Secondary Button
+
+```css
+.btn-secondary {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: 700 var(--text-sm) / 1 var(--font-body);
+  box-shadow: var(--shadow-xs);
+  transition:
+    transform 180ms var(--ease-smooth),
+    border-color 180ms var(--ease-smooth),
+    background 180ms var(--ease-smooth),
+    box-shadow 180ms var(--ease-smooth);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-muted);
+  box-shadow: var(--shadow-sm);
+}
+```
+
+### Metric Card
 
 ```tsx
-type Tier = "Bronze" | "Silver" | "Gold" | "Platinum";
+interface MetricCardProps {
+  label: string;
+  value: string;
+  description?: string;
+  trend?: string;
+  featured?: boolean;
+}
 
-const tierConfig: Record<Tier, { color: string; bg: string; glow: string }> = {
-  Bronze: {
-    color: "#CD7F32",
-    bg: "rgba(205, 127, 50, 0.15)",
-    glow: "rgba(205, 127, 50, 0.30)",
-  },
-  Silver: {
-    color: "#C0C0C0",
-    bg: "rgba(192, 192, 192, 0.15)",
-    glow: "rgba(192, 192, 192, 0.30)",
-  },
-  Gold: {
-    color: "#FFD700",
-    bg: "rgba(255, 215, 0, 0.15)",
-    glow: "rgba(255, 215, 0, 0.30)",
-  },
-  Platinum: {
-    color: "#6BCE53",
-    bg: "rgba(107, 206, 83, 0.15)",
-    glow: "rgba(107, 206, 83, 0.30)",
-  },
-};
-
-// Style:
-// border-radius: 99px; padding: 4px 12px; font-size: var(--text-xs);
-// font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
-// background: tierConfig[tier].bg; color: tierConfig[tier].color;
-// box-shadow: 0 0 12px tierConfig[tier].glow;
+export function MetricCard({ label, value, description, trend, featured }: MetricCardProps) {
+  return (
+    <section
+      className="bento-card p-6"
+      data-featured={featured ? "true" : undefined}
+      aria-label={`${label}: ${value}`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-label">{label}</p>
+        {trend ? <span className="status-chip status-chip--success">{trend}</span> : null}
+      </div>
+      <p className="text-metric mt-6">{value}</p>
+      {description ? <p className="text-body mt-3 max-w-prose">{description}</p> : null}
+    </section>
+  );
+}
 ```
 
-### Redemption Status Chip
+### Status Chip
 
-```
-Status              Background                  Text Color
-─────────────────────────────────────────────────────────
-Draft               rgba(148, 163, 184, 0.15)   #94A3B8
-Pending Verify      rgba(245, 158, 11, 0.15)    #FCD34D
-Verified            rgba(59, 130, 246, 0.15)    #93C5FD
-Rejected            rgba(239, 68, 68, 0.15)     #FCA5A5
-Purchased           rgba(107, 206, 83, 0.10)    #86EFAC
-Pickup Scheduled    rgba(107, 206, 83, 0.18)    #6BCE53
-Completed           rgba(107, 206, 83, 0.25)    #6BCE53
-Cancelled           rgba(71, 85, 105, 0.25)     #475569
+```css
+.status-chip {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: var(--radius-full);
+  padding: 0.25rem 0.625rem;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.status-chip--success {
+  color: var(--color-success);
+  background: var(--color-success-soft);
+  border-color: color-mix(in srgb, var(--color-success) 22%, transparent);
+}
+
+.status-chip--warning {
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
+  border-color: color-mix(in srgb, var(--color-warning) 22%, transparent);
+}
+
+.status-chip--error {
+  color: var(--color-error);
+  background: var(--color-error-soft);
+  border-color: color-mix(in srgb, var(--color-error) 22%, transparent);
+}
+
+.status-chip--info {
+  color: var(--color-info);
+  background: var(--color-info-soft);
+  border-color: color-mix(in srgb, var(--color-info) 22%, transparent);
+}
 ```
 
-### Progress Bar (Tier Advancement)
+### Form Input
+
+```css
+.input-field {
+  min-height: 44px;
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: 0.75rem 0.875rem;
+  color: var(--color-text-primary);
+  font: 500 var(--text-sm) / 1.35 var(--font-body);
+  transition:
+    border-color 180ms var(--ease-smooth),
+    box-shadow 180ms var(--ease-smooth),
+    background 180ms var(--ease-smooth);
+}
+
+.input-field::placeholder {
+  color: var(--color-text-muted);
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-primary-ring);
+}
+
+.input-field[aria-invalid="true"] {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 4px var(--color-error-soft);
+}
+```
+
+### Progress Bar
 
 ```css
 .progress-track {
-  height: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 99px;
+  height: 8px;
   overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-subtle);
 }
 
 .progress-fill {
   height: 100%;
-  border-radius: 99px;
-  background: linear-gradient(90deg, #57b241, #6bce53, #8ee56c);
-  box-shadow: 0 0 8px rgba(107, 206, 83, 0.5);
-  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-  position: relative;
-}
-
-/* Shimmer sweep on progress bar */
-.progress-fill::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.3) 50%,
-    transparent 70%
-  );
-  animation: shimmer-sweep 2s ease-in-out infinite;
-  background-size: 200% 100%;
-}
-
-@keyframes shimmer-sweep {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-```
-
-### Upload Drop Zone
-
-```css
-.upload-zone {
-  border: 2px dashed var(--color-border-glass);
-  border-radius: 16px;
-  padding: 48px 24px;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.02);
-  transition:
-    border-color 0.2s var(--ease-smooth),
-    background 0.2s var(--ease-smooth);
-  cursor: pointer;
-}
-
-.upload-zone:hover,
-.upload-zone[data-dragging="true"] {
-  border-color: var(--color-accent);
-  background: var(--color-accent-muted);
-  box-shadow: 0 0 0 4px var(--color-accent-glow);
-}
-
-/* Icon bounce on hover */
-.upload-zone:hover .upload-icon {
-  animation: bounce-gentle 0.6s var(--ease-spring);
-}
-
-@keyframes bounce-gentle {
-  0% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-8px);
-  }
-  70% {
-    transform: translateY(-3px);
-  }
-  100% {
-    transform: translateY(0);
-  }
-}
-```
-
-### Notification Toast
-
-```css
-.toast {
-  background: rgba(45, 55, 72, 0.9);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--color-border-glass);
-  border-radius: 12px;
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 300px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
-
-  /* Entrance animation */
-  animation: toast-in 0.35s var(--ease-spring) forwards;
-}
-
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes toast-out {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.96);
-  }
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  transition: width 700ms var(--ease-spring);
 }
 ```
 
 ---
 
-## 8. Breadcrumb Navigation
+## 7. Micro-Interactions & Motion
 
-Breadcrumbs communicate page depth and allow users to quickly navigate back. Every page below the root dashboard must show a breadcrumb.
+### Motion Tokens
 
-### Visual Design
-
+```css
+:root {
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 140ms;
+  --duration-base: 220ms;
+  --duration-slow: 360ms;
+}
 ```
-Dashboard  /  Monthly Uploads  /  Upload #42 — January 2026
+
+### Motion Rules
+
+- Animate `transform` and `opacity` by default.
+- Avoid animating `width`, `height`, `top`, `left`, and layout-heavy properties unless using controlled layout transitions.
+- Keep most interactions between `140ms` and `260ms`.
+- Use `prefers-reduced-motion` to disable non-essential movement.
+- No infinite decorative animations except skeleton shimmer and live indicators.
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 ```
 
-- Separator: `/` in `--color-text-disabled`, never `>` or `›`
-- Active (current page): `--color-text-primary`, not a link
-- Ancestors: `--color-text-secondary`, underlined on hover → `--color-text-primary`
-- Container: sits below `<nav>` and above the page `<h1>`
-
-### Implementation (React + Tailwind)
+### Tactile Button with Motion
 
 ```tsx
-interface BreadcrumbItem {
-  label: string;
-  href?: string;
+import { motion } from "motion/react";
+
+export function TactileButton({ children, ...props }) {
+  return (
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.96 }}
+      transition={{ type: "spring", stiffness: 420, damping: 24 }}
+      className="btn-primary"
+      {...props}
+    >
+      {children}
+    </motion.button>
+  );
+}
+```
+
+### Bento Card Entrance
+
+```tsx
+const gridVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06 },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.32, ease: [0, 0, 0.2, 1] },
+  },
+};
+```
+
+### Shared Element Transitions
+
+Use `layoutId` for transitions between list/detail views, especially reward catalog cards.
+
+```tsx
+<motion.img layoutId={`reward-image-${reward.id}`} src={reward.imageUrl} alt="" />
+```
+
+Use shared elements only for meaningful context continuity. Do not apply `layoutId` everywhere.
+
+---
+
+## 8. Responsive Web App Rules
+
+### Breakpoints
+
+```text
+sm  640px   large phone / small tablet
+md  768px   tablet
+lg  1024px  desktop layout starts
+xl  1280px  wide desktop
+2xl 1536px  dashboard max-width
+```
+
+### Container Queries
+
+Use container queries for reusable cards that can live in different contexts.
+
+```css
+.card-container {
+  container-type: inline-size;
 }
 
-function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
+@container (min-width: 420px) {
+  .metric-card-layout {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+  }
+}
+```
+
+### Touch-First Rules
+
+- Minimum touch target: `44px`, recommended `48px`.
+- Important mobile actions should be reachable near the bottom half of the screen.
+- Hover states must not be the only way to reveal critical actions.
+- Swipe actions need visible fallback buttons.
+
+### Mobile Bento Priority
+
+On mobile, order cards by task importance:
+
+1. Total Tokens
+2. Eligibility / Can Redeem
+3. Current Tier
+4. Next Tier Progress
+5. Reward Preview
+6. Token History Chart
+7. Activity Tables
+
+---
+
+## 9. Skeleton Screens
+
+Skeletons must mirror the final layout. Avoid full-page spinners for data-heavy views.
+
+### Skeleton Base
+
+```css
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: #e2e8f0;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.72),
+    transparent
+  );
+  animation: skeleton-sweep 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+```
+
+### Dashboard Skeleton
+
+```tsx
+export function DashboardSkeleton() {
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-2 py-3">
-      {items.map((item, i) => {
-        const isLast = i === items.length - 1;
+    <div role="status" aria-label="Loading loyalty dashboard" aria-busy="true" className="bento-grid">
+      <div className="bento-card bento-span-12 p-6 space-y-3">
+        <div className="skeleton h-7 w-72" />
+        <div className="skeleton h-4 w-96 max-w-full" />
+      </div>
+
+      {[0, 1, 2].map((item) => (
+        <div key={item} className="bento-card bento-span-4 p-6 space-y-5">
+          <div className="skeleton h-3 w-24" />
+          <div className="skeleton h-12 w-40" />
+          <div className="skeleton h-4 w-56 max-w-full" />
+        </div>
+      ))}
+
+      <div className="bento-card bento-span-8 p-6 space-y-4">
+        <div className="skeleton h-5 w-44" />
+        <div className="skeleton h-64 w-full rounded-xl" />
+      </div>
+
+      <div className="bento-card bento-span-4 bento-row-2 p-6 space-y-4">
+        <div className="skeleton h-5 w-40" />
+        {[0, 1, 2, 3].map((item) => (
+          <div key={item} className="flex items-center gap-3">
+            <div className="skeleton h-12 w-12 rounded-xl" />
+            <div className="flex-1 space-y-2">
+              <div className="skeleton h-4 w-full" />
+              <div className="skeleton h-3 w-2/3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## 10. Navigation & Breadcrumbs
+
+### Sticky Top Navigation
+
+Use a clean white navigation bar with subtle blur only when content scrolls underneath.
+
+```css
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+}
+```
+
+### Breadcrumb Design
+
+```text
+Dashboard / Rewards / Item Name
+```
+
+Rules:
+
+- Separator: `/`
+- Ancestors: `--color-text-secondary`
+- Current page: `--color-text-primary`
+- Hover: underline and primary text color
+- No scale or movement on breadcrumb links
+
+```tsx
+function Breadcrumb({ items }: { items: { label: string; href?: string }[] }) {
+  return (
+    <nav aria-label="Breadcrumb" className="flex items-center gap-2 py-3 text-sm">
+      {items.map((item, index) => {
+        const isLast = index === items.length - 1;
         return (
-          <React.Fragment key={i}>
-            {i > 0 && (
-              <span className="text-[--color-text-disabled] text-sm select-none">
-                /
-              </span>
-            )}
+          <React.Fragment key={item.label}>
+            {index > 0 && <span className="text-slate-300">/</span>}
             {isLast ? (
-              <span
-                className="text-sm font-medium text-[--color-text-primary]"
-                aria-current="page"
-              >
+              <span aria-current="page" className="font-semibold text-slate-950">
                 {item.label}
               </span>
             ) : (
-              <a
-                href={item.href}
-                className="
-                  text-sm text-[--color-text-secondary]
-                  underline-offset-2 hover:underline
-                  hover:text-[--color-text-primary]
-                  transition-colors duration-150
-                "
-              >
+              <a href={item.href} className="text-slate-500 underline-offset-4 hover:text-slate-950 hover:underline">
                 {item.label}
               </a>
             )}
@@ -1075,318 +917,29 @@ function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
 }
 ```
 
-### Micro-Interaction Rule
-
-Each breadcrumb ancestor link has:
-
-- `transition: color 150ms ease`
-- On hover: text color transitions from secondary → primary
-- On hover: `text-decoration: underline` appears (do not use `border-bottom` — breaks baseline)
-- No transform/scale — breadcrumbs must feel stable, not playful
-
-### Breadcrumb by Role
-
-| Route                     | Breadcrumb                              |
-| ------------------------- | --------------------------------------- |
-| `/dashboard`              | Dashboard                               |
-| `/rewards`                | Dashboard / Rewards                     |
-| `/rewards/[id]`           | Dashboard / Rewards / Item Name         |
-| `/admin/uploads`          | Admin / Monthly Uploads                 |
-| `/admin/uploads/[id]`     | Admin / Monthly Uploads / Upload #42    |
-| `/admin/redemptions/[id]` | Admin / Redemption Requests / REQ-0042  |
-| `/team/members/[id]`      | Team Overview / Members / Employee Name |
-
 ---
 
-## 9. Skeleton Screens
+## 11. Accessibility Standards
 
-Skeleton screens must be used on every async data view. Never use a spinner alone for content areas.
+Target WCAG 2.2 AA.
 
-### Design Rules
+### Contrast Targets
 
-1. **Match the layout** — the skeleton must mirror the exact shape of loaded content.
-2. **Animate with shimmer** — a single directional sweep, never pulsing opacity.
-3. **Use the same spacing** — padding, gaps, and border-radius should match the real component.
-4. **Neutral color** — skeletons use `rgba(255, 255, 255, 0.06)` base with shimmer at `rgba(255, 255, 255, 0.12)`.
-5. **No text placeholders** — use blocks, never "Loading..." text inside skeleton shapes.
+| UI Element | Minimum Ratio |
+| --- | ---: |
+| Normal text | 4.5:1 |
+| Large text | 3:1 |
+| Icons, borders, controls | 3:1 |
+| Focus indicator | Must be clearly visible against adjacent colors |
 
-### Skeleton CSS Base
-
-```css
-.skeleton {
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  position: relative;
-  overflow: hidden;
-}
-
-.skeleton::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.08) 40%,
-    rgba(255, 255, 255, 0.12) 50%,
-    rgba(255, 255, 255, 0.08) 60%,
-    transparent 100%
-  );
-  animation: skeleton-sweep 1.8s ease-in-out infinite;
-  background-size: 200% 100%;
-}
-
-@keyframes skeleton-sweep {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-```
-
-### Skeleton — Token Hero Card
-
-```tsx
-function TokenCardSkeleton() {
-  return (
-    <div className="glass-card p-6 space-y-4">
-      {/* Label */}
-      <div className="skeleton h-3 w-24 rounded" />
-      {/* Hero number */}
-      <div className="skeleton h-12 w-40 rounded" />
-      {/* Sub-value */}
-      <div className="skeleton h-3 w-32 rounded" />
-      {/* Divider */}
-      <div className="skeleton h-px w-full rounded" />
-      {/* Footer info */}
-      <div className="skeleton h-3 w-48 rounded" />
-    </div>
-  );
-}
-```
-
-### Skeleton — Table Row (Admin Upload List)
-
-```tsx
-function TableRowSkeleton({ rows = 5 }: { rows?: number }) {
-  return (
-    <>
-      {Array.from({ length: rows }).map((_, i) => (
-        <tr key={i} className="border-b border-[--color-border-subtle]">
-          <td className="p-4">
-            <div className="skeleton h-4 w-32 rounded" />
-          </td>
-          <td className="p-4">
-            <div className="skeleton h-4 w-20 rounded" />
-          </td>
-          <td className="p-4">
-            <div className="skeleton h-4 w-16 rounded" />
-          </td>
-          <td className="p-4">
-            <div className="skeleton h-6 w-24 rounded-full" />
-          </td>
-          <td className="p-4">
-            <div className="skeleton h-4 w-8 rounded ml-auto" />
-          </td>
-        </tr>
-      ))}
-    </>
-  );
-}
-```
-
-### Skeleton — Bento Grid (Full Dashboard)
-
-```tsx
-function DashboardSkeleton() {
-  return (
-    <div className="bento-grid">
-      {/* Welcome banner */}
-      <div className="col-span-12 glass-card p-6">
-        <div className="skeleton h-6 w-64 rounded mb-2" />
-        <div className="skeleton h-4 w-48 rounded" />
-      </div>
-
-      {/* Stat cards x3 */}
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="col-span-4 glass-card p-6 space-y-4">
-          <div className="skeleton h-3 w-20 rounded" />
-          <div className="skeleton h-10 w-32 rounded" />
-          <div className="skeleton h-3 w-28 rounded" />
-        </div>
-      ))}
-
-      {/* Chart area */}
-      <div className="col-span-8 glass-card p-6">
-        <div className="skeleton h-4 w-40 rounded mb-4" />
-        <div className="skeleton h-40 w-full rounded-lg" />
-      </div>
-
-      {/* Side panel */}
-      <div className="col-span-4 glass-card p-6 space-y-3">
-        <div className="skeleton h-4 w-32 rounded" />
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="flex items-center gap-3">
-            <div className="skeleton h-10 w-10 rounded-lg shrink-0" />
-            <div className="space-y-2 flex-1">
-              <div className="skeleton h-3 w-full rounded" />
-              <div className="skeleton h-3 w-2/3 rounded" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-```
-
-### Transition from Skeleton → Content
-
-```tsx
-// Fade in loaded content — skeleton fades out simultaneously
-const contentVariants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.35,
-      ease: [0, 0, 0.2, 1],
-      staggerChildren: 0.06, // stagger each bento card
-    },
-  },
-};
-
-// Wrap each card with motion.div using cardVariant
-const cardVariant = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-};
-```
-
----
-
-## 10. Iconography & Spacing
-
-### Icon Library
-
-Use **Lucide React** as the primary icon set. It is already in the required stack via shadcn/ui and has consistent 24px optical sizing with 1.5px strokes — ideal for the dark glass aesthetic.
-
-```tsx
-import {
-  Coins,
-  Award,
-  ShoppingBag,
-  Upload,
-  Users,
-  TrendingUp,
-} from "lucide-react";
-
-// Standard icon sizes
-const iconSm = { size: 14 }; // Badge icons, inline text
-const iconMd = { size: 18 }; // Button icons, table actions
-const iconLg = { size: 24 }; // Card labels, nav items
-const iconXl = { size: 32 }; // Feature section icons (with bg)
-```
-
-### Icon + Color Mapping
-
-| Icon           | Context            | Color                        |
-| -------------- | ------------------ | ---------------------------- |
-| `Coins`        | Token count        | `#6BCE53`                    |
-| `Award`        | Tier badge         | Tier color (see tier config) |
-| `ShoppingBag`  | Rewards            | `#93C5FD`                    |
-| `Upload`       | File upload        | `#94A3B8`                    |
-| `Users`        | Team view          | `#94A3B8`                    |
-| `TrendingUp`   | Token growth       | `#6BCE53`                    |
-| `AlertCircle`  | Warnings           | `#FCD34D`                    |
-| `XCircle`      | Errors / Rejected  | `#FCA5A5`                    |
-| `CheckCircle2` | Success / Verified | `#6BCE53`                    |
-
-### Spacing Scale (Tailwind remapped)
-
-```
-4px   → gap-1, p-1    Micro: icon padding, chip padding
-8px   → gap-2, p-2    Small: badge internal gap
-12px  → gap-3, p-3    Base: button padding, input padding
-16px  → gap-4, p-4    Card internal padding (mobile)
-24px  → gap-6, p-6    Card internal padding (desktop)
-32px  → gap-8, p-8    Section internal padding
-48px  → gap-12, p-12  Section spacing
-64px  → gap-16, p-16  Page padding
-```
-
----
-
-## 11. Responsive Behavior
-
-### Breakpoints
-
-```
-sm  → 640px   Tablet portrait start
-md  → 768px   Tablet landscape
-lg  → 1024px  Desktop start
-xl  → 1280px  Wide desktop
-2xl → 1536px  Ultra-wide / dashboard max-width
-```
-
-### Bento Grid Collapse Rules
-
-```
-Default (mobile):  grid-cols-1    All cards full width, stacked
-sm (640px):        grid-cols-2    2-col basic grid
-lg (1024px):       grid-cols-12   Full bento layout
-```
-
-### Sidebar Navigation
-
-| Breakpoint        | Nav Behavior                                                                    |
-| ----------------- | ------------------------------------------------------------------------------- |
-| Mobile `< lg`     | Hidden by default; hamburger icon opens a `glass-elevated` drawer from the left |
-| Desktop `>= lg`   | Fixed sidebar, 240px wide, glass surface                                        |
-| Desktop collapsed | 64px icon-only sidebar; labels revealed on hover via tooltip                    |
-
-### Card Priority on Mobile
-
-On mobile, bento cards reorder by priority:
-
-1. Total tokens
-2. Tier / Eligibility
-3. Redemption CTA
-4. Progress bar
-5. Chart / History
-6. Catalog preview
-
-Use CSS `order` utilities or a priority data attribute to manage this.
-
----
-
-## 12. Accessibility Standards
-
-Every component must pass WCAG 2.1 AA at minimum.
-
-### Contrast Ratios
-
-| Combination                        | Ratio  | Status                                |
-| ---------------------------------- | ------ | ------------------------------------- |
-| `#F8FAFC` on `#1E2938`             | 11.5:1 | ✅ AAA                                |
-| `#6BCE53` on `#1E2938`             | 6.8:1  | ✅ AA                                 |
-| `#94A3B8` on `#1E2938`             | 4.6:1  | ✅ AA                                 |
-| `#6BCE53` on `rgba(45,55,72,0.25)` | ≈5.2:1 | ✅ AA                                 |
-| `#475569` on `#1E2938`             | 2.1:1  | ⚠️ Use only for truly decorative text |
-
-### Focus Ring (Keyboard Navigation)
+### Focus Ring
 
 ```css
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-primary);
   outline-offset: 3px;
-  border-radius: 4px;
 }
 
-/* Remove default outline for mouse users only */
 :focus:not(:focus-visible) {
   outline: none;
 }
@@ -1395,120 +948,136 @@ Every component must pass WCAG 2.1 AA at minimum.
 ### ARIA Patterns
 
 ```tsx
-// Status chips must use role="status" for live updates
 <span role="status" aria-label={`Status: ${status}`} className="status-chip">
   {status}
 </span>
 
-// Token count — screen reader should say "4,200 tokens"
-<p aria-label={`${tokens} tokens`} className="text-metric-hero">
+<p aria-label={`${tokens.toLocaleString()} tokens`} className="text-metric">
   {tokens.toLocaleString()}
 </p>
 
-// Skeleton must communicate loading state
 <div role="status" aria-label="Loading loyalty data" aria-busy="true">
   <DashboardSkeleton />
 </div>
-
-// Breadcrumb nav landmark
-<nav aria-label="Breadcrumb">...</nav>
 ```
+
+### Accessibility Rules
+
+- Never use color alone to communicate state.
+- Every icon-only button needs an `aria-label`.
+- Every table needs clear column headers.
+- Error messages should be connected to fields with `aria-describedby`.
+- Loading regions should use `aria-busy="true"`.
 
 ---
 
-## 13. Dark Mode Architecture
+## 12. Dark Mode Architecture
 
-This portal targets **Dark Mode exclusively** as the primary and only mode in Phase 1 (per product context). Do not implement light mode toggles. Use `class="dark"` on `<html>` or rely on `prefers-color-scheme: dark` media query.
-
-```css
-/* tailwind.config.ts */
-// darkMode: 'class'
-// All glass/dark styles are defaults — no 'dark:' prefix needed
-```
-
-If Phase 2 introduces a light mode option for HC PM admin views, introduce a `data-theme="light"` attribute and override CSS variables only — no duplication of components.
-
----
-
-## 14. Implementation Tokens (CSS Variables)
-
-Add this to `src/app/globals.css` or the root layout:
+Light mode is the default. Dark mode is token-driven only. Do not duplicate components.
 
 ```css
-:root {
-  /* Backgrounds */
-  --color-bg-base: #1e2938;
-  --color-bg-deep: #0f172a;
-  --color-bg-surface: rgba(45, 55, 72, 0.25);
-  --color-bg-surface-md: rgba(45, 55, 72, 0.35);
-  --color-bg-surface-hi: rgba(45, 55, 72, 0.5);
+[data-theme="dark"] {
+  --color-bg: #0f172a;
+  --color-bg-subtle: #111827;
+  --color-surface: #111827;
+  --color-surface-raised: #1e293b;
+  --color-surface-muted: #0b1220;
 
-  /* Text */
   --color-text-primary: #f8fafc;
-  --color-text-secondary: #94a3b8;
-  --color-text-disabled: #475569;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-text-disabled: #64748b;
+  --color-text-inverse: #ffffff;
 
-  /* Accent */
-  --color-accent: #6bce53;
-  --color-accent-hover: #57b241;
-  --color-accent-muted: rgba(107, 206, 83, 0.15);
-  --color-accent-glow: rgba(107, 206, 83, 0.3);
+  --color-border: rgba(226, 232, 240, 0.14);
+  --color-border-subtle: rgba(226, 232, 240, 0.08);
+  --color-border-strong: rgba(226, 232, 240, 0.22);
 
-  /* Brand */
-  --color-brand: #063175;
-  --color-brand-hover: #0a45a3;
-
-  /* Semantic */
-  --color-error: #ef4444;
-  --color-warning: #f59e0b;
-  --color-info: #3b82f6;
-  --color-success: #6bce53;
-
-  /* Borders */
-  --color-border-glass: rgba(255, 255, 255, 0.1);
-  --color-border-subtle: rgba(255, 255, 255, 0.06);
-  --color-border-accent: rgba(107, 206, 83, 0.4);
-
-  /* Typography */
-  --font-display: "Syne", sans-serif;
-  --font-body: "DM Sans", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
-
-  /* Type Scale */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  --text-4xl: 2.25rem;
-  --text-5xl: 3rem;
-
-  /* Motion */
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-in: cubic-bezier(0.4, 0, 1, 1);
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
-
-  /* Border radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-full: 9999px;
-
-  /* Glass */
-  --glass-blur: blur(16px) saturate(180%);
-  --glass-blur-lg: blur(24px) saturate(200%);
-  --glass-blur-sm: blur(12px) saturate(160%);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.30);
+  --shadow-md: 0 16px 40px rgba(0, 0, 0, 0.34);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.42);
 }
 ```
 
-### Tailwind Config Extension
+Dark mode rules:
+
+- Keep the same brand colors, but use softer backgrounds.
+- Do not use pure black backgrounds.
+- Increase border visibility slightly because shadows are less readable on dark surfaces.
+- Use `data-theme="dark"` at the document root.
+
+---
+
+## 13. Implementation Tokens
+
+Add to `src/app/globals.css`.
+
+```css
+:root {
+  --color-bg: #f8fafc;
+  --color-bg-subtle: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-muted: #f8fafc;
+
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-text-disabled: #cbd5e1;
+  --color-text-inverse: #ffffff;
+
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-pressed: #3730a3;
+  --color-primary-soft: rgba(79, 70, 229, 0.10);
+  --color-primary-ring: rgba(79, 70, 229, 0.22);
+
+  --color-accent: #06b6d4;
+  --color-accent-hover: #0891b2;
+  --color-accent-soft: rgba(6, 182, 212, 0.10);
+  --color-accent-ring: rgba(6, 182, 212, 0.22);
+
+  --color-success: #16a34a;
+  --color-success-soft: rgba(22, 163, 74, 0.10);
+  --color-warning: #d97706;
+  --color-warning-soft: rgba(217, 119, 6, 0.12);
+  --color-error: #dc2626;
+  --color-error-soft: rgba(220, 38, 38, 0.10);
+  --color-info: #0284c7;
+  --color-info-soft: rgba(2, 132, 199, 0.10);
+
+  --color-border: #e2e8f0;
+  --color-border-subtle: #edf2f7;
+  --color-border-strong: #cbd5e1;
+
+  --font-display: "Plus Jakarta Sans", "Inter Tight", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 10px 24px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 18px 48px rgba(15, 23, 42, 0.10);
+
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+```
+
+---
+
+## 14. Tailwind Config Extension
 
 ```ts
-// tailwind.config.ts
 import type { Config } from "tailwindcss";
 
 const config: Config = {
@@ -1516,28 +1085,42 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: {
-          base: "#1E2938",
-          deep: "#0F172A",
-        },
-        accent: "#6BCE53",
-        brand: "#063175",
+        canvas: "var(--color-bg)",
+        surface: "var(--color-surface)",
+        primary: "var(--color-primary)",
+        accent: "var(--color-accent)",
+        ink: "var(--color-text-primary)",
+        muted: "var(--color-text-secondary)",
+        border: "var(--color-border)",
       },
       fontFamily: {
-        display: ["Syne", "sans-serif"],
-        body: ["DM Sans", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        display: ["var(--font-display)"],
+        body: ["var(--font-body)"],
+        mono: ["var(--font-mono)"],
       },
-      backdropBlur: {
-        glass: "16px",
-        "glass-lg": "24px",
+      borderRadius: {
+        sm: "var(--radius-sm)",
+        md: "var(--radius-md)",
+        lg: "var(--radius-lg)",
+        xl: "var(--radius-xl)",
+      },
+      boxShadow: {
+        xs: "var(--shadow-xs)",
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+      },
+      transitionTimingFunction: {
+        smooth: "var(--ease-smooth)",
+        spring: "var(--ease-spring)",
+      },
+      keyframes: {
+        "skeleton-sweep": {
+          "100%": { transform: "translateX(100%)" },
+        },
       },
       animation: {
-        "skeleton-sweep": "skeleton-sweep 1.8s ease-in-out infinite",
-        "pulse-ring": "pulse-ring 2s ease-out infinite",
-        "shimmer-sweep": "shimmer-sweep 2s ease-in-out infinite",
-        "toast-in": "toast-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
-        "bounce-gentle": "bounce-gentle 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "skeleton-sweep": "skeleton-sweep 1.5s ease-in-out infinite",
       },
     },
   },
@@ -1551,127 +1134,123 @@ export default config;
 
 ## 15. AI Vibecoder Prompt Patterns
 
-Use these structured prompt patterns when generating components with an LLM coding assistant. They encode the design system constraints so generated output stays on-system.
+### Pattern A — Modern Clean Bento Card
 
-### Pattern A — Bento Card Component
-
-```
-Create a React TypeScript bento card component for the Berijalan Loyalty Portal.
+```text
+Create a React TypeScript bento card component for Berijalan Employee Loyalty Portal.
 
 Design constraints:
-- Background: rgba(45, 55, 72, 0.25) with backdrop-filter: blur(16px) saturate(180%)
-- Border: 1px solid rgba(255, 255, 255, 0.10), border-radius: 16px
-- Hover: translateY(-3px), border-color rgba(107,206,83,0.20), transition 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)
-- Primary text: #F8FAFC, secondary: #94A3B8, accent numbers: #6BCE53
-- Font: display headings use Syne, metric numbers use JetBrains Mono
-- Skeleton prop: when isLoading=true, render shimmer skeleton matching card layout
-- Use Tailwind utility classes. No inline styles except CSS custom properties.
-- Include aria-label for screen readers on metric values.
+- Theme: Modern Clean Professional, light-first, Bento Card System.
+- Surface: #FFFFFF, border #E2E8F0, radius 16px, shadow 0 4px 12px rgba(15,23,42,0.06).
+- Hover: translateY(-3px), border-color mixed with #4F46E5, shadow 0 10px 24px rgba(15,23,42,0.08).
+- Text: primary #0F172A, secondary #64748B, muted #94A3B8.
+- Primary action color: #4F46E5. Accent highlight: #06B6D4.
+- Typography: Plus Jakarta Sans or Inter Tight; metric values use JetBrains Mono.
+- Include aria-labels for metric values and icon-only buttons.
+- Include skeleton state that mirrors the real layout.
+- Use Tailwind classes where possible and CSS custom properties for theme tokens.
 
-Card contains: [DESCRIBE CONTENT]
+Card content: [DESCRIBE CONTENT]
 ```
 
-### Pattern B — Glass Button
+### Pattern B — Professional CTA Button
 
-```
-Create a CTA button component for the Loyalty Portal with these exact states:
+```text
+Create a CTA button component.
 
-Rest:   background #6BCE53, text #0F172A, border-radius 10px, font Syne 600
-Hover:  background #57B241, box-shadow "0 0 0 4px rgba(107,206,83,0.30)", translateY(-1px)
-Active: scale(0.98), reduced shadow, transition 80ms
-Focus:  outline 2px solid #6BCE53, outline-offset 3px
-Disabled: opacity 0.4, cursor not-allowed, no hover transform
+States:
+- Rest: bg #4F46E5, text white, radius 12px, min-height 44px, font-weight 700.
+- Hover: bg #4338CA, translateY(-1px), shadow 0 10px 24px rgba(79,70,229,0.24).
+- Active: scale(0.97), bg #3730A3.
+- Focus: outline 2px solid #4F46E5, outline-offset 3px, or box-shadow 0 0 0 4px rgba(79,70,229,0.22).
+- Disabled: opacity 0.48, cursor not-allowed, no hover transform.
 
-All transitions: 0.2s cubic-bezier(0.4, 0, 0.2, 1)
-Export as: <PrimaryButton onClick label disabled isLoading />
-When isLoading: show a small spinner inside the button, disable click.
+Export as <PrimaryButton label icon isLoading disabled onClick />.
+When loading, show a small spinner and disable clicks.
 ```
 
 ### Pattern C — Dashboard Page Shell
 
-```
-Scaffold a Next.js App Router page at /app/(employee)/dashboard/page.tsx.
+```text
+Scaffold a Next.js App Router dashboard page.
 
-Layout requirements:
-- Body background: #1E2938 with radial mesh gradient (green 8% opacity at top-left, brand blue 25% at bottom-right)
-- Sticky glass navbar at top: rgba(30,41,56,0.80) with blur(20px), border-bottom 1px rgba(255,255,255,0.08)
-- Breadcrumb below navbar: text-sm, ancestors in #94A3B8, current page in #F8FAFC
-- Bento grid: grid-cols-12 gap-4 p-6 (collapse to grid-cols-1 on mobile)
-- Show DashboardSkeleton while data loads (Suspense boundary)
-- Stagger card entrance: each card fades in from y:12 with 60ms delay per card
+Layout:
+- Root background: #F8FAFC with subtle radial gradients: indigo at top-left and cyan at top-right.
+- Sticky white nav: rgba(255,255,255,0.82), blur(16px), border-bottom #E2E8F0.
+- Breadcrumb below nav.
+- Main max-width 1440px, mx-auto, px responsive.
+- Bento grid: 12 columns desktop, 6 columns tablet, 1 column mobile.
+- Cards: white surface, #E2E8F0 border, 16px radius, soft shadow.
+- Show skeleton while loading.
+- Stagger card entrance with opacity + y transform only.
 
-Include: total tokens hero card (col-span-4), tier card (col-span-4), eligibility card (col-span-4).
-Use server component for data fetch. Client component only for count-up animation.
+Cards:
+- Total Tokens: col-span-4, featured.
+- Current Tier: col-span-4.
+- Redemption Eligibility: col-span-4 with primary CTA.
+- Token History: col-span-8.
+- Reward Preview: col-span-4 row-span-2.
+- Tier Progress: col-span-8.
 ```
 
 ### Pattern D — Skeleton Screen
 
-```
-Generate a skeleton screen for [COMPONENT NAME] that:
-- Mirrors the exact layout/spacing of the real component
-- Uses base color rgba(255,255,255,0.06) with shimmer animation
-- Shimmer: linear-gradient sweep from right to left, 1.8s infinite
-- Border radius matches real component shapes
-- Includes role="status" aria-label="Loading [content description]" aria-busy="true"
-- No text, no spinners — only geometric block shapes
-```
+```text
+Generate a skeleton screen for [COMPONENT].
 
-### Pattern E — Status Badge / Chip
-
-```
-Create a RedemptionStatusChip component for statuses:
-Draft | Pending Verification | Verified | Rejected | Purchased | Pickup Scheduled | Completed | Cancelled
-
-Each status has:
-- Unique background (low-opacity colored tint on dark base)
-- Matching text color (desaturated version of same hue)
-- border-radius: 9999px, padding: 2px 10px, font-size: 12px, font-weight: 500
-- UPPERCASE text with 0.06em letter-spacing
-- No transitions needed (static display chip)
-- Screen reader: role="status" aria-label="Status: [value]"
+Rules:
+- Mirror the final layout exactly.
+- Use #E2E8F0 base and a white shimmer sweep.
+- Do not use spinner or text placeholders.
+- Use role="status", aria-label="Loading [content]", aria-busy="true".
+- Respect prefers-reduced-motion.
 ```
 
 ---
 
-## Appendix: Quick Reference Cheat Sheet
+## 16. Quick Reference Cheat Sheet
 
-```
-COLOR           VALUE
-────────────────────────────────────────────────────
-Background      #1E2938
-Surface card    rgba(45,55,72,0.25) + blur(16px)
-Primary text    #F8FAFC
-Secondary text  #94A3B8
-Accent / CTA    #6BCE53
-Accent hover    #57B241
-Accent glow     rgba(107,206,83,0.30)
-Brand blue      #063175
-Error           #EF4444
-Card border     rgba(255,255,255,0.10)
+```text
+THEME
+Modern Clean Professional · Bento Card System · Light-first
 
-MOTION          VALUE
-────────────────────────────────────────────────────
-Spring          cubic-bezier(0.34, 1.56, 0.64, 1)
-Smooth          cubic-bezier(0.4, 0, 0.2, 1)
-Hover duration  0.25s
-Active duration 0.08s
-Skeleton cycle  1.8s
+COLORS
+Canvas              #F8FAFC
+Surface             #FFFFFF
+Primary             #4F46E5
+Primary hover       #4338CA
+Accent              #06B6D4
+Text primary        #0F172A
+Text secondary      #64748B
+Border              #E2E8F0
 
-FONT            USE
-────────────────────────────────────────────────────
-Syne            Headings, labels, buttons
-DM Sans         Body text, table cells, descriptions
-JetBrains Mono  Token numbers, codes, stats
+TYPOGRAPHY
+Display/body        Plus Jakarta Sans or Inter Tight
+Mono                JetBrains Mono
+Hero                clamp(2.25rem, 1.65rem + 2vw, 4.5rem)
+Body                clamp(1rem, 0.95rem + 0.18vw, 1.0625rem)
+Line-height body    1.55–1.7
 
-RADIUS          VALUE
-────────────────────────────────────────────────────
-sm              6px  (badges, chips)
-md              10px (buttons, inputs)
-lg              16px (bento cards)
-xl              20px (modals, drawers)
-full            9999px (status chips, avatars)
+RADIUS
+Button/input        12px
+Card                16px
+Modal/drawer        24px
+Chip                9999px
+
+MOTION
+Standard duration   180–260ms
+Entrance duration   320–360ms
+Use                 transform + opacity
+Avoid               width, height, top, left
+
+BENTO
+Desktop             12 columns
+Tablet              6 columns
+Mobile              1 column
+Gap                 24–32px
+Card padding        24px desktop, 16px mobile
 ```
 
 ---
 
-_This document is the single source of design truth for the Berijalan Loyalty Portal. When in doubt: glass over solid, green for action, numbers above the fold._
+_This document is the single source of design truth for the Berijalan Employee Loyalty Portal. When in doubt: clarity over decoration, bento hierarchy over generic grids, and accessibility over visual tricks._

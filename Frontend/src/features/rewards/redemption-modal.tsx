@@ -48,7 +48,7 @@ export function RedemptionModal({ reward, userTokens, onClose }: RedemptionModal
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
-          className="relative w-full max-w-md glass-elevated p-6 overflow-hidden border border-[--color-border-glass]"
+          className="relative w-full max-w-md bg-white shadow-xl border border-border rounded-xl p-6 overflow-hidden border border-[--color-border-glass]"
         >
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-display font-semibold text-[--color-text-primary]">Confirm Redemption</h2>

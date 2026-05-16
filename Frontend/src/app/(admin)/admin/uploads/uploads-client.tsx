@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import { MonthlyUpload } from "@/types";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +26,7 @@ import {
 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -79,6 +80,7 @@ const formatDate = (iso: string) =>
   });
 
 export default function UploadsClient({ history }: { history: MonthlyUpload[] }) {
+
   const [files,         setFiles        ] = useState<File[]>([]);
   const [division,      setDivision     ] = useState<string>("");
   const [uploadStatus,  setUploadStatus ] = useState<UploadStatus>("idle");
@@ -199,32 +201,9 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
   const detectedDiv = parseResult?.division ?? division;
 
   return (
-    <div className="max-w-5xl mx-auto w-full space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Monthly Upload</h1>
-        <p className="text-muted-foreground mt-1">
-          Upload official Loyalty Excel templates (.xlsx) to process employee data.
-        </p>
-      </div>
-
-      <Tabs defaultValue="upload">
-        <TabsList className="bg-muted/30 border border-border">
-          <TabsTrigger value="upload" className="data-[state=active]:bg-background data-[state=active]:text-foreground">
-            Upload New File
-          </TabsTrigger>
-          <TabsTrigger value="history" className="data-[state=active]:bg-background data-[state=active]:text-foreground">
-            Upload History
-            {localHistory.length > 0 && (
-              <Badge variant="secondary" className="ml-2 text-[10px] px-1.5 py-0">
-                {localHistory.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
-
-        {/* ── UPLOAD TAB ────────────────────────────────────── */}
-        <TabsContent value="upload" className="mt-6 space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full items-start">
+      {/* ── LEFT COLUMN (UPLOAD & PREVIEW) ── */}
+      <div className="col-span-1 lg:col-span-7 space-y-6">
 
           {/* Division selector */}
           <BentoCard className="p-4">
@@ -332,9 +311,9 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                       <span className="font-medium text-foreground">{files[0]?.name}</span>
                     </div>
                     {detectedDiv && (
-                      <Badge variant="secondary" className="text-xs">
+                      <span className="status-chip status-chip--info text-[10px]">
                         {DIVISION_LABELS[detectedDiv] ?? detectedDiv}
-                      </Badge>
+                      </span>
                     )}
                     <span className="text-muted-foreground">
                       <span className="font-bold text-foreground">{parseResult.summary.validRows}</span> valid •{" "}
@@ -421,12 +400,14 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                             <TableCell className="font-mono text-sm">{row.npk}</TableCell>
                             <TableCell className="font-medium">{row.name}</TableCell>
                             <TableCell>
-                              <Badge
-                                variant={row.partnershipStatus === "ACTIVE" ? "default" : "outline"}
-                                className="text-[10px]"
+                              <span
+                                className={cn(
+                                  "status-chip",
+                                  row.partnershipStatus === "ACTIVE" ? "status-chip--success" : "status-chip--info"
+                                )}
                               >
                                 {String(row.partnershipStatus ?? "-")}
-                              </Badge>
+                              </span>
                             </TableCell>
                             <TableCell className="text-right font-tabular-nums">
                               {typeof row.totalSlots === "number"
@@ -437,11 +418,11 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                             </TableCell>
                             <TableCell>
                               {row.isResigned ? (
-                                <Badge variant="destructive" className="text-[10px]">Resigned</Badge>
+                                <span className="status-chip status-chip--error">Resigned</span>
                               ) : hasError ? (
-                                <Badge variant="destructive" className="text-[10px]">Error</Badge>
+                                <span className="status-chip status-chip--error">Error</span>
                               ) : (
-                                <Badge variant="default" className="text-[10px]">Valid</Badge>
+                                <span className="status-chip status-chip--success">Valid</span>
                               )}
                             </TableCell>
                           </TableRow>
@@ -484,11 +465,19 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
               <Button onClick={handleReset}>Upload Another File</Button>
             </BentoCard>
           )}
-        </TabsContent>
+      </div>
 
-        {/* ── HISTORY TAB ─────────────────────────────────── */}
-        <TabsContent value="history" className="mt-6">
-          <BentoCard className="overflow-hidden p-0">
+      {/* ── RIGHT COLUMN (HISTORY) ── */}
+      <div className="col-span-1 lg:col-span-5 space-y-4 lg:sticky lg:top-6">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-lg font-semibold text-foreground tracking-tight">Recent Uploads</h3>
+          {localHistory.length > 0 && (
+            <span className="status-chip status-chip--info shadow-sm border border-border/50 px-2">
+              {localHistory.length}
+            </span>
+          )}
+        </div>
+        <BentoCard className="overflow-hidden p-0 max-h-[calc(100vh-12rem)] overflow-y-auto">
             {localHistory.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <FileSpreadsheet className="h-10 w-10 text-muted-foreground mb-3" />
@@ -521,21 +510,22 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                         {upload.validRows.toLocaleString()}
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={upload.status === "Completed" ? "default" : upload.status === "Failed" ? "destructive" : "secondary"}
-                          className="text-[10px]"
+                        <span
+                          className={cn(
+                            "status-chip",
+                            upload.status === "Completed" ? "status-chip--success" : upload.status === "Failed" ? "status-chip--error" : "status-chip--warning"
+                          )}
                         >
                           {upload.status}
-                        </Badge>
+                        </span>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             )}
-          </BentoCard>
-        </TabsContent>
-      </Tabs>
+        </BentoCard>
+      </div>
     </div>
   );
 }

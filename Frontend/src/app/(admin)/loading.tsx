@@ -24,7 +24,7 @@ export default function Loading() {
       {/* KPI cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="glass-card p-6 space-y-4">
+          <div key={i} className="bento-card p-6 space-y-4">
             <div className="skeleton h-3 w-24 rounded" />
             <div className="skeleton h-10 w-28 rounded" />
             <div className="skeleton h-3 w-36 rounded" />
@@ -33,7 +33,7 @@ export default function Loading() {
       </div>
 
       {/* Table */}
-      <div className="glass-card overflow-hidden">
+      <div className="bento-card overflow-hidden">
         <div className="p-6 border-b border-white/10">
           <div className="skeleton h-5 w-40 rounded" />
         </div>

@@ -42,7 +42,6 @@ next-env.d.ts
 
 # ide
 .vscode/
-.kiro/
 
 # agents
 .agents/

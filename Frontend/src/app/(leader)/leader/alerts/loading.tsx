@@ -17,7 +17,7 @@ export default function Loading() {
       {/* Summary strip */}
       <div className="grid grid-cols-3 gap-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="glass-card p-4 space-y-3">
+          <div key={i} className="bento-card p-4 space-y-3">
             <div className="skeleton h-3 w-28 rounded" />
             <div className="skeleton h-10 w-10 rounded" />
             <div className="skeleton h-3 w-32 rounded" />
@@ -29,7 +29,7 @@ export default function Loading() {
       <div className="space-y-3">
         <div className="skeleton h-4 w-36 rounded" />
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="glass-card p-5 flex items-start gap-4">
+          <div key={i} className="bento-card p-5 flex items-start gap-4">
             <div className="skeleton h-10 w-10 rounded-xl shrink-0" />
             <div className="flex-1 space-y-2">
               <div className="skeleton h-4 w-40 rounded" />

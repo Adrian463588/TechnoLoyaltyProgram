@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Syne, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "@/styles/globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import StartupCheck from "@/components/startup-check";
 
 const fontSyne = Syne({
   variable: "--font-display",
@@ -31,7 +32,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${fontSyne.variable} ${fontDmSans.variable} ${fontJetBrainsMono.variable} h-full antialiased dark`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col hide-scrollbar" suppressHydrationWarning>
-        {children}
+        <StartupCheck />
+      {children}
         <Toaster />
       </body>
     </html>

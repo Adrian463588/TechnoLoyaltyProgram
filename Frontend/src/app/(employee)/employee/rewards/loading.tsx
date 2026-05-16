@@ -30,7 +30,7 @@ export default function Loading() {
       {/* Reward card grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="glass-card flex flex-col overflow-hidden">
+          <div key={i} className="bento-card flex flex-col overflow-hidden">
             {/* Thumbnail */}
             <div className="skeleton aspect-[4/3] w-full" />
             {/* Content */}

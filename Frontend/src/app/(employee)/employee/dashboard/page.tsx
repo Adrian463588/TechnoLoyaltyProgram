@@ -34,7 +34,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="glass-nav px-6">
+      <div className="app-nav px-6">
         <Breadcrumb className="py-4" />
       </div>
 

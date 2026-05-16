@@ -21,7 +21,7 @@ export default function Loading() {
       </div>
 
       {/* Dropzone placeholder */}
-      <div className="glass-card p-8 flex flex-col items-center gap-4 border-2 border-dashed border-white/10">
+      <div className="bento-card p-8 flex flex-col items-center gap-4 border-2 border-dashed border-white/10">
         <div className="skeleton h-14 w-14 rounded-2xl" />
         <div className="skeleton h-4 w-48 rounded" />
         <div className="skeleton h-3 w-32 rounded" />
@@ -29,7 +29,7 @@ export default function Loading() {
       </div>
 
       {/* Upload history table */}
-      <div className="glass-card overflow-hidden">
+      <div className="bento-card overflow-hidden">
         <div className="p-6 border-b border-white/10 flex items-center justify-between">
           <div className="skeleton h-5 w-36 rounded" />
           <div className="skeleton h-4 w-24 rounded" />
