@@ -50,7 +50,7 @@ export const employeeApi = {
   getDashboard: (token: string) =>
     apiFetch<EmployeeDashboardResponse>("/api/employee/dashboard", {
       headers: withAuth(token),
-      next: { revalidate: 60 },
+      cache: "no-store",
     } as RequestInit),
 
   getTokenSummary: (token: string) =>
