@@ -196,7 +196,7 @@ export function getKeysForInvalidationEvent(event: CacheInvalidationEvent): Cach
         CacheKeys.rewardCatalogActive(),
         CacheKeys.rewardCatalogAdmin(),
         // Use pattern for eligibility since any reward change affects all users
-        "redemption:eligibility:*" as CacheKeyPattern,
+        "redemption:eligibility:*",
       ];
     }
 
@@ -213,7 +213,7 @@ export function getKeysForInvalidationEvent(event: CacheInvalidationEvent): Cach
         }
       } else {
         // Otherwise invalidate all eligibility previews
-        keys.push("redemption:eligibility:*" as CacheKeyPattern);
+        keys.push("redemption:eligibility:*");
       }
 
       return keys;
@@ -258,6 +258,7 @@ export function getKeysForInvalidationEvent(event: CacheInvalidationEvent): Cach
 
     default:
       // Type-safe exhaustive check - should never reach here
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const _exhaustive: never = event;
       return [];
   }

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Menu, LogOut, User, Bell, Search, ChevronDown, CreditCard } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Menu, LogOut, User, Bell, Search, ChevronDown } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,6 +19,7 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { data: session } = useSession();
   const role = (session?.user?.role as string) || "MITRA";
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const router = useRouter();
 
   return (
     <motion.header
@@ -93,6 +95,8 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
           whileHover={{ scale: 1.05, rotate: 5 }}
           whileTap={{ scale: 0.95 }}
           className="relative p-2.5 text-muted-foreground hover:text-foreground rounded-xl hover:bg-slate-100 transition-colors"
+          onClick={() => window.location.assign("/notifications")}
+          aria-label="View notifications"
         >
           <Bell size={20} />
           {/* Notification badge with pulse */}
@@ -165,31 +169,30 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
 
                 <DropdownMenuSeparator className="my-2 bg-border" />
 
-                <DropdownMenuItem className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors hover:bg-slate-100 focus:bg-slate-100">
-                  <motion.div whileHover={{ x: 2 }}>
-                    <User size={16} />
-                  </motion.div>
-                  <span>Profile Settings</span>
+                <DropdownMenuItem
+                  onClick={() => router.push("/profile" as string as never)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors hover:bg-slate-100 focus:bg-slate-100"
+                >
+                    <motion.div whileHover={{ x: 2 }}>
+                      <User size={16} />
+                    </motion.div>
+                    <span>Profile Settings</span>
                 </DropdownMenuItem>
 
-                <DropdownMenuItem className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors hover:bg-slate-100 focus:bg-slate-100">
-                  <motion.div whileHover={{ x: 2 }}>
-                    <CreditCard size={16} />
-                  </motion.div>
-                  <span>Payment Methods</span>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors hover:bg-slate-100 focus:bg-slate-100">
-                  <motion.div whileHover={{ x: 2 }}>
-                    <Bell size={16} />
-                  </motion.div>
-                  <span>Notifications</span>
+                <DropdownMenuItem
+                  onClick={() => router.push("/notifications" as string as never)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors hover:bg-slate-100 focus:bg-slate-100"
+                >
+                    <motion.div whileHover={{ x: 2 }}>
+                      <Bell size={16} />
+                    </motion.div>
+                    <span>Notifications</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator className="my-2 bg-border" />
 
                 <DropdownMenuItem
-                  onClick={() => signOut()}
+                  onClick={() => signOut({ callbackUrl: "/login" })}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition-colors"
                 >
                   <motion.div

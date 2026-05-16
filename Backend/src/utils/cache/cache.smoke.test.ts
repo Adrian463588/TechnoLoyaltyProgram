@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { redisClient } from "./redis-client";
 import { CacheService } from "../../services/cache.service";
 import { CacheKeys } from "./cache-key.registry";

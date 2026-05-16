@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ShoppingBag, TrendingUp, ChevronRight, ArrowUpRight, Clock, Gift } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { TokenHeroSection } from "@/components/dashboard/token-hero-section";
@@ -54,6 +55,7 @@ const upcomingRewards = [
 
 export function DashboardContent({ data }: { data: DashboardData }) {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const router = useRouter();
 
   return (
     <motion.div
@@ -185,7 +187,12 @@ export function DashboardContent({ data }: { data: DashboardData }) {
             </motion.p>
             <div className="mt-6">
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button className="w-full btn-primary" size="sm" data-testid="employee-dashboard-redeem-button">
+                <Button
+                  className="w-full"
+                  size="sm"
+                  onClick={() => router.push("/employee/rewards")}
+                  data-testid="employee-dashboard-redeem-button"
+                >
                   Browse Catalog
                   <ArrowUpRight className="ml-1 h-3 w-3" />
                 </Button>
@@ -200,7 +207,12 @@ export function DashboardContent({ data }: { data: DashboardData }) {
         <BentoCard className="h-full p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-card-title">Token History</h3>
-            <Button variant="ghost" size="sm" className="text-xs font-bold uppercase tracking-widest hover:bg-slate-50">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs font-bold uppercase tracking-widest hover:bg-slate-50"
+              onClick={() => router.push("/employee/history")}
+            >
               View All
               <ChevronRight className="ml-1 h-3 w-3" />
             </Button>

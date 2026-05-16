@@ -151,11 +151,17 @@ export function AppNavbar({
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem className="cursor-pointer hover:bg-slate-100 focus:bg-slate-100">
-                    <User className="mr-2 h-4 w-4" /> Profile
+                  <DropdownMenuItem className="cursor-pointer p-0 hover:bg-slate-100 focus:bg-slate-100">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    <Link href={"/employee/profile" as any} className="flex w-full items-center px-2 py-1.5">
+                      <User className="mr-2 h-4 w-4" /> Profile
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer hover:bg-slate-100 focus:bg-slate-100">
-                    <Settings className="mr-2 h-4 w-4" /> Settings
+                  <DropdownMenuItem className="cursor-pointer p-0 hover:bg-slate-100 focus:bg-slate-100">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    <Link href={"/employee/settings" as any} className="flex w-full items-center px-2 py-1.5">
+                      <Settings className="mr-2 h-4 w-4" /> Settings
+                    </Link>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />

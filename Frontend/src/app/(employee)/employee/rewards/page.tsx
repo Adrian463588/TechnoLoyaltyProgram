@@ -1,6 +1,7 @@
 import { auth, getServerToken } from "@/lib/auth";
 import { employeeApi } from "@/lib/api-client";
 import RewardsClient from "./rewards-client";
+import { Breadcrumb } from "@/components/shared/breadcrumb";
 
 export default async function RewardsPage() {
   await auth();
@@ -27,10 +28,18 @@ export default async function RewardsPage() {
   }));
 
   return (
-    <RewardsClient
-      rewards={rewards}
-      userTokens={userTokens}
-      isEligible={isEligible}
-    />
+    <div className="flex flex-col h-full">
+      <div className="px-4 md:px-6">
+        <Breadcrumb className="py-4" />
+      </div>
+
+      <div className="flex-1 p-4 md:p-6 max-w-[1600px] w-full mx-auto">
+        <RewardsClient
+          rewards={rewards}
+          userTokens={userTokens}
+          isEligible={isEligible}
+        />
+      </div>
+    </div>
   );
 }

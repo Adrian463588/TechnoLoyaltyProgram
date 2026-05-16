@@ -86,7 +86,7 @@ export class TokenLedgerRepository {
    * Gets current token balance for a user.
    */
   async getBalance(userId: string, client: Prisma.TransactionClient | typeof prisma = prisma): Promise<number> {
-    const fetchBalance = async () => {
+    const fetchBalance = async (): Promise<number> => {
       const lastEntry = await client.tokenLedger.findFirst({
         where: { userId },
         orderBy: { createdAt: "desc" },

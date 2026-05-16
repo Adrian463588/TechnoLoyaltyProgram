@@ -99,7 +99,14 @@ export const TeamLeaderController = {
       const tokenSummary = await LoyaltyCalculationService.getTokenSummary(member.id);
       const history      = await tokenLedgerRepository.getHistory(member.id, 20, 0);
 
-      res.json({ member, tokenSummary, recentHistory: history });
+      res.json({
+        member: {
+          ...member,
+          totalTokens: tokenSummary.totalTokens,
+        },
+        tokenSummary,
+        ledger: history,
+      });
     } catch (err) {
       next(err);
     }

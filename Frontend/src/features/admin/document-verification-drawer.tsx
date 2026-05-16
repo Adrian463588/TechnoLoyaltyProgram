@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X, Check, Shield, FileText, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { RedemptionStatusChip } from "@/components/shared/status-badge";
@@ -11,19 +11,43 @@ export function DocumentVerificationDrawer({ request, onClose }: { request: any;
   const [docs, setDocs] = useState({ idCard: false, ktp: false, npwp: false, poa: false });
   const [isVisible, setIsVisible] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  // Capture the element that opened the drawer so focus returns on close
+  const returnFocusRef = useRef<Element | null>(null);
 
   const isAllVerified = docs.idCard && docs.ktp && docs.npwp;
 
-  useEffect(() => {
-    // Defer to next frame so CSS transition plays
-    const raf = requestAnimationFrame(() => setIsVisible(true));
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
   const handleClose = () => {
     setIsVisible(false);
-    setTimeout(onClose, 300);
+    // Return focus to the element that triggered the drawer
+    setTimeout(() => {
+      (returnFocusRef.current as HTMLElement | null)?.focus();
+      onClose();
+    }, 300);
   };
+
+  useEffect(() => {
+    // Save current focused element to restore on close
+    returnFocusRef.current = document.activeElement;
+    // Lock body scroll
+    document.body.style.overflow = "hidden";
+    // Defer so CSS transition plays
+    const raf = requestAnimationFrame(() => setIsVisible(true));
+
+    // Escape key handler
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    document.addEventListener("keydown", onKey);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", onKey);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
 
   const handleApprove = async () => {
     setIsApproving(true);

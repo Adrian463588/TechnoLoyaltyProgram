@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -193,12 +193,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* Footer with user info and settings */}
           <div className="border-t border-border p-4 space-y-2">
             {/* User Info */}
-            <motion.div
-              className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              whileHover={{ scale: 1.02 }}
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              aria-label="Sign out"
+              data-testid="sidebar-logout"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors text-left"
             >
               <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
                 <span className="text-primary font-bold text-sm">
@@ -219,7 +219,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               >
                 <LogOut size={14} />
               </motion.div>
-            </motion.div>
+            </button>
           </div>
         </aside>
       </>

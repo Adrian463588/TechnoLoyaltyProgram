@@ -1,4 +1,10 @@
-import { RewardRequest } from "@/types";
+/**
+ * /employee/history — Redemption History (Server Component)
+ * Fetches real redemption data from /api/employee/redemptions.
+ * Falls back gracefully on backend unavailability.
+ */
+import { auth, getServerToken } from "@/lib/auth";
+import { employeeApi, type RedemptionResponse } from "@/lib/api-client";
 import { BentoCard } from "@/components/ui/bento-card";
 import { RedemptionStatusChip } from "@/components/shared/status-badge";
 import {
@@ -11,40 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Coins, History, Info } from "lucide-react";
 
-// Mock history data — will be replaced by API call
-const mockHistory: RewardRequest[] = [
-  {
-    id: "REQ-1001",
-    userId: "EMP-001",
-    rewardId: "RW-001",
-    rewardName: "Exclusive Partner Voucher IDR 100k",
-    tokensSpent: 2000,
-    status: "VERIFIED",
-    requestedAt: "2026-05-09T10:00:00Z",
-    updatedAt: "2026-05-10T14:30:00Z",
-  },
-  {
-    id: "REQ-0985",
-    userId: "EMP-001",
-    rewardId: "RW-002",
-    rewardName: "Company Branded Hoodie",
-    tokensSpent: 4500,
-    status: "COMPLETED",
-    requestedAt: "2026-03-12T08:00:00Z",
-    updatedAt: "2026-03-25T11:00:00Z",
-  },
-  {
-    id: "REQ-0912",
-    userId: "EMP-001",
-    rewardId: "RW-004",
-    rewardName: "Tech Gadget Bundle",
-    tokensSpent: 7500,
-    status: "REJECTED",
-    requestedAt: "2026-01-20T09:30:00Z",
-    updatedAt: "2026-01-21T10:00:00Z",
-    rejectReason: "Not eligible due to recent downgrade status.",
-  },
-];
+export const metadata = { title: "Redemption History | Berijalan Loyalty" };
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
@@ -54,9 +27,29 @@ function formatDate(iso: string) {
   });
 }
 
-export default function RedemptionHistoryPage() {
+export default async function RedemptionHistoryPage() {
+  await auth();
+  const token = await getServerToken();
+
+  let redemptions: RedemptionResponse[] = [];
+  try {
+    redemptions = await employeeApi.getMyRedemptions(token);
+  } catch (err) {
+    console.warn(
+      "[history] failed to fetch redemptions:",
+      err instanceof Error ? err.message : err,
+    );
+  }
+
+  const counts = {
+    total: redemptions.length,
+    completed: redemptions.filter((r) => r.status === "COMPLETED").length,
+    pending: redemptions.filter((r) => r.status === "PENDING_VERIFICATION").length,
+    rejected: redemptions.filter((r) => r.status === "REJECTED").length,
+  };
+
   return (
-    <div className="max-w-5xl mx-auto w-full space-y-6">
+    <div className="max-w-5xl mx-auto w-full space-y-6 p-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -68,12 +61,12 @@ export default function RedemptionHistoryPage() {
       </div>
 
       {/* Summary Chips */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3" role="status" aria-label="Redemption summary">
         {[
-          { label: "Total Requests", value: mockHistory.length },
-          { label: "Completed", value: mockHistory.filter((r) => r.status === "COMPLETED").length },
-          { label: "Pending", value: mockHistory.filter((r) => r.status === "PENDING_VERIFICATION").length },
-          { label: "Rejected", value: mockHistory.filter((r) => r.status === "REJECTED").length },
+          { label: "Total Requests", value: counts.total },
+          { label: "Completed", value: counts.completed },
+          { label: "Pending", value: counts.pending },
+          { label: "Rejected", value: counts.rejected },
         ].map(({ label, value }) => (
           <div key={label} className="flex items-center gap-2 rounded-full border border-border bg-muted/30 px-4 py-1.5">
             <span className="text-xs text-muted-foreground">{label}:</span>
@@ -83,13 +76,13 @@ export default function RedemptionHistoryPage() {
       </div>
 
       {/* History Table */}
-      {mockHistory.length === 0 ? (
+      {redemptions.length === 0 ? (
         <BentoCard className="p-16 flex flex-col items-center justify-center text-center gap-4">
           <div className="p-4 bg-muted rounded-full">
-            <History className="w-8 h-8 text-muted-foreground" />
+            <History className="w-8 h-8 text-muted-foreground" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="font-semibold text-lg">No Redemption History</h3>
+            <h2 className="font-semibold text-lg">No Redemption History</h2>
             <p className="text-sm text-muted-foreground mt-1">
               You haven&apos;t submitted any redemption requests yet.
             </p>
@@ -97,10 +90,10 @@ export default function RedemptionHistoryPage() {
         </BentoCard>
       ) : (
         <BentoCard className="overflow-hidden p-0">
-          <Table>
+          <Table data-testid="history-table">
             <TableHeader className="bg-muted/50">
               <TableRow>
-                <TableHead className="w-[110px]">Request ID</TableHead>
+                <TableHead className="w-[130px]">Request ID</TableHead>
                 <TableHead>Reward</TableHead>
                 <TableHead>Tokens</TableHead>
                 <TableHead>Requested</TableHead>
@@ -109,34 +102,36 @@ export default function RedemptionHistoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockHistory.map((req) => (
-                <TableRow key={req.id}>
+              {redemptions.map((req) => (
+                <TableRow key={req.id} data-testid="history-row">
                   <TableCell className="font-mono text-xs text-muted-foreground">
-                    {req.id}
+                    {req.id.slice(0, 8)}…
                   </TableCell>
                   <TableCell>
-                    <p className="font-medium text-foreground">{req.rewardName}</p>
-                    {req.rejectReason && (
+                    <p className="font-medium text-foreground">{req.item?.name ?? "—"}</p>
+                    {req.status === "REJECTED" && (
                       <div className="flex items-start gap-1 mt-1 text-xs text-destructive">
-                        <Info className="w-3 h-3 mt-0.5 shrink-0" />
-                        <span>{req.rejectReason}</span>
+                        <Info className="w-3 h-3 mt-0.5 shrink-0" aria-hidden="true" />
+                        <span>Rejected — contact HC PM for details.</span>
                       </div>
                     )}
                   </TableCell>
                   <TableCell>
                     <span className="flex items-center gap-1 font-semibold text-destructive">
-                      <Coins className="w-3 h-3" />
-                      {req.tokensSpent.toLocaleString()}
+                      <Coins className="w-3 h-3" aria-hidden="true" />
+                      {(req.item?.tokenCost ?? 0).toLocaleString()}
                     </span>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(req.requestedAt)}
+                    {formatDate(req.createdAt)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(req.updatedAt)}
+                    {formatDate(req.createdAt)}
                   </TableCell>
                   <TableCell>
-                    <RedemptionStatusChip status={req.status} />
+                    <RedemptionStatusChip
+                      status={req.status as import("@/types").RewardRequestStatus}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -146,11 +141,14 @@ export default function RedemptionHistoryPage() {
       )}
 
       {/* Info banner */}
-      <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border border-border">
-        <Info className="w-4 h-4 mt-0.5 shrink-0" />
+      <div
+        className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border border-border"
+        role="note"
+      >
+        <Info className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
         <span>
           Redemption requests are verified by HC PM before processing. Rejected requests
-          will include a reason visible here. Contact your HC PM for questions.
+          will include a reason. Contact your HC PM for questions.
         </span>
       </div>
     </div>

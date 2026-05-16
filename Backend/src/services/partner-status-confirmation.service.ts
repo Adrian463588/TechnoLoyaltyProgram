@@ -31,7 +31,8 @@ export class PartnerStatusConfirmationService {
     mitraId:             string,
     teamLeadId:          string,
     requestedBy:         string,
-  ) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ): Promise<any> {
     // Verify redemption exists
     const redemption = await prisma.redemptionRequest.findUnique({
       where: { id: redemptionRequestId },
@@ -90,7 +91,8 @@ export class PartnerStatusConfirmationService {
     status: "CONFIRMED_ACTIVE" | "CONFIRMED_RESIGNED",
     actorId: string,
     note?: string,
-  ) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ): Promise<any> {
     const confirmation = await prisma.partnerStatusConfirmation.findUnique({
       where: { id: confirmationId },
     });
@@ -128,7 +130,8 @@ export class PartnerStatusConfirmationService {
   }
 
   /** HC or TL cancels a pending request. */
-  async cancel(confirmationId: string, actorId: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async cancel(confirmationId: string, actorId: string): Promise<any> {
     const confirmation = await prisma.partnerStatusConfirmation.findUnique({
       where: { id: confirmationId },
     });
@@ -157,7 +160,8 @@ export class PartnerStatusConfirmationService {
   }
 
   /** List confirmations assigned to the current TL. */
-  async listForTL(teamLeadId: string, statusFilter?: ConfirmationStatus) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async listForTL(teamLeadId: string, statusFilter?: ConfirmationStatus): Promise<any[]> {
     return prisma.partnerStatusConfirmation.findMany({
       where: {
         assignedTo: teamLeadId,
@@ -172,7 +176,8 @@ export class PartnerStatusConfirmationService {
   }
 
   /** List confirmations created by HC. */
-  async listForHC(requestedBy: string, statusFilter?: ConfirmationStatus) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async listForHC(requestedBy: string, statusFilter?: ConfirmationStatus): Promise<any[]> {
     return prisma.partnerStatusConfirmation.findMany({
       where: {
         requestedBy,

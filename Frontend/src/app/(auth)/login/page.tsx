@@ -15,9 +15,17 @@ import { Loader2, Lock, Shield, Trophy, Users } from "lucide-react";
 import { motion } from "framer-motion";
 
 const DEMO_CREDENTIALS = [
-  { label: "Employee (Mitra)", npk: "34567", password: "password123", icon: Trophy },
-  { label: "Team Leader",      npk: "23456", password: "password123", icon: Users },
-  { label: "HC PM Admin",      npk: "12345", password: "password123", icon: Shield },
+  { label: "Admin (HC PM)", npk: "12345", password: "password123", icon: Shield },
+  { label: "Leader (OpCent)", npk: "23456", password: "password123", icon: Users },
+  { label: "Leader (Tele)", npk: "23457", password: "password123", icon: Users },
+  { label: "Leader (Techno)", npk: "23458", password: "password123", icon: Users },
+  { label: "Alice (OpCent, Emerald)", npk: "34567", password: "password123", icon: Trophy },
+  { label: "Saphire (Tele, Saphire)", npk: "40001", password: "password123", icon: Trophy },
+  { label: "Emerald (OpCent, Emerald)", npk: "40002", password: "password123", icon: Trophy },
+  { label: "Ruby (Techno, Ruby)", npk: "40003", password: "password123", icon: Trophy },
+  { label: "Diamond (Techno, Diamond)", npk: "40004", password: "password123", icon: Trophy },
+  { label: "Eve (OpCent, Inactive)", npk: "40005", password: "password123", icon: Trophy },
+  { label: "Frank (Tele, Resigned)", npk: "40006", password: "password123", icon: Trophy },
 ];
 
 const ROLE_REDIRECT: Record<string, string> = {
@@ -69,8 +77,11 @@ export default function LoginPage() {
       {/* Brand header */}
       <div className="text-center space-y-3">
         <div className="flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30">
-            <Trophy className="h-8 w-8 text-primary-foreground" />
+          <div
+            className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30"
+            aria-hidden="true"
+          >
+            <Trophy className="h-8 w-8 text-primary-foreground" aria-hidden="true" />
           </div>
         </div>
         <div>
@@ -90,7 +101,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div className="space-y-2">
             <Label htmlFor="npk" className="text-sm font-medium">
               NPK (Employee ID)
@@ -102,10 +113,14 @@ export default function LoginPage() {
               autoComplete="username"
               className="bg-muted/30"
               data-testid="login-npk"
+              aria-describedby={errors.npk ? "npk-error" : undefined}
+              aria-invalid={!!errors.npk}
               {...register("npk")}
             />
             {errors.npk && (
-              <p className="text-xs text-destructive">{errors.npk.message}</p>
+              <p id="npk-error" role="alert" className="text-xs text-destructive">
+                {errors.npk.message}
+              </p>
             )}
           </div>
 
@@ -120,15 +135,19 @@ export default function LoginPage() {
               autoComplete="current-password"
               className="bg-muted/30"
               data-testid="login-password"
+              aria-describedby={errors.password ? "password-error" : undefined}
+              aria-invalid={!!errors.password}
               {...register("password")}
             />
             {errors.password && (
-              <p className="text-xs text-destructive">{errors.password.message}</p>
+              <p id="password-error" role="alert" className="text-xs text-destructive">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
           {errorMsg && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" role="alert" aria-live="assertive">
               <AlertDescription>{errorMsg}</AlertDescription>
             </Alert>
           )}
@@ -142,12 +161,12 @@ export default function LoginPage() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                 Signing in...
               </>
             ) : (
               <>
-                <Lock className="mr-2 h-4 w-4" />
+                <Lock className="mr-2 h-4 w-4" aria-hidden="true" />
                 Sign In
               </>
             )}
@@ -160,7 +179,7 @@ export default function LoginPage() {
         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-center">
           Demo Accounts
         </p>
-        <div className="space-y-2">
+        <div className="space-y-2" role="list" aria-label="Demo account credentials">
           {DEMO_CREDENTIALS.map(({ label, npk, password, icon: Icon }) => (
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -168,6 +187,8 @@ export default function LoginPage() {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
               key={npk}
               type="button"
+              role="listitem"
+              aria-label={`Fill credentials for ${label}`}
               onClick={() => {
                 setValue("npk", npk);
                 setValue("password", password);
@@ -175,12 +196,12 @@ export default function LoginPage() {
               className="w-full flex items-center justify-between text-left rounded-lg bg-background border border-border px-3 py-2.5 hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="p-1.5 rounded-md bg-primary/10">
-                  <Icon className="w-3.5 h-3.5 text-primary" />
+                <div className="p-1.5 rounded-md bg-primary/10" aria-hidden="true">
+                  <Icon className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                 </div>
                 <span className="text-sm font-medium text-foreground">{label}</span>
               </div>
-              <div className="text-right">
+              <div className="text-right" aria-hidden="true">
                 <p className="text-xs font-mono text-muted-foreground">{npk}</p>
                 <p className="text-xs text-muted-foreground/60">password123</p>
               </div>

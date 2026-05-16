@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { Upload, Users, ShoppingBag, Coins, ChevronRight } from "lucide-react";
 import { RedemptionQueueTable } from "@/features/admin/redemption-queue-table";
@@ -102,10 +103,12 @@ export default function AdminDashboardPage() {
             <div className="bento-card p-6">
               <h3 className="text-card-heading mb-6">Quick Actions</h3>
               <div className="space-y-4">
-                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} className="btn-primary w-full text-left flex justify-between items-center px-4 py-3">
-                  Upload Data File
-                  <Upload className="h-4 w-4" />
-                </motion.button>
+                <Link href={'/admin/uploads'}>
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} className="btn-primary w-full text-left flex justify-between items-center px-4 py-3">
+                    Upload Data File
+                    <Upload className="h-4 w-4" />
+                  </motion.button>
+                </Link>
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ type: "spring", stiffness: 400, damping: 17 }} className="btn-ghost w-full text-left flex justify-between items-center px-4 py-3">
                   Process Month End
                   <ChevronRight className="h-4 w-4" />

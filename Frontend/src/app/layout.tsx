@@ -22,6 +22,11 @@ const fontJetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Berijalan Employee Loyalty Program Portal",
   description: "Internal loyalty portal for Optel and Techno divisions",
+  openGraph: {
+    title: "Berijalan Loyalty",
+    description: "Employee Loyalty Program Portal",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
