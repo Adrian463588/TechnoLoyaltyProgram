@@ -179,16 +179,6 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
                     <span>Profile Settings</span>
                 </DropdownMenuItem>
 
-                <DropdownMenuItem
-                  onClick={() => router.push("/notifications" as string as never)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors hover:bg-slate-100 focus:bg-slate-100"
-                >
-                    <motion.div whileHover={{ x: 2 }}>
-                      <Bell size={16} />
-                    </motion.div>
-                    <span>Notifications</span>
-                </DropdownMenuItem>
-
                 <DropdownMenuSeparator className="my-2 bg-border" />
 
                 <DropdownMenuItem
