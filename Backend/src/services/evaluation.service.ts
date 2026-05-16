@@ -12,6 +12,7 @@ import { prisma } from "@/db/prisma";
 import { DivisionType, MemberTierType, PartnershipStatus, TokenEventType } from "@prisma/client";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
 import { LOYALTY_POLICIES } from "@/policies/loyalty.policy";
+import { cacheInvalidationService } from "@/utils/cache/cache-invalidation.service";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -115,7 +116,7 @@ export class EvaluationService {
           });
           const isReset = totalAttempts === 0;
 
-          await prisma.$transaction(async (tx) => {
+          const { newTier, penaltyAmount } = await prisma.$transaction(async (tx) => {
             let newTier: MemberTierType = MemberTierType.SAPHIRE;
             let penaltyAmount = currentBalance; // RESET: full balance
             let eventType: TokenEventType = TokenEventType.RESET_PENALTY;
@@ -179,7 +180,17 @@ export class EvaluationService {
             } else {
               results.skipped++;
             }
+
+            return { newTier, penaltyAmount };
           });
+
+          // Post-commit cache invalidation
+          if (mitra.membershipTier !== newTier) {
+            await cacheInvalidationService.invalidateAfterCommit({ type: "MEMBERSHIP_MUTATED", userId: mitra.id });
+          }
+          if (penaltyAmount > 0) {
+            await cacheInvalidationService.invalidateAfterCommit({ type: "TOKEN_MUTATED", userId: mitra.id });
+          }
         } else {
           results.skipped++;
         }
@@ -297,6 +308,9 @@ export class EvaluationService {
                 newValue:        { expired: remainingInCohort },
               },
             });
+
+            // Post-commit cache invalidation (no transaction wrapped around the ledger insertion here directly except inside the repository)
+            await cacheInvalidationService.invalidateAfterCommit({ type: "TOKEN_MUTATED", userId: user.id });
 
             results.expiredTokens  += remainingInCohort;
             results.entriesCreated += 1;

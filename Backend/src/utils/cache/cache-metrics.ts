@@ -20,22 +20,22 @@ export class CacheMetrics implements ICacheMetrics {
   }
 
   recordHit(timeMs: number) {
+    this.checkWindow();
     this.hits++;
     this.totalTimeMs += timeMs;
     this.operationCount++;
-    this.checkWindow();
   }
 
   recordMiss(timeMs: number) {
+    this.checkWindow();
     this.misses++;
     this.totalTimeMs += timeMs;
     this.operationCount++;
-    this.checkWindow();
   }
 
   recordError() {
-    this.errors++;
     this.checkWindow();
+    this.errors++;
   }
 
   private checkWindow() {

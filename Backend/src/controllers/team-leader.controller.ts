@@ -30,38 +30,33 @@ export const TeamLeaderController = {
       const { user } = req;
       const cacheKey = CacheKeys.teamTokenSummary(user.id);
       
-      const cached = await CacheService.get(cacheKey);
-      if (cached) {
-        res.json(cached);
-        return;
-      }
+      const result = await CacheService.getWithFallback(cacheKey, async () => {
+        const members = await prisma.user.findMany({
+          where: {
+            teamLeadId:    user.id,
+            partnerStatus: { not: "RESIGNED" },
+          },
+          select: {
+            id:            true,
+            name:          true,
+            npk:           true,
+            division:      true,
+            membershipTier: true,
+            partnerStatus: true,
+          },
+          orderBy: { name: "asc" },
+        });
 
-      const members = await prisma.user.findMany({
-        where: {
-          teamLeadId:    user.id,
-          partnerStatus: { not: "RESIGNED" },
-        },
-        select: {
-          id:            true,
-          name:          true,
-          npk:           true,
-          division:      true,
-          membershipTier: true,
-          partnerStatus: true,
-        },
-        orderBy: { name: "asc" },
+        // Get current balance for each member
+        const summaries = await Promise.all(
+          members.map(async (m) => ({
+            ...m,
+            currentBalance: await tokenLedgerRepository.getBalance(m.id),
+          })),
+        );
+
+        return { teamLeadId: user.id, members: summaries, count: summaries.length };
       });
-
-      // Get current balance for each member
-      const summaries = await Promise.all(
-        members.map(async (m) => ({
-          ...m,
-          currentBalance: await tokenLedgerRepository.getBalance(m.id),
-        })),
-      );
-
-      const result = { teamLeadId: user.id, members: summaries, count: summaries.length };
-      await CacheService.set(cacheKey, result);
       
       res.json(result);
     } catch (err) {

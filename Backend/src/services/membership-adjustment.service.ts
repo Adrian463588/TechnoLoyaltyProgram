@@ -10,7 +10,7 @@ import { logAudit } from "@/services/audit.service";
 import { calculateDowngrade, calculateReset, DowngradeTrigger, ResetTrigger } from "@/domain/membership/downgrade.domain";
 import { MemberTierType } from "@prisma/client";
 import { NotFoundError } from "@/errors";
-import { CacheService } from "@/services/cache.service";
+import { cacheInvalidationService } from "@/utils/cache/cache-invalidation.service";
 
 type MembershipAdjustmentResult =
   | {
@@ -107,7 +107,7 @@ export class MembershipAdjustmentService {
     });
 
     if (result.status === "APPLIED") {
-      await CacheService.invalidate({ 
+      await cacheInvalidationService.invalidateAfterCommit({ 
         type: "MEMBERSHIP_MUTATED", 
         userId, 
         tokenPenaltyApplied: result.penaltyAmount > 0 
@@ -194,7 +194,7 @@ export class MembershipAdjustmentService {
     });
 
     if (result.status === "APPLIED") {
-      await CacheService.invalidate({ 
+      await cacheInvalidationService.invalidateAfterCommit({ 
         type: "MEMBERSHIP_MUTATED", 
         userId, 
         tokenPenaltyApplied: result.penaltyAmount > 0 

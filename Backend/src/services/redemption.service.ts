@@ -15,6 +15,7 @@ import { checkRedemptionEligibility } from "./loyalty.service";
 import { logAudit } from "./audit.service";
 import { NotFoundError, ValidationError } from "@/errors/index";
 import { CacheService } from "./cache.service";
+import { cacheInvalidationService } from "../utils/cache/cache-invalidation.service";
 import { CacheKeys } from "../utils/cache/cache-key.registry";
 
 /**
@@ -80,29 +81,30 @@ export class RedemptionService {
    */
   async getEligibilityPreview(userId: string): Promise<{ isEligible: boolean; reasons: string[] }> {
     const cacheKey = CacheKeys.redemptionEligibility(userId);
-    const cached = await CacheService.get<{ isEligible: boolean; reasons: string[] }>(cacheKey);
-    if (cached) return cached;
+    return CacheService.getWithFallback<{ isEligible: boolean; reasons: string[] }>(
+      cacheKey,
+      async () => {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new NotFoundError("User", userId);
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundError("User", userId);
+        const tokenBalance = await tokenLedgerRepository.getBalance(userId);
 
-    const tokenBalance = await tokenLedgerRepository.getBalance(userId);
+        // Simplified general guard: must be ACTIVE partner and have enough for the cheapest reward or an arbitrary threshold (e.g. 2000).
+        // The exact check depends on the catalog, but generally we check if partnerStatus is ACTIVE.
+        const reasons: string[] = [];
+        if (user.partnerStatus !== "ACTIVE") {
+          reasons.push("Only active partners are eligible for redemption.");
+        }
+        
+        // As a simple generic check, assume a base threshold of 2000 tokens for the dashboard preview
+        if (tokenBalance < 2000) {
+          reasons.push(`Earn ${(2000 - tokenBalance).toLocaleString()} more tokens to unlock rewards.`);
+        }
 
-    // Simplified general guard: must be ACTIVE partner and have enough for the cheapest reward or an arbitrary threshold (e.g. 2000).
-    // The exact check depends on the catalog, but generally we check if partnerStatus is ACTIVE.
-    const reasons: string[] = [];
-    if (user.partnerStatus !== "ACTIVE") {
-      reasons.push("Only active partners are eligible for redemption.");
-    }
-    
-    // As a simple generic check, assume a base threshold of 2000 tokens for the dashboard preview
-    if (tokenBalance < 2000) {
-      reasons.push(`Earn ${(2000 - tokenBalance).toLocaleString()} more tokens to unlock rewards.`);
-    }
-
-    const result = { isEligible: reasons.length === 0, reasons };
-    await CacheService.set(cacheKey, result, 120);
-    return result;
+        return { isEligible: reasons.length === 0, reasons };
+      },
+      120 // 2 minutes TTL
+    );
   }
 
   /**
@@ -166,7 +168,7 @@ export class RedemptionService {
       return request;
     });
 
-    await CacheService.invalidate({ type: "REDEMPTION_MUTATED", userId });
+    await cacheInvalidationService.invalidateAfterCommit({ type: "REDEMPTION_MUTATED", userId });
     return result;
   }
 
@@ -216,7 +218,7 @@ export class RedemptionService {
       return updated;
     });
 
-    await CacheService.invalidate({ type: "REDEMPTION_MUTATED", userId: request.mitraId });
+    await cacheInvalidationService.invalidateAfterCommit({ type: "REDEMPTION_MUTATED", userId: request.mitraId });
     return result;
   }
 
@@ -301,9 +303,9 @@ export class RedemptionService {
       return updated;
     });
 
-    await CacheService.invalidate({ type: "REDEMPTION_MUTATED", userId: request.mitraId });
+    await cacheInvalidationService.invalidateAfterCommit({ type: "REDEMPTION_MUTATED", userId: request.mitraId });
     if (newStatus === "VERIFIED") {
-      await CacheService.invalidate({ type: "TOKEN_MUTATED", userId: request.mitraId });
+      await cacheInvalidationService.invalidateAfterCommit({ type: "TOKEN_MUTATED", userId: request.mitraId });
     }
 
     return result;
