@@ -1,7 +1,6 @@
 /**
  * Backend/src/utils/swagger.ts
- *
- * Swagger configuration using swagger-jsdoc.
+ * Lazy swagger spec — AST is parsed ONCE on first /api-docs hit, not at startup.
  */
 
 import swaggerJsdoc from "swagger-jsdoc";
@@ -29,14 +28,19 @@ const options: swaggerJsdoc.Options = {
         },
       },
     },
-    security: [
-      {
-        bearerAuth: [],
-      },
-    ],
+    security: [{ bearerAuth: [] }],
   },
-  // Path to the API docs
   apis: ["./src/api/*.ts", "./src/controllers/*.ts"],
 };
 
-export const swaggerSpec = swaggerJsdoc(options);
+let _spec: ReturnType<typeof swaggerJsdoc> | null = null;
+
+/** Returns the swagger spec, computing it once and caching in memory. */
+export function getSwaggerSpec() {
+  if (!_spec) _spec = swaggerJsdoc(options);
+  return _spec;
+}
+
+// Legacy named export for backwards compat
+export const swaggerSpec = getSwaggerSpec();
+

@@ -23,7 +23,6 @@ import {
   User,
   X,
 } from "lucide-react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -82,16 +81,13 @@ export function AppNavbar({
         )}
       >
         {/* Mobile hamburger */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="flex md:hidden items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-slate-100 transition-colors"
+        <button
+          className="flex md:hidden items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-slate-100 active:scale-95 transition-all duration-150"
           onClick={() => setMobileOpen((o) => !o)}
           aria-label="Toggle menu"
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </motion.button>
+        </button>
 
         {/* Brand */}
         <Link

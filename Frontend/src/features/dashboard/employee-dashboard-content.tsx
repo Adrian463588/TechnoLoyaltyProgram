@@ -57,12 +57,14 @@ function MiniChart({ color = "bg-primary" }: { color?: string }) {
   return (
     <div className="flex items-end justify-between h-20 w-full mt-2 gap-2">
       {[40, 70, 45, 90, 65, 80, 55].map((h, i) => (
-        <motion.div
+        <div
           key={i}
-          initial={{ height: 0 }}
-          animate={{ height: `${h}%` }}
-          transition={{ delay: 0.5 + i * 0.1, duration: 0.8, ease: "easeOut" }}
-          className={cn("w-full rounded-t-md opacity-80", color)}
+          className={cn("w-full rounded-t-md opacity-80 animate-bar-grow", color)}
+          style={{
+            height: `${h}%`,
+            animationDelay: `${i * 100}ms`,
+            animationFillMode: "both",
+          }}
         />
       ))}
     </div>

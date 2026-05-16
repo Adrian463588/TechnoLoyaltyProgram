@@ -1,14 +1,9 @@
 /**
- * Backend/src/app.ts
- *
- * Express application entry point.
- * Thin orchestration layer — all business logic lives in services.
- *
- * SOLID: Single entry point only wires routes and middleware.
- * Clean Code: Each concern is registered once, in order.
+ * Backend/src/app.ts — Express entry point.
+ * Thin orchestration: wires routes, middleware, lifecycle hooks.
  */
 
-import "dotenv/config"; // Load .env before Prisma initializes
+import "dotenv/config";
 import express, { type Application } from "express";
 import cors from "cors";
 
@@ -17,13 +12,10 @@ import { employeeRoutes } from "./api/employee.routes";
 import { adminRoutes }    from "./api/admin.routes";
 import { leaderRoutes }   from "./api/leader.routes";
 import { errorHandler }   from "./middleware/error-handler";
-import swaggerUi          from "swagger-ui-express";
-import { swaggerSpec }    from "./utils/swagger";
+import { prisma }         from "./db/prisma";
+import { redisClient }    from "./utils/cache/redis-client";
 
 const app: Application = express();
-
-// ── Swagger Documentation ──────────────────────────────────────────────────
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // ── Global middleware ─────────────────────────────────────────────────────
 app.use(express.json({ limit: "10mb" }));
@@ -51,6 +43,18 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// ── Swagger — lazy-loaded, only initialises AST on first hit ─────────────
+app.get("/api-docs", async (req, res) => {
+  const [swaggerUi, { swaggerSpec }] = await Promise.all([
+    import("swagger-ui-express"),
+    import("./utils/swagger"),
+  ]);
+  const html = swaggerUi.default.generateHTML(swaggerSpec);
+  res.setHeader("Content-Type", "text/html");
+  res.send(html);
+});
+
+
 // ── API routes ────────────────────────────────────────────────────────────
 app.use("/api/auth",     authRoutes);
 app.use("/api/employee", employeeRoutes);
@@ -63,8 +67,32 @@ app.use(errorHandler);
 // ── Bootstrap ─────────────────────────────────────────────────────────────
 const PORT = Number(process.env.PORT ?? 8080);
 
-app.listen(PORT, () => {
-  console.warn(`[Backend] Server running on port ${String(PORT)} — env: ${process.env.NODE_ENV ?? "development"}`);
-});
+async function bootstrap() {
+  // Connect Redis only if enabled in env; gracefully skips if not configured.
+  await redisClient.connect();
+
+  const server = app.listen(PORT, () => {
+    console.warn(
+      `[Backend] Server running on port ${String(PORT)} — env: ${process.env.NODE_ENV ?? "development"}`
+    );
+  });
+
+  // ── Graceful shutdown — prevents orphaned DB/Redis connections ───────────
+  async function shutdown(signal: string) {
+    console.warn(`[Backend] ${signal} received — shutting down gracefully`);
+    server.close(async () => {
+      await Promise.allSettled([
+        prisma.$disconnect(),
+        redisClient.disconnect(),
+      ]);
+      process.exit(0);
+    });
+  }
+
+  process.on("SIGTERM", () => { void shutdown("SIGTERM"); });
+  process.on("SIGINT",  () => { void shutdown("SIGINT"); });
+}
+
+void bootstrap();
 
 export default app;
