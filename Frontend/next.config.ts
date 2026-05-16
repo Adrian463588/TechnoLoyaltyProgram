@@ -2,21 +2,23 @@ import type { NextConfig } from "next";
 
 /**
  * Frontend/next.config.ts
- *
- * Next.js 16 configuration for GCP Cloud Run deployment.
- * Uses standalone output mode for minimal Docker image size.
+ * Next.js 16 — optimised for dev memory + GCP Cloud Run deployment.
  */
 const nextConfig: NextConfig = {
-  // ── GCP Cloud Run: standalone bundle ────────────────────────────────────
-  output: "standalone",
+  // ── Standalone output: ONLY in production builds ─────────────────────────
+  // In dev, this causes extra file-tracing on every HMR cycle → RAM bloat.
+  ...(process.env.NODE_ENV === "production" && { output: "standalone" }),
 
-  // ── Type-safe routing (Next.js experimental) ────────────────────────────
+  // ── Prevent framer-motion from being server-side bundled ─────────────────
+  // Keeps it in the client chunk only, reduces SSR memory footprint.
+  serverExternalPackages: ["framer-motion"],
+
+  // ── Type-safe routing ────────────────────────────────────────────────────
   experimental: {
     typedRoutes: true,
   },
 
   // ── Server-only env vars passed to client ───────────────────────────────
-  // Do NOT put secrets here — use process.env directly in server components
   env: {
     NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL ?? "",
   },
@@ -24,10 +26,10 @@ const nextConfig: NextConfig = {
   // ── Image optimization ──────────────────────────────────────────────────
   images: {
     remotePatterns: [
-      // Add your GCP Storage bucket domain here
       // { protocol: "https", hostname: "storage.googleapis.com" },
     ],
   },
 };
 
 export default nextConfig;
+

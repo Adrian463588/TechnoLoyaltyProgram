@@ -5,7 +5,7 @@
   "private": true,
   "main": "dist/app.js",
   "scripts": {
-    "dev": "tsx watch --tsconfig tsconfig.json src/app.ts",
+    "dev": "NODE_OPTIONS=--max-old-space-size=512 tsx watch --tsconfig tsconfig.json src/app.ts",
     "build": "tsc --project tsconfig.json",
     "start": "node dist/app.js",
     "lint": "eslint \"src/**/*.ts\"",

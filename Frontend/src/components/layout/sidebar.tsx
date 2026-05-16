@@ -6,7 +6,7 @@ import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { LazyMotion, domAnimation, m, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -53,11 +53,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const links = navItems[role] || navItems.MITRA;
 
   return (
+    <LazyMotion features={domAnimation}>
     <AnimatePresence mode="wait">
       <>
         {/* Mobile Backdrop with blur */}
         {isOpen && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -79,25 +80,25 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* Logo Header */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-border shrink-0">
             <Link href="/" className="flex items-center gap-3 group">
-              <motion.div
+              <m.div
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 whileTap={{ scale: 0.95 }}
                 className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/30"
               >
                 <LayoutDashboard size={20} />
-              </motion.div>
+              </m.div>
               <span className="font-display font-bold text-xl text-foreground tracking-tight">
                 Berijalan
               </span>
             </Link>
-            <motion.button
+            <m.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               className="lg:hidden p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-slate-100 transition-colors"
               onClick={onClose}
             >
               <X size={20} />
-            </motion.button>
+            </m.button>
           </div>
 
           {/* Navigation Links */}
@@ -108,7 +109,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               const isHovered = hoveredLink === link.href;
 
               return (
-                <motion.div
+                <m.div
                   key={link.href}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -127,7 +128,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     )}
                   >
                     {/* Hover background effect */}
-                    <motion.div
+                    <m.div
                       className="absolute inset-0 bg-primary/5 rounded-xl"
                       initial={{ scale: 0, opacity: 0 }}
                       whileHover={{ scale: 1, opacity: 1 }}
@@ -136,7 +137,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                     {/* Active indicator */}
                     {isActive && (
-                      <motion.div
+                      <m.div
                         layoutId="activeIndicator"
                         className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full"
                         initial={{ opacity: 0 }}
@@ -145,7 +146,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     )}
 
                     {/* Icon with animation */}
-                    <motion.div
+                    <m.div
                       whileHover={{ scale: 1.1, rotate: isActive ? 0 : 3 }}
                       transition={{ type: "spring", stiffness: 400, damping: 17 }}
                       className="relative z-10"
@@ -159,33 +160,33 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                             : "text-muted-foreground group-hover:text-foreground"
                         )}
                       />
-                    </motion.div>
+                    </m.div>
 
                     {/* Label */}
                     <span className="relative z-10">{link.label}</span>
 
                     {/* Arrow indicator on hover */}
-                    <motion.span
+                    <m.span
                       className="absolute right-4 text-primary opacity-0"
                       initial={{ x: -10, opacity: 0 }}
                       animate={{ x: isHovered ? 0 : -10, opacity: isHovered ? 1 : 0 }}
                       transition={{ duration: 0.2 }}
                     >
                       <ChevronRight size={16} />
-                    </motion.span>
+                    </m.span>
 
                     {/* Sparkle effect on active */}
                     {isActive && (
-                      <motion.div
+                      <m.div
                         className="absolute right-10 text-primary"
                         animate={{ opacity: [0.5, 1, 0.5] }}
                         transition={{ duration: 2, repeat: Infinity }}
                       >
                         <Sparkles size={12} />
-                      </motion.div>
+                      </m.div>
                     )}
                   </Link>
-                </motion.div>
+                </m.div>
               );
             })}
           </nav>
@@ -213,16 +214,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   {role}
                 </p>
               </div>
-              <motion.div
+              <m.div
                 whileHover={{ x: 2 }}
                 className="text-muted-foreground"
               >
                 <LogOut size={14} />
-              </motion.div>
+              </m.div>
             </button>
           </div>
         </aside>
       </>
     </AnimatePresence>
+    </LazyMotion>
   );
 }

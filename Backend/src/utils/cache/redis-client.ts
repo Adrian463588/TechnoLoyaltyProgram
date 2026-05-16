@@ -232,8 +232,16 @@ function createRedisClient(): IRedisClient {
   return client;
 }
 
+// ── Singleton guard — survives tsx hot-reload without spawning new instances ──
+const globalForRedis = globalThis as unknown as { redisClient?: IRedisClient };
+
 /**
- * Singleton Redis client instance
- * Export for use throughout the backend
+ * Singleton Redis client instance.
+ * Exported for use throughout the backend.
  */
-export const redisClient: IRedisClient = createRedisClient();
+export const redisClient: IRedisClient =
+  globalForRedis.redisClient ?? createRedisClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForRedis.redisClient = redisClient;
+}

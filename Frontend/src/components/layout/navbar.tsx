@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Menu, LogOut, User, Bell, Search, ChevronDown } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
-import { motion, AnimatePresence } from "framer-motion";
+import { LazyMotion, domAnimation, m, AnimatePresence } from "framer-motion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +22,8 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
   const router = useRouter();
 
   return (
-    <motion.header
+    <LazyMotion features={domAnimation}>
+    <m.header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -30,7 +31,7 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
     >
       <div className="flex items-center gap-4">
         {/* Hamburger Menu Button */}
-        <motion.button
+        <m.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onMenuClick}
@@ -38,10 +39,10 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
           aria-label="Open menu"
         >
           <Menu size={22} />
-        </motion.button>
+        </m.button>
 
         {/* Search Bar with microinteractions */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, width: 0 }}
           animate={{
             opacity: 1,
@@ -55,7 +56,7 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
               : "bg-slate-50 border-border"
           )}
         >
-          <motion.div
+          <m.div
             animate={{ scale: isSearchFocused ? 1.1 : 1 }}
             transition={{ duration: 0.2 }}
           >
@@ -66,7 +67,7 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
                 isSearchFocused ? "text-primary" : "text-muted-foreground"
               )}
             />
-          </motion.div>
+          </m.div>
           <input
             type="text"
             placeholder="Search..."
@@ -76,22 +77,22 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
           />
           <AnimatePresence>
             {isSearchFocused && (
-              <motion.kbd
+              <m.kbd
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5 rounded"
               >
                 ⌘K
-              </motion.kbd>
+              </m.kbd>
             )}
           </AnimatePresence>
-        </motion.div>
+        </m.div>
       </div>
 
       <div className="flex items-center gap-2">
         {/* Notifications Bell with badge animation */}
-        <motion.button
+        <m.button
           whileHover={{ scale: 1.05, rotate: 5 }}
           whileTap={{ scale: 0.95 }}
           className="relative p-2.5 text-muted-foreground hover:text-foreground rounded-xl hover:bg-slate-100 transition-colors"
@@ -100,34 +101,34 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
         >
           <Bell size={20} />
           {/* Notification badge with pulse */}
-          <motion.span
+          <m.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             className="absolute top-1.5 right-1.5 h-2 w-2 bg-primary rounded-full"
           >
-            <motion.span
+            <m.span
               className="absolute inset-0 h-full w-full rounded-full bg-primary"
               animate={{ scale: [1, 1.5, 1], opacity: [1, 0, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             />
-          </motion.span>
-        </motion.button>
+          </m.span>
+        </m.button>
 
         {/* User Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger className="focus:outline-none">
-            <motion.div
+            <m.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               data-testid="profile-menu-trigger"
               className="flex items-center gap-2 rounded-full p-1 pr-3 hover:bg-slate-100 transition-colors cursor-pointer"
             >
-              <motion.div
+              <m.div
                 whileHover={{ rotate: 10 }}
                 className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 text-primary overflow-hidden"
               >
                 <User size={18} />
-              </motion.div>
+              </m.div>
               <span className="hidden md:block text-sm font-medium text-foreground max-w-32 truncate">
                 {session?.user?.name || "Account"}
               </span>
@@ -135,7 +136,7 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
                 size={14}
                 className="hidden md:block text-muted-foreground"
               />
-            </motion.div>
+            </m.div>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
@@ -143,7 +144,7 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
             className="w-64 bg-white border border-border p-2 shadow-lg rounded-xl"
           >
             <AnimatePresence mode="wait">
-              <motion.div
+              <m.div
                 key="dropdown-content"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -151,12 +152,12 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
                 transition={{ duration: 0.15 }}
               >
                 <DropdownMenuLabel className="flex items-center gap-3 p-2 rounded-xl bg-slate-50">
-                  <motion.div
+                  <m.div
                     whileHover={{ rotate: 10 }}
                     className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 text-primary overflow-hidden"
                   >
                     <User size={20} />
-                  </motion.div>
+                  </m.div>
                   <div className="flex flex-col gap-0.5">
                     <span className="text-sm font-bold text-foreground">
                       {session?.user?.name || "Account"}
@@ -173,9 +174,9 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
                   onClick={() => router.push("/profile" as string as never)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors hover:bg-slate-100 focus:bg-slate-100"
                 >
-                    <motion.div whileHover={{ x: 2 }}>
+                    <m.div whileHover={{ x: 2 }}>
                       <User size={16} />
-                    </motion.div>
+                    </m.div>
                     <span>Profile Settings</span>
                 </DropdownMenuItem>
 
@@ -185,19 +186,20 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
                   onClick={() => signOut({ callbackUrl: "/login" })}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition-colors"
                 >
-                  <motion.div
+                  <m.div
                     whileHover={{ x: 2 }}
                     transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
                     <LogOut size={16} />
-                  </motion.div>
+                  </m.div>
                   <span className="font-medium">Log out</span>
                 </DropdownMenuItem>
-              </motion.div>
+              </m.div>
             </AnimatePresence>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </motion.header>
+    </m.header>
+    </LazyMotion>
   );
 }
