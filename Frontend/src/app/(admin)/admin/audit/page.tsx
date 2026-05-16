@@ -2,6 +2,7 @@ import { BentoCard } from "@/components/ui/bento-card";
 import { Badge } from "@/components/ui/badge";
 import { adminApi } from "@/lib/api-client";
 import { getServerToken } from "@/lib/auth";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -33,11 +34,11 @@ function getActionIcon(action: string) {
 }
 
 function getActionBadgeColor(action: string): string {
-  if (action.includes("Verified"))  return "bg-primary/10 border-primary/20 text-primary";
-  if (action.includes("Rejected"))  return "bg-destructive/10 border-destructive/20 text-destructive";
-  if (action.includes("Upload"))    return "bg-secondary/10 border-secondary/20 text-secondary";
-  if (action.includes("Snapshot"))  return "bg-muted/40 border-border text-muted-foreground";
-  return "bg-muted/30 border-border text-muted-foreground";
+  if (action.includes("Verified"))  return "bg-primary/10 border-primary/20 text-primary shadow-sm backdrop-blur-md";
+  if (action.includes("Rejected"))  return "bg-destructive/10 border-destructive/20 text-destructive shadow-sm backdrop-blur-md";
+  if (action.includes("Upload"))    return "bg-secondary/10 border-secondary/20 text-secondary shadow-sm backdrop-blur-md";
+  if (action.includes("Snapshot"))  return "bg-muted/40 border-border/50 text-muted-foreground shadow-sm backdrop-blur-md";
+  return "bg-muted/30 border-border/50 text-muted-foreground shadow-sm backdrop-blur-md";
 }
 
 function formatDate(dateStr: string): string {
@@ -69,17 +70,27 @@ function formatDetails(details: unknown): string {
   return String(details);
 }
 
-async function AuditTable() {
+async function AuditTable({ filter }: { filter?: string }) {
   const token = await getServerToken();
-  const logs = await adminApi.getAuditLogs(token).catch(() => []);
+  let logs = await adminApi.getAuditLogs(token).catch(() => []);
+
+  if (filter) {
+    logs = logs.filter((log) => {
+      if (filter === "Upload") return log.action.includes("Upload");
+      if (filter === "Verification") return log.action.includes("Verified");
+      if (filter === "Rejection") return log.action.includes("Rejected");
+      if (filter === "System") return !log.action.includes("Upload") && !log.action.includes("Verified") && !log.action.includes("Rejected");
+      return true;
+    });
+  }
 
   if (logs.length === 0) {
     return (
       <BentoCard className="p-12 text-center">
         <Activity className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-        <p className="text-sm font-medium text-foreground">No audit events yet</p>
+        <p className="text-sm font-medium text-foreground">No audit events found</p>
         <p className="text-xs text-muted-foreground mt-1">
-          Admin actions and system events will appear here.
+          {filter ? `No events match the "${filter}" filter.` : "Admin actions and system events will appear here."}
         </p>
       </BentoCard>
     );
@@ -111,9 +122,9 @@ async function AuditTable() {
                 {formatDate(log.createdAt)}
               </TableCell>
               <TableCell>
-                <div className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs ${getActionBadgeColor(log.action)}`}>
+                <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${getActionBadgeColor(log.action)}`}>
                   {getActionIcon(log.action)}
-                  <span className="font-medium">{log.action}</span>
+                  <span className="font-semibold">{log.action}</span>
                 </div>
               </TableCell>
               <TableCell>
@@ -169,7 +180,14 @@ function AuditTableSkeleton() {
   );
 }
 
-export default function AuditLogPage() {
+export default async function AuditLogPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const resolvedParams = await searchParams;
+  const filter = typeof resolvedParams.filter === "string" ? resolvedParams.filter : undefined;
+
   return (
     <main className="p-6 max-w-[1600px] w-full mx-auto space-y-6">
       <div className="bento-grid">
@@ -183,25 +201,34 @@ export default function AuditLogPage() {
           </div>
         </div>
 
-        {/* Action Type Legend */}
+        {/* Action Type Filters */}
         <div className="bento-span-12 flex flex-wrap gap-3">
           {[
-            { icon: <FileSpreadsheet className="w-3.5 h-3.5 text-secondary" />, label: "Upload",       color: "bg-secondary/10 border-secondary/20" },
-            { icon: <CheckCircle     className="w-3.5 h-3.5 text-primary" />,   label: "Verification", color: "bg-primary/10 border-primary/20"   },
-            { icon: <ShieldAlert     className="w-3.5 h-3.5 text-destructive" />, label: "Rejection",  color: "bg-destructive/10 border-destructive/20" },
-            { icon: <Activity        className="w-3.5 h-3.5 text-muted-foreground" />, label: "System", color: "bg-muted/40 border-border"         },
-          ].map(({ icon, label, color }) => (
-            <div key={label} className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${color}`}>
-              {icon}
-              <span className="font-medium text-foreground">{label}</span>
-            </div>
-          ))}
+            { icon: <Info            className="w-3.5 h-3.5 text-foreground" />,        label: "All",          color: "bg-muted/50 border-border/50 text-foreground" },
+            { icon: <FileSpreadsheet className="w-3.5 h-3.5 text-secondary" />,         label: "Upload",       color: "bg-secondary/10 border-secondary/20 text-secondary" },
+            { icon: <CheckCircle     className="w-3.5 h-3.5 text-primary" />,           label: "Verification", color: "bg-primary/10 border-primary/20 text-primary"   },
+            { icon: <ShieldAlert     className="w-3.5 h-3.5 text-destructive" />,       label: "Rejection",    color: "bg-destructive/10 border-destructive/20 text-destructive" },
+            { icon: <Activity        className="w-3.5 h-3.5 text-muted-foreground" />,  label: "System",       color: "bg-muted/40 border-border/50 text-muted-foreground"         },
+          ].map(({ icon, label, color }) => {
+            const isActive = filter === label || (label === "All" && !filter);
+            const activeStyles = isActive ? "ring-2 ring-ring ring-offset-2 ring-offset-background opacity-100" : "opacity-60 hover:opacity-100";
+            const href = label === "All" 
+              ? { pathname: "/admin/audit" as const } 
+              : { pathname: "/admin/audit" as const, query: { filter: label } };
+            
+            return (
+              <Link key={label} href={href as any} className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold shadow-sm backdrop-blur-md transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer hover:shadow-md ${color} ${activeStyles}`}>
+                {icon}
+                <span>{label}</span>
+              </Link>
+            );
+          })}
         </div>
 
         {/* Audit Table — Suspense boundary for streaming */}
         <div className="bento-span-12">
-          <Suspense fallback={<AuditTableSkeleton />}>
-            <AuditTable />
+          <Suspense fallback={<AuditTableSkeleton />} key={filter ?? "all"}>
+            <AuditTable filter={filter} />
           </Suspense>
         </div>
 

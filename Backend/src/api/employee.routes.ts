@@ -108,3 +108,4 @@ employeeRoutes.get("/notifications", NotificationsController.list             as
 // ── Profile ────────────────────────────────────────────────────────────────
 employeeRoutes.get( "/profile",      ProfileController.get                    as RequestHandler);
 employeeRoutes.patch("/profile",     ProfileController.update                 as RequestHandler);
+employeeRoutes.post( "/profile/change-password", ProfileController.changePassword as RequestHandler);

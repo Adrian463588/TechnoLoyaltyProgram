@@ -28,4 +28,15 @@ export const ProfileController = {
       next(err);
     }
   }) satisfies RequestHandler,
+
+  // POST /api/employee/profile/change-password
+  changePassword: (async (req, res, next) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const result = await ProfileService.changePassword(req.user.id, currentPassword, newPassword);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  }) satisfies RequestHandler,
 };

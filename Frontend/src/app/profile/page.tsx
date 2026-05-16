@@ -5,6 +5,7 @@
 import { auth } from "@/lib/auth";
 import { User, Mail, Shield } from "lucide-react";
 import { BentoCard } from "@/components/ui/bento-card";
+import { ChangePasswordForm } from "./change-password-form";
 
 export const metadata = { title: "Profile | Berijalan Loyalty" };
 
@@ -56,6 +57,8 @@ export default async function ProfilePage() {
             </div>
           </div>
         </div>
+        
+        <ChangePasswordForm />
       </BentoCard>
     </div>
   );
