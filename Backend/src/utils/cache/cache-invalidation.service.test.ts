@@ -435,7 +435,7 @@ describe("CacheInvalidationService", () => {
 
   describe("Batch delete chunking", () => {
     it("should process batch deletes in chunks of 100 keys", async () => {
-      const userIds = Array.from({ length: 150 }, (_, i) => `user-${i}`);
+      const userIds = Array.from({ length: 150 }, (_, i) => `user-${String(i)}`);
       const event: CacheInvalidationEvent = {
         type: "MONTHLY_MEMBERSHIP_EVALUATION",
         affectedUserIds: userIds,

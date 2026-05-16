@@ -1,18 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { CacheService } from "./cache.service";
-import { CacheKeys } from "../utils/cache/cache-key.registry";
 import { tokenLedgerRepository } from "../repositories/token-ledger.repository";
 import { manualAdjustmentService } from "./manual-adjustment.service";
 import { rewardCatalogService } from "./reward-catalog.service";
 import { redemptionService } from "./redemption.service";
 import { cacheInvalidationService } from "@/utils/cache/cache-invalidation.service";
 import { prisma } from "@/db/prisma";
-import { TokenEventType } from "@prisma/client";
 
 // Mock prisma and logAudit
 vi.mock("@/db/prisma", () => ({
   prisma: {
-    $transaction: vi.fn(async (cb) => cb(prisma)),
+    $transaction: vi.fn((cb) => cb(prisma)),
     user: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
@@ -48,23 +46,26 @@ describe("Cache Integration Tests", () => {
     vi.clearAllMocks();
     // Use an in-memory map to simulate redis for these tests
     const mockCache = new Map<string, string>();
-    vi.spyOn(CacheService, "get").mockImplementation(async (key) => {
+    vi.spyOn(CacheService, "get").mockImplementation((key) => {
       const val = mockCache.get(key);
-      return val ? JSON.parse(val) : null;
+      return Promise.resolve(val ? JSON.parse(val) : null);
     });
-    vi.spyOn(CacheService, "set").mockImplementation(async (key, value) => {
+    vi.spyOn(CacheService, "set").mockImplementation((key, value) => {
       mockCache.set(key, JSON.stringify(value));
+      return Promise.resolve();
     });
-    vi.spyOn(CacheService, "del").mockImplementation(async (key) => {
+    vi.spyOn(CacheService, "del").mockImplementation((key) => {
       mockCache.delete(key);
+      return Promise.resolve();
     });
-    vi.spyOn(CacheService, "delByPattern").mockImplementation(async (pattern) => {
+    vi.spyOn(CacheService, "delByPattern").mockImplementation((pattern) => {
       const regex = new RegExp("^" + pattern.replace("*", ".*") + "$");
       for (const k of mockCache.keys()) {
         if (regex.test(k)) {
           mockCache.delete(k);
         }
       }
+      return Promise.resolve();
     });
   });
 

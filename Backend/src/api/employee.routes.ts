@@ -11,6 +11,8 @@ import { authorize }            from "@/middleware/authorize";
 import { RedemptionController }    from "@/controllers/redemption.controller";
 import { LoyaltyController }        from "@/controllers/loyalty.controller";
 import { RewardCatalogController }  from "@/controllers/reward-catalog.controller";
+import { NotificationsController }  from "@/controllers/notifications.controller";
+import { ProfileController }        from "@/controllers/profile.controller";
 
 export const employeeRoutes = Router();
 
@@ -96,3 +98,13 @@ employeeRoutes.post("/redemptions", RedemptionController.createRequest      as R
  *         description: List of active rewards retrieved
  */
 employeeRoutes.get( "/rewards",     RewardCatalogController.listActive       as RequestHandler);
+
+// ── Token Ledger History ───────────────────────────────────────────────────
+employeeRoutes.get("/history",      LoyaltyController.getTokenHistory        as RequestHandler);
+
+// ── Notifications (stub) ───────────────────────────────────────────────────
+employeeRoutes.get("/notifications", NotificationsController.list             as RequestHandler);
+
+// ── Profile ────────────────────────────────────────────────────────────────
+employeeRoutes.get( "/profile",      ProfileController.get                    as RequestHandler);
+employeeRoutes.patch("/profile",     ProfileController.update                 as RequestHandler);

@@ -34,6 +34,7 @@ export interface IRedisClient {
  */
 const logger = {
   info: (message: string, meta?: Record<string, unknown>) => {
+    // eslint-disable-next-line no-console
     console.log(`[CACHE] ${message}`, meta ? JSON.stringify(meta) : "");
   },
   warn: (message: string, meta?: Record<string, unknown>) => {

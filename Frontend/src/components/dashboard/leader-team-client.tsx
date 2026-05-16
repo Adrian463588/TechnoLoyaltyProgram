@@ -28,9 +28,9 @@ import {
   getPaginationRowModel,
   getFilteredRowModel,
 } from "@tanstack/react-table";
-import { AlertTriangle, Coins, Search, Users } from "lucide-react";
+import { AlertTriangle, Coins, Search, Users, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { Division } from "@/types";
-import { motion } from "framer-motion";
 import type { TeamSummaryResponse } from "@/lib/api-client";
 
 type TeamMember = {
@@ -149,16 +149,16 @@ export function LeaderTeamClient({ data }: { data: TeamSummaryResponse[] | null 
     {
       id: "actions",
       header: "Action",
-      cell: () => (
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="text-sm text-primary font-medium hover:underline"
+      cell: ({ row }) => (
+        <Link
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          href={`/leader/team/${row.original.id}` as any}
           data-testid="leader-team-table-action-view"
+          className="text-sm text-primary font-medium hover:underline flex items-center gap-1"
         >
           View Detail
-        </motion.button>
+          <ExternalLink className="w-3 h-3" />
+        </Link>
       ),
     },
   ];
@@ -177,7 +177,7 @@ export function LeaderTeamClient({ data }: { data: TeamSummaryResponse[] | null 
   const alertsCount = teamData.filter((m) => m.status !== "ACTIVE").length;
 
   return (
-    <div className="max-w-6xl mx-auto w-full space-y-6 animate-fade-up-in">
+    <div className="p-6 max-w-6xl mx-auto w-full space-y-6 animate-fade-up-in">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

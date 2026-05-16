@@ -5,7 +5,6 @@ import { RewardItem } from "@/types";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { SuccessAnimation } from "@/components/shared/success-animation";
 import { RedemptionPipeline } from "@/components/shared/redemption-pipeline";
 import { TooltipWrapper } from "@/components/shared/tooltip-wrapper";
@@ -60,7 +59,6 @@ export default function RewardsClient({ rewards, userTokens, isEligible }: Rewar
   if (!isEligible) {
     return (
       <div className="space-y-4 animate-fade-up-in">
-        <Breadcrumb />
         <BentoCard className="p-12 flex flex-col items-center justify-center text-center space-y-5 border-dashed" glow={false}>
           <div className="p-5 bg-secondary/10 rounded-full text-secondary ring-2 ring-secondary/20 ring-offset-2 ring-offset-card">
             <Lock className="w-10 h-10" />
@@ -80,8 +78,7 @@ export default function RewardsClient({ rewards, userTokens, isEligible }: Rewar
   }
 
   return (
-    <div className="space-y-6 p-6 animate-fade-up-in">
-      <Breadcrumb />
+    <div className="space-y-6 animate-fade-up-in">
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

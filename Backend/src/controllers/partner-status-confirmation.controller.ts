@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /**
  * Backend/src/controllers/partner-status-confirmation.controller.ts
  *

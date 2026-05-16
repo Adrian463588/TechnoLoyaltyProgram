@@ -53,7 +53,7 @@ export function TokenHeroSection({
             Total Tokens
           </h3>
           <motion.button
-            whileHover={{ scale: 1.2, rotate: 90 }}
+            whileHover="hover"
             whileTap={{ scale: 0.9 }}
             className="p-1.5 rounded-full hover:bg-slate-100 transition-colors relative group"
             onClick={() => setShowInfo(true)}
@@ -61,9 +61,11 @@ export function TokenHeroSection({
             <Info className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
             <motion.span
               className="absolute inset-0 rounded-full border border-primary/30"
-              initial={{ scale: 1.5, opacity: 0 }}
-              whileHover={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.3 }}
+              variants={{
+                initial: { scale: 1.5, opacity: 0 },
+                hover: { scale: 1, opacity: 1, transition: { duration: 0.3 } }
+              }}
+              initial="initial"
             />
           </motion.button>
         </div>
@@ -102,8 +104,8 @@ export function TokenHeroSection({
 
       {/* Info Dialog */}
       <DialogPrimitive.Root open={showInfo} onOpenChange={setShowInfo}>
-        <DialogOverlay />
-        <DialogPopup>
+        <DialogPrimitive.Backdrop className="fixed inset-0 bg-black/50 z-50 transition-opacity" />
+        <DialogPrimitive.Popup className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -121,15 +123,14 @@ export function TokenHeroSection({
                 </motion.div>
                 Token Balance Info
               </h2>
-              <DialogClose>
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="p-1 rounded-full hover:bg-slate-100 cursor-pointer"
-                >
-                  <X className="h-4 w-4 text-muted-foreground" />
-                </motion.div>
-              </DialogClose>
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-1 rounded-full hover:bg-slate-100 cursor-pointer"
+                onClick={() => setShowInfo(false)}
+              >
+                <X className="h-4 w-4 text-muted-foreground" />
+              </motion.button>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               Your tokens are earned through shifts and projects. They can be
@@ -155,37 +156,13 @@ export function TokenHeroSection({
               </div>
             </div>
             <div className="flex justify-end mt-6">
-              <Button variant="outline" onClick={() => setShowInfo(false)}>
+              <Button variant="secondary" onClick={() => setShowInfo(false)}>
                 Got it
               </Button>
             </div>
           </motion.div>
-        </DialogPopup>
+        </DialogPrimitive.Popup>
       </DialogPrimitive.Root>
     </>
   );
-}
-
-// Helper components for Base UI Dialog
-function DialogOverlay() {
-  return (
-    <DialogPrimitive.Backdrop 
-      suppressHydrationWarning
-      className="fixed inset-0 isolate z-50 bg-black/60 backdrop-blur-sm data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" 
-    />
-  );
-}
-
-function DialogPopup({ children }: { children: React.ReactNode }) {
-  return (
-    <DialogPrimitive.Portal>
-      <div className="fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2">
-        {children}
-      </div>
-    </DialogPrimitive.Portal>
-  );
-}
-
-function DialogClose({ children }: { children: React.ReactNode }) {
-  return <DialogPrimitive.Close>{children}</DialogPrimitive.Close>;
 }

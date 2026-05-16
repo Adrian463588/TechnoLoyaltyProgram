@@ -59,7 +59,7 @@ export class EvaluationService {
    * Runs on the 1st of each month.
    * Division filter: OPCENT and TELE only (slot-based evaluation).
    */
-  async runMonthlyMembershipEvaluation() {
+  async runMonthlyMembershipEvaluation(): Promise<{ skipped: boolean; message: string } | { evaluated: number; downgraded: number; reset: number; skipped: number }> {
     const today = new Date();
     const periodKey = buildPeriodKey(today.getFullYear(), today.getMonth());
     const JOB_NAME = "membership-evaluation";
@@ -210,7 +210,7 @@ export class EvaluationService {
    *
    * AGENTS.md §8: Uses JobRun guard + tokenLedgerRepository for append-only writes.
    */
-  async runTokenExpiryJob(forceYear?: number) {
+  async runTokenExpiryJob(forceYear?: number): Promise<{ skipped: boolean; message: string } | { processedUsers: number; expiredTokens: number; entriesCreated: number }> {
     const today = new Date();
     const targetYear = forceYear ?? today.getFullYear();
     const periodKey  = `${String(targetYear)}-token-expiry`;

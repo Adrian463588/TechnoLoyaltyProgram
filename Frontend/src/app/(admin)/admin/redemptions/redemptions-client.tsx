@@ -2,6 +2,7 @@
 
 import { useState, Fragment } from "react";
 import { RewardRequest, RewardRequestStatus } from "@/types";
+import { adminApi } from "@/lib/api-client";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,8 +47,10 @@ const STATUS_TO_STEP: Record<RewardRequestStatus, PipelineStep> = {
 
 export default function RedemptionsClient({
   initialRequests,
+  sessionToken,
 }: {
   initialRequests: RewardRequest[];
+  sessionToken: string;
 }) {
   const [requests, setRequests] = useState(initialRequests);
   const [filter, setFilter] = useState<"All" | "PENDING_VERIFICATION">("All");
@@ -62,20 +65,28 @@ export default function RedemptionsClient({
   const filtered =
     filter === "All" ? requests : requests.filter((r) => r.status === "PENDING_VERIFICATION");
 
-  const handleStatusUpdate = (
+  const handleStatusUpdate = async (
     id: string,
     newStatus: RewardRequestStatus,
     reason?: string
   ) => {
+    // Optimistic update
     setRequests((prev) =>
       prev.map((r) =>
         r.id === id ? { ...r, status: newStatus, rejectReason: reason } : r
       )
     );
-    // Trigger autosave indicator
     setSavedId(id);
     setTimeout(() => setSavedId(null), 100);
-    toast.success(`Request ${id} updated to ${newStatus}`);
+
+    try {
+      await adminApi.updateRedemptionStatus(sessionToken, id, newStatus, reason);
+      toast.success(`Request updated to ${newStatus}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Update failed — please retry");
+      // Rollback
+      setRequests(initialRequests);
+    }
   };
 
   const handleRejectSubmit = () => {

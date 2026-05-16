@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { redisConfigSchema, type RedisConfig } from "./cache.config";
+import { redisConfigSchema } from "./cache.config";
 
 /**
  * Unit tests for cache configuration validation

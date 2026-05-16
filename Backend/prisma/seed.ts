@@ -6,7 +6,7 @@
  */
 
 import "dotenv/config";
-import { PrismaClient, UserRole, DivisionType, MemberTierType, TokenEventType, RedemptionStatus, ClaimStatus } from "@prisma/client";
+import { PrismaClient, UserRole, DivisionType, MemberTierType, TokenEventType, RedemptionStatus, ClaimStatus, PartnershipStatus } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import bcrypt from "bcryptjs";
@@ -66,6 +66,28 @@ async function main() {
     },
   });
 
+  const leaderTele = await prisma.user.create({
+    data: {
+      email: "leader.tele@berijalan.id",
+      npk: "23457",
+      name: "Leader Tele",
+      passwordHash,
+      role: UserRole.TEAM_LEADER,
+      division: DivisionType.TELE,
+    },
+  });
+
+  const leaderTechno = await prisma.user.create({
+    data: {
+      email: "leader.techno@berijalan.id",
+      npk: "23458",
+      name: "Leader Techno",
+      passwordHash,
+      role: UserRole.TEAM_LEADER,
+      division: DivisionType.TECHNO,
+    },
+  });
+
   // Create Mitras and assign them to the leader
   const alice = await prisma.user.create({
     data: {
@@ -89,7 +111,7 @@ async function main() {
       role: UserRole.MITRA,
       division: DivisionType.TELE,
       membershipTier: MemberTierType.SAPHIRE,
-      teamLeadId: leaderUser.id,
+      teamLeadId: leaderTele.id,
     },
   });
 
@@ -115,7 +137,7 @@ async function main() {
       role: UserRole.MITRA,
       division: DivisionType.TECHNO,
       membershipTier: MemberTierType.RUBY,
-      teamLeadId: leaderUser.id,
+      teamLeadId: leaderTechno.id,
     },
   });
 
@@ -128,7 +150,35 @@ async function main() {
       role: UserRole.MITRA,
       division: DivisionType.TECHNO,
       membershipTier: MemberTierType.DIAMOND,
+      teamLeadId: leaderTechno.id,
+    },
+  });
+
+  const inactiveUser = await prisma.user.create({
+    data: {
+      email: "inactive@berijalan.id",
+      npk: "40005",
+      name: "Eve Inactive",
+      passwordHash,
+      role: UserRole.MITRA,
+      division: DivisionType.OPCENT,
+      partnerStatus: PartnershipStatus.INACTIVE,
+      membershipTier: MemberTierType.SAPHIRE,
       teamLeadId: leaderUser.id,
+    },
+  });
+
+  const resignedUser = await prisma.user.create({
+    data: {
+      email: "resigned@berijalan.id",
+      npk: "40006",
+      name: "Frank Resigned",
+      passwordHash,
+      role: UserRole.MITRA,
+      division: DivisionType.TELE,
+      partnerStatus: PartnershipStatus.RESIGNED,
+      membershipTier: MemberTierType.RUBY,
+      teamLeadId: leaderTele.id,
     },
   });
 
@@ -171,6 +221,8 @@ async function main() {
     { userId: emeraldUser.id, amount: 800, event: TokenEventType.EARNED_SHIFT, reason: "Mid-tier rewards" },
     { userId: rubyUser.id, amount: 2500, event: TokenEventType.EARNED_PROJECT, reason: "High-tier rewards" },
     { userId: diamondUser.id, amount: 5000, event: TokenEventType.EARNED_PROJECT, reason: "Elite tier rewards" },
+    { userId: inactiveUser.id, amount: 500, event: TokenEventType.EARNED_SHIFT, reason: "Old shift rewards" },
+    { userId: resignedUser.id, amount: 1200, event: TokenEventType.EARNED_PROJECT, reason: "Last project reward" },
   ];
 
   for (const entry of ledgerEntries) {
@@ -239,6 +291,24 @@ async function main() {
       isActive: true,
       category: "DIAMOND",
       stock: 2,
+    },
+    {
+      name: "MAP Voucher Rp250.000",
+      description: "Voucher belanja MAP senilai Rp250.000.",
+      tokenCost: 2500,
+      createdBy: adminUser.id,
+      isActive: true,
+      category: "RUBY",
+      stock: 20,
+    },
+    {
+      name: "Berijalan Hoodie",
+      description: "Exclusive Emerald Tier hoodie.",
+      tokenCost: 1500,
+      createdBy: adminUser.id,
+      isActive: true,
+      category: "EMERALD",
+      stock: 30,
     }
   ];
 
@@ -248,16 +318,23 @@ async function main() {
   // REDEMPTION REQUEST & PARTNER STATUS CONFIRMATION (TL-01)
   // ============================================================
   console.log("🔄 Adding Redemption Requests and Partner Confirmations...");
-  const rewardItem = await prisma.rewardItem.findFirst({
+  const tumblerReward = await prisma.rewardItem.findFirst({
     where: { name: "Tumbler Premium" },
   });
+  const gopayReward = await prisma.rewardItem.findFirst({
+    where: { name: "GoPay Voucher Rp100.000" },
+  });
+  const mapReward = await prisma.rewardItem.findFirst({
+    where: { name: "MAP Voucher Rp250.000" },
+  });
 
-  if (rewardItem) {
-    const redemption = await prisma.redemptionRequest.create({
+  if (tumblerReward && gopayReward && mapReward) {
+    // 1. Pending Request for Alice
+    const redemption1 = await prisma.redemptionRequest.create({
       data: {
         mitraId: alice.id,
-        rewardItemId: rewardItem.id,
-        tokenCost: rewardItem.tokenCost,
+        rewardItemId: tumblerReward.id,
+        tokenCost: tumblerReward.tokenCost,
         status: RedemptionStatus.PENDING_VERIFICATION,
         history: {
           create: {
@@ -270,17 +347,100 @@ async function main() {
       }
     });
 
-    // Create a Partner Status Confirmation request (from HC to TL)
     await prisma.partnerStatusConfirmation.create({
       data: {
-        redemptionRequestId: redemption.id,
+        redemptionRequestId: redemption1.id,
         mitraId: alice.id,
         requestedBy: adminUser.id,
         assignedTo: leaderUser.id,
         status: "PENDING",
       }
     });
+
+    // 2. Completed Request for Alice
+    const redemption2 = await prisma.redemptionRequest.create({
+      data: {
+        mitraId: alice.id,
+        rewardItemId: gopayReward.id,
+        tokenCost: gopayReward.tokenCost,
+        status: RedemptionStatus.COMPLETED,
+        completedAt: new Date(),
+        history: {
+          createMany: {
+            data: [
+              { previousStatus: RedemptionStatus.DRAFT, newStatus: RedemptionStatus.PENDING_VERIFICATION, changedBy: alice.id },
+              { previousStatus: RedemptionStatus.PENDING_VERIFICATION, newStatus: RedemptionStatus.VERIFIED, changedBy: adminUser.id },
+              { previousStatus: RedemptionStatus.VERIFIED, newStatus: RedemptionStatus.PURCHASED, changedBy: adminUser.id },
+              { previousStatus: RedemptionStatus.PURCHASED, newStatus: RedemptionStatus.COMPLETED, changedBy: adminUser.id },
+            ]
+          }
+        }
+      }
+    });
+
+    // Deduct tokens for completed redemption
+    await prisma.tokenLedger.create({
+      data: {
+        userId: alice.id,
+        eventType: TokenEventType.REDEEMED,
+        amount: -gopayReward.tokenCost,
+        balanceAfter: 5000 - gopayReward.tokenCost,
+        referenceId: redemption2.id,
+        performedBy: adminUser.id,
+        reason: "Redemption: GoPay Voucher Rp100.000",
+      }
+    });
+
+    // 3. Rejected Request for Saphire
+    await prisma.redemptionRequest.create({
+      data: {
+        mitraId: saphireUser.id,
+        rewardItemId: tumblerReward.id,
+        tokenCost: tumblerReward.tokenCost,
+        status: RedemptionStatus.REJECTED,
+        rejectionReason: "Insufficient slot history validation",
+        history: {
+          createMany: {
+            data: [
+              { previousStatus: RedemptionStatus.DRAFT, newStatus: RedemptionStatus.PENDING_VERIFICATION, changedBy: saphireUser.id },
+              { previousStatus: RedemptionStatus.PENDING_VERIFICATION, newStatus: RedemptionStatus.REJECTED, changedBy: adminUser.id, note: "Insufficient validation" },
+            ]
+          }
+        }
+      }
+    });
+
+    // 4. Verified Request for Ruby User
+    await prisma.redemptionRequest.create({
+      data: {
+        mitraId: rubyUser.id,
+        rewardItemId: mapReward.id,
+        tokenCost: mapReward.tokenCost,
+        status: RedemptionStatus.VERIFIED,
+        history: {
+          createMany: {
+            data: [
+              { previousStatus: RedemptionStatus.DRAFT, newStatus: RedemptionStatus.PENDING_VERIFICATION, changedBy: rubyUser.id },
+              { previousStatus: RedemptionStatus.PENDING_VERIFICATION, newStatus: RedemptionStatus.VERIFIED, changedBy: adminUser.id },
+            ]
+          }
+        }
+      }
+    });
   }
+
+  // Add an EXPIRED token entry for Alice
+  await prisma.tokenLedger.create({
+    data: {
+      userId: alice.id,
+      eventType: TokenEventType.EXPIRED,
+      amount: -100,
+      balanceAfter: 3900, // Assuming 4000 after gopay
+      performedBy: "SYSTEM",
+      reason: "Tokens from 2023 expired",
+      earnedYear: 2023,
+    }
+  });
 
   // ============================================================
   // AUDIT LOGS

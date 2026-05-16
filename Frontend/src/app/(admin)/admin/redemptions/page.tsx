@@ -42,7 +42,7 @@ export default async function RedemptionsPage() {
         </div>
       </div>
 
-      <RedemptionsClient initialRequests={mapped} />
+      <RedemptionsClient initialRequests={mapped} sessionToken={token} />
     </div>
   );
 }

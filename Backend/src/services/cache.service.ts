@@ -1,7 +1,8 @@
 import { redisClient } from "../utils/cache/redis-client";
-import { getTTLForKey, type CacheKey, type CacheInvalidationEvent, getKeysForInvalidationEvent, containsPattern } from "../utils/cache/cache-key.registry";
+import { getTTLForKey, type CacheKey, type CacheInvalidationEvent, getKeysForInvalidationEvent } from "../utils/cache/cache-key.registry";
 import { cacheMetrics } from "../utils/cache/cache-metrics";
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class CacheService {
   /**
    * Get an item from the cache
@@ -50,6 +51,7 @@ export class CacheService {
     const fetched = await fetcher();
     
     // Only cache if the fetched data is not null/undefined
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (fetched !== null && fetched !== undefined) {
       await this.set(key, fetched, customTtl);
     }
@@ -60,7 +62,7 @@ export class CacheService {
   /**
    * Set an item in the cache
    */
-  static async set<T>(key: CacheKey, value: T, customTtl?: number): Promise<void> {
+  static async set(key: CacheKey, value: unknown, customTtl?: number): Promise<void> {
     if (!redisClient.isConnected() || !redisClient.isEnabled()) {
       return;
     }

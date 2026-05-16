@@ -33,14 +33,14 @@ export default async function DashboardPage() {
   const data = await getDashboardData(token);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="app-nav px-6">
+    <div className="flex flex-col h-full">
+      <div className="px-4 md:px-6">
         <Breadcrumb className="py-4" />
       </div>
 
-      <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto">
+      <div className="flex-1 p-4 md:p-6 max-w-[1600px] w-full mx-auto">
         <DashboardContent data={data} />
-      </main>
+      </div>
     </div>
   );
 }

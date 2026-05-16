@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
 import { MonthlyUpload } from "@/types";
 import { BentoCard } from "@/components/ui/bento-card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Table,

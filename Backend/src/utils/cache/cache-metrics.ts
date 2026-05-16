@@ -19,26 +19,26 @@ export class CacheMetrics implements ICacheMetrics {
     this.windowStart = new Date();
   }
 
-  recordHit(timeMs: number) {
+  recordHit(timeMs: number): void {
     this.checkWindow();
     this.hits++;
     this.totalTimeMs += timeMs;
     this.operationCount++;
   }
 
-  recordMiss(timeMs: number) {
+  recordMiss(timeMs: number): void {
     this.checkWindow();
     this.misses++;
     this.totalTimeMs += timeMs;
     this.operationCount++;
   }
 
-  recordError() {
+  recordError(): void {
     this.checkWindow();
     this.errors++;
   }
 
-  private checkWindow() {
+  private checkWindow(): void {
     const now = new Date();
     // 1-minute rolling window reset
     if (now.getTime() - this.windowStart.getTime() > 60000) {
@@ -52,12 +52,13 @@ export class CacheMetrics implements ICacheMetrics {
     }
   }
 
-  private logMetrics() {
+  private logMetrics(): void {
     const totalRequests = this.hits + this.misses;
     const hitRate = totalRequests > 0 ? this.hits / totalRequests : 0;
     const missRate = totalRequests > 0 ? this.misses / totalRequests : 0;
     const avgResponseTime = this.operationCount > 0 ? this.totalTimeMs / this.operationCount : 0;
 
+    // eslint-disable-next-line no-console
     console.log(JSON.stringify({
       level: "info",
       type: "cache_metrics",
