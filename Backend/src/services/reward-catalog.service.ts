@@ -12,6 +12,7 @@ import { prisma } from "@/db/prisma";
 import { logAudit } from "./audit.service";
 import { NotFoundError, ValidationError } from "@/errors/index";
 import { CacheService } from "./cache.service";
+import { cacheInvalidationService } from "@/utils/cache/cache-invalidation.service";
 import { CacheKeys } from "@/utils/cache/cache-key.registry";
 import type { RewardItem } from "@prisma/client";
 
@@ -40,16 +41,12 @@ export class RewardCatalogService {
       ? CacheKeys.rewardCatalogAdmin() 
       : CacheKeys.rewardCatalogActive();
 
-    const cached = await CacheService.get<RewardItem[]>(cacheKey);
-    if (cached) return cached;
-
-    const items = await prisma.rewardItem.findMany({
-      where: includeInactive ? {} : { isActive: true },
-      orderBy: { createdAt: "desc" },
+    return CacheService.getWithFallback<RewardItem[]>(cacheKey, async () => {
+      return prisma.rewardItem.findMany({
+        where: includeInactive ? {} : { isActive: true },
+        orderBy: { createdAt: "desc" },
+      });
     });
-
-    await CacheService.set(cacheKey, items);
-    return items;
   }
 
   /** Get a single reward by ID. Throws NotFoundError if missing. */
@@ -86,7 +83,7 @@ export class RewardCatalogService {
       newValue:  { name: item.name, tokenCost: item.tokenCost },
     });
 
-    await CacheService.invalidate({ type: "REWARD_CATALOG_MUTATED" });
+    await cacheInvalidationService.invalidateAfterCommit({ type: "REWARD_CATALOG_MUTATED" });
 
     return item;
   }
@@ -118,7 +115,7 @@ export class RewardCatalogService {
       newValue:      { ...input },
     });
 
-    await CacheService.invalidate({ type: "REWARD_CATALOG_MUTATED" });
+    await cacheInvalidationService.invalidateAfterCommit({ type: "REWARD_CATALOG_MUTATED" });
 
     return updated;
   }
@@ -148,7 +145,7 @@ export class RewardCatalogService {
       newValue:      { isActive: false },
     });
 
-    await CacheService.invalidate({ type: "REWARD_CATALOG_MUTATED" });
+    await cacheInvalidationService.invalidateAfterCommit({ type: "REWARD_CATALOG_MUTATED" });
 
     return updated;
   }

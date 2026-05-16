@@ -75,7 +75,7 @@ export class ManualAdjustmentService {
       return entry;
     });
 
-    await CacheService.invalidate({ type: "TOKEN_MUTATED", userId });
+    await cacheInvalidationService.invalidateAfterCommit({ type: "TOKEN_MUTATED", userId });
 
     return result;
   }

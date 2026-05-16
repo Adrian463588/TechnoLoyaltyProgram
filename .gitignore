@@ -50,3 +50,6 @@ next-env.d.ts
 # test artifacts
 TestSuite/*.txt
 TestSuite/*.html
+
+# Frontend lint output
+Frontend/lint_output.txt

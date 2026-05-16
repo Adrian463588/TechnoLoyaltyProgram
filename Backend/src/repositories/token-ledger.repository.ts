@@ -78,13 +78,6 @@ export class TokenLedgerRepository {
     };
 
     const result = await (externalTx ? operation(externalTx) : prisma.$transaction(operation));
-    
-    // Invalidate cache after successfully appending
-    // If externalTx is passed, it is part of a larger transaction. 
-    // Invalidating immediately might slightly precede commit, but Redis operations are fast and safe here.
-    await CacheService.invalidate({ type: "TOKEN_MUTATED", userId: input.userId }).catch(e => {
-      console.warn("[CACHE] Failed to invalidate during appendTokenEvent:", e);
-    });
 
     return result;
   }

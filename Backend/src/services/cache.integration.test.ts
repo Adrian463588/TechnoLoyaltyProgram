@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { CacheService } from "./cache.service";
 import { CacheKeys } from "../utils/cache/cache-key.registry";
 import { tokenLedgerRepository } from "../repositories/token-ledger.repository";
+import { manualAdjustmentService } from "./manual-adjustment.service";
 import { rewardCatalogService } from "./reward-catalog.service";
 import { redemptionService } from "./redemption.service";
+import { cacheInvalidationService } from "@/utils/cache/cache-invalidation.service";
 import { prisma } from "@/db/prisma";
 import { TokenEventType } from "@prisma/client";
 
@@ -69,17 +71,14 @@ describe("Cache Integration Tests", () => {
   describe("Token Ledger Cache Integration", () => {
     it("should invalidate cache after token mutation", async () => {
       const userId = "test-user-1";
-      const invalidateSpy = vi.spyOn(CacheService, "invalidate");
+      const invalidateSpy = vi.spyOn(cacheInvalidationService, "invalidateAfterCommit").mockResolvedValue(undefined);
 
       vi.mocked(prisma.tokenLedger.findFirst).mockResolvedValue({ balanceAfter: 100 } as any);
       vi.mocked(prisma.tokenLedger.create).mockResolvedValue({} as any);
+      vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: userId } as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: userId } as any);
 
-      await tokenLedgerRepository.appendTokenEvent({
-        userId,
-        eventType: TokenEventType.EARNED_SHIFT,
-        amount: 50,
-        performedBy: "system"
-      });
+      await manualAdjustmentService.adjustTokens(userId, 50, "Test", "admin-1");
 
       expect(invalidateSpy).toHaveBeenCalledWith(
         expect.objectContaining({ type: "TOKEN_MUTATED", userId })
@@ -118,7 +117,7 @@ describe("Cache Integration Tests", () => {
     });
 
     it("should invalidate catalog after deactivation", async () => {
-      const invalidateSpy = vi.spyOn(CacheService, "invalidate");
+      const invalidateSpy = vi.spyOn(cacheInvalidationService, "invalidateAfterCommit").mockResolvedValue(undefined);
       vi.mocked(prisma.rewardItem.findUnique).mockResolvedValue({ id: "item-1", isActive: true } as any);
       vi.mocked(prisma.rewardItem.update).mockResolvedValue({ id: "item-1", isActive: false } as any);
 
