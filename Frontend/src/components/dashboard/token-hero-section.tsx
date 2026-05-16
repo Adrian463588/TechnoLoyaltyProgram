@@ -104,8 +104,9 @@ export function TokenHeroSection({
 
       {/* Info Dialog */}
       <DialogPrimitive.Root open={showInfo} onOpenChange={setShowInfo}>
-        <DialogPrimitive.Backdrop className="fixed inset-0 bg-black/50 z-50 transition-opacity" />
-        <DialogPrimitive.Popup className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Backdrop className="fixed inset-0 bg-black/50 z-50 transition-opacity" />
+          <DialogPrimitive.Popup className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -161,7 +162,8 @@ export function TokenHeroSection({
               </Button>
             </div>
           </motion.div>
-        </DialogPrimitive.Popup>
+          </DialogPrimitive.Popup>
+        </DialogPrimitive.Portal>
       </DialogPrimitive.Root>
     </>
   );
