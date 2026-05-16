@@ -1,0 +1,67 @@
+﻿
+D:\SEMESTER12\BeriJalan\ProjectChallenge\LoyatlyProgram\Frontend\src\app\(admin)\admin\dashboard\page.tsx
+  106:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\SEMESTER12\BeriJalan\ProjectChallenge\LoyatlyProgram\Frontend\src\app\(admin)\admin\uploads\uploads-client.tsx
+  4:10  error  'motion' is defined but never used  @typescript-eslint/no-unused-vars
+  7:10  error  'Badge' is defined but never used   @typescript-eslint/no-unused-vars
+
+D:\SEMESTER12\BeriJalan\ProjectChallenge\LoyatlyProgram\Frontend\src\components\dashboard\leader-team-client.tsx
+  34:10  error  'motion' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\SEMESTER12\BeriJalan\ProjectChallenge\LoyatlyProgram\Frontend\src\components\layout\navbar.tsx
+  4:8  error  'Link' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\SEMESTER12\BeriJalan\ProjectChallenge\LoyatlyProgram\Frontend\src\features\admin\document-verification-drawer.tsx
+  29:31  error  Error: Cannot access variable before it is declared
+
+`handleClose` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+D:\SEMESTER12\BeriJalan\ProjectChallenge\LoyatlyProgram\Frontend\src\features\admin\document-verification-drawer.tsx:29:31
+  27 |     // Escape key handler
+  28 |     const onKey = (e: KeyboardEvent) => {
+> 29 |       if (e.key === "Escape") handleClose();
+     |                               ^^^^^^^^^^^ `handleClose` accessed before it is declared
+  30 |     };
+  31 |     document.addEventListener("keydown", onKey);
+  32 |
+
+D:\SEMESTER12\BeriJalan\ProjectChallenge\LoyatlyProgram\Frontend\src\features\admin\document-verification-drawer.tsx:41:3
+  39 |   }, []);
+  40 |
+> 41 |   const handleClose = () => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 42 |     setIsVisible(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 43 |     // Return focus to the element that triggered the drawer
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 44 |     setTimeout(() => {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 45 |       (returnFocusRef.current as HTMLElement | null)?.focus();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 46 |       onClose();
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 47 |     }, 300);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 48 |   };
+     | ^^^^^ `handleClose` is declared here
+  49 |
+  50 |   const handleApprove = async () => {
+  51 |     setIsApproving(true);  react-hooks/immutability
+
+D:\SEMESTER12\BeriJalan\ProjectChallenge\LoyatlyProgram\Frontend\src\features\admin\redemption-queue-table.tsx
+  75:17  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+D:\SEMESTER12\BeriJalan\ProjectChallenge\LoyatlyProgram\Frontend\src\features\admin\redemption-queue-table.tsx:75:17
+  73 |   ];
+  74 |
+> 75 |   const table = useReactTable({
+     |                 ^^^^^^^^^^^^^ TanStack Table's `useReactTable()` API returns functions that cannot be memoized safely
+  76 |     data,
+  77 |     columns,
+  78 |     getCoreRowModel: getCoreRowModel(),  react-hooks/incompatible-library
+
+✖ 7 problems (6 errors, 1 warning)
+

@@ -12,6 +12,9 @@ export const metadata = { title: "Profile | Berijalan Loyalty" };
 export default async function ProfilePage() {
   const session = await auth();
   const user = session?.user;
+  
+  const token = (session as { accessToken?: string; user?: { accessToken?: string } })?.accessToken || 
+                (session as { accessToken?: string; user?: { accessToken?: string } })?.user?.accessToken || "";
 
   return (
     <div className="max-w-2xl mx-auto w-full space-y-6 p-6">
@@ -58,7 +61,7 @@ export default async function ProfilePage() {
           </div>
         </div>
         
-        <ChangePasswordForm />
+        <ChangePasswordForm accessToken={token} />
       </BentoCard>
     </div>
   );

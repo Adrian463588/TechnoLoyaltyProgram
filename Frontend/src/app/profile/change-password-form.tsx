@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Lock } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { employeeApi } from "@/lib/api-client";
 
-export function ChangePasswordForm() {
-  const { data: session } = useSession();
+interface ChangePasswordFormProps {
+  accessToken: string;
+}
+
+export function ChangePasswordForm({ accessToken }: ChangePasswordFormProps) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -31,11 +33,9 @@ export function ChangePasswordForm() {
 
     try {
       setLoading(true);
-      const token = (session as { accessToken?: string; user?: { accessToken?: string } })?.accessToken || 
-                    (session as { accessToken?: string; user?: { accessToken?: string } })?.user?.accessToken;
-      if (!token) throw new Error("No authorization token found");
+      if (!accessToken) throw new Error("No authorization token found");
       
-      await employeeApi.changePassword(token, {
+      await employeeApi.changePassword(accessToken, {
         currentPassword,
         newPassword
       });
