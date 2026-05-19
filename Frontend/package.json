@@ -4,7 +4,7 @@
   "description": "Berijalan Employee Loyalty Program — Frontend (Next.js)",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=2048 next dev --turbo",
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=2048 next dev",
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
