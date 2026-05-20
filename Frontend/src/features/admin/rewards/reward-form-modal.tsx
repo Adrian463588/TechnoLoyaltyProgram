@@ -12,6 +12,7 @@ const rewardSchema = z.object({
   description: z.string().max(1000),
   tokenCost: z.number().int().positive("Token cost must be greater than 0"),
   minTier: z.enum(["SAPHIRE", "EMERALD", "RUBY", "DIAMOND"]),
+  imageUrl: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
   stockEnabled: z.boolean(),
   stock: z.number().int().nonnegative("Stock cannot be negative").optional(),
   isActive: z.boolean(),
@@ -47,6 +48,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
       description: "",
       tokenCost: 1,
       minTier: "SAPHIRE",
+      imageUrl: "",
       stockEnabled: false,
       stock: 0,
       isActive: true,
@@ -54,6 +56,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
   });
 
   const stockEnabled = watch("stockEnabled");
+  const imageUrl = watch("imageUrl");
 
   useEffect(() => {
     if (isOpen) {
@@ -63,6 +66,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
           description: initialData.description || "",
           tokenCost: initialData.tokenCost,
           minTier: initialData.minTier || "SAPHIRE",
+          imageUrl: initialData.imageUrl || "",
           stockEnabled: initialData.stock !== null,
           stock: initialData.stock ?? 0,
           isActive: initialData.isActive,
@@ -73,6 +77,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
           description: "",
           tokenCost: 1,
           minTier: "SAPHIRE",
+          imageUrl: "",
           stockEnabled: false,
           stock: 0,
           isActive: true,
@@ -94,6 +99,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
         description: values.description,
         tokenCost: values.tokenCost,
         minTier: values.minTier,
+        imageUrl: values.imageUrl || null,
         stock: values.stockEnabled ? values.stock : null,
         isActive: values.isActive,
       };
@@ -134,6 +140,35 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
           )}
 
           <form id="reward-form" onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
+            {/* Image Preview & URL */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-neutral-700">
+                Reward Image
+              </label>
+              
+              <div className="flex gap-4 items-start">
+                <div className="w-24 h-24 rounded-xl border border-neutral-200 bg-neutral-50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                  {imageUrl ? (
+                    <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-neutral-400 text-[10px] font-bold text-center p-2 uppercase tracking-tighter">No Image</div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    {...register("imageUrl")}
+                    type="text"
+                    className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all text-sm shadow-sm"
+                    placeholder="Enter image URL (e.g. https://...)"
+                  />
+                  {errors.imageUrl && <p className="mt-1.5 text-sm text-red-500">{errors.imageUrl.message}</p>}
+                  <p className="mt-1.5 text-xs text-neutral-500 leading-relaxed">
+                    Provide a direct link to the reward image. Recommended aspect ratio 4:3.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Name */}
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1.5">
