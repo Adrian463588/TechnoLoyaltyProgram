@@ -24,9 +24,10 @@ interface AdjustmentModalProps {
   user: UserResponse;
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: (userId: string, amount: number) => void;
 }
 
-export default function AdjustmentModal({ user, isOpen, onClose }: AdjustmentModalProps) {
+export default function AdjustmentModal({ user, isOpen, onClose, onSuccess }: AdjustmentModalProps) {
   const [isPending, startTransition] = useTransition();
 
   const {
@@ -59,12 +60,32 @@ export default function AdjustmentModal({ user, isOpen, onClose }: AdjustmentMod
 
       if (result.success) {
         toast.success(
-          `Adjustment recorded for ${user.name}: ${finalAmount > 0 ? "+" : ""}${finalAmount} tokens`
+          `Adjustment recorded for ${user.name}: ${finalAmount > 0 ? "+" : ""}${finalAmount} tokens`,
+          {
+            style: {
+              background: "#10b981", // Solid green
+              color: "#fff",
+              border: "none",
+              borderRadius: "12px",
+            },
+          }
         );
+        
+        if (onSuccess) {
+          onSuccess(user.id, finalAmount);
+        }
+
         reset();
         onClose();
       } else {
-        toast.error(result.error ?? "Adjustment failed. Please try again.");
+        toast.error(result.error ?? "Adjustment failed. Please try again.", {
+          style: {
+            background: "#ef4444", // Solid red
+            color: "#fff",
+            border: "none",
+            borderRadius: "12px",
+          },
+        });
       }
     });
   };
