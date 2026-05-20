@@ -27,17 +27,10 @@ interface RewardsClientProps {
   isEligible: boolean;
 }
 
-const CATEGORIES = ["All", "Voucher", "Merchandise", "TimeOff", "Experience"];
-
 export default function RewardsClient({ rewards, userTokens, isEligible }: RewardsClientProps) {
   const [selectedReward, setSelectedReward] = useState<RewardItem | null>(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [activeCategory, setActiveCategory] = useState("All");
-
-  const filteredRewards = rewards.filter((r) =>
-    activeCategory === "All" ? true : r.category === activeCategory
-  );
 
   const handleRedeem = async () => {
     if (!selectedReward) return;
@@ -79,55 +72,38 @@ export default function RewardsClient({ rewards, userTokens, isEligible }: Rewar
 
   return (
     <div className="space-y-6 animate-fade-up-in">
-
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Rewards Catalog</h1>
-          <p className="text-muted-foreground mt-1">
+      
+      {/* Header & Token Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+        <BentoCard className="md:col-span-8 p-6 flex flex-col justify-center">
+          <div className="flex items-center gap-3 mb-1">
+            <ShoppingBag className="h-6 w-6 text-[--color-accent]" />
+            <h1 className="text-card-heading text-2xl">Rewards Catalog</h1>
+          </div>
+          <p className="text-[--color-text-secondary]">
             Browse and redeem from the exclusive employee rewards collection.
           </p>
-        </div>
-        <Badge
-          variant="outline"
-          className="bg-primary/10 text-primary border-primary/30 text-sm px-3 py-1.5 self-start md:self-auto"
-        >
-          <Coins className="w-3.5 h-3.5 mr-1.5" />
-          {userTokens.toLocaleString()} tokens available
-        </Badge>
-      </div>
+        </BentoCard>
 
-      {/* Category Filter — pill with active indicator */}
-      <div className="flex overflow-x-auto pb-2 gap-2 hide-scrollbar">
-        {CATEGORIES.map((cat) => {
-          const isActive = activeCategory === cat;
-          return (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={cn(
-                "relative px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap",
-                "transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-[0_4px_16px_var(--color-green-glow)]"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-border"
-              )}
-            >
-              {cat}
-              {/* Active underline dot */}
-              {isActive && (
-                <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary-foreground/60" />
-              )}
-            </motion.button>
-          );
-        })}
+        <BentoCard className="md:col-span-4 p-6 flex flex-col justify-center bg-gradient-to-br from-[--color-surface-elevated] to-[--color-surface-base] relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform duration-500">
+            <Coins size={80} />
+          </div>
+          <div className="relative z-10">
+            <p className="text-xs font-bold text-[--color-text-tertiary)] uppercase tracking-widest mb-1">Your Balance</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-extrabold text-[--color-accent] font-display tracking-tight">
+                {userTokens.toLocaleString()}
+              </span>
+              <span className="text-sm font-semibold text-[--color-text-secondary)]">tokens available</span>
+            </div>
+          </div>
+        </BentoCard>
       </div>
 
       {/* Rewards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredRewards.map((reward, i) => {
+        {rewards.map((reward, i) => {
           const canAfford = userTokens >= reward.tokenCost;
           const isAvailable = reward.isAvailable;
           const canRedeem = canAfford && isAvailable;
