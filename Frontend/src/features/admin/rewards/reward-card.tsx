@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, PackageX, Power, PowerOff, Edit, Trash2 } from "lucide-react";
+import { Box, PackageX, Eye, EyeOff, Edit, Trash2 } from "lucide-react";
 import type { RewardCatalogItem } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +30,7 @@ export function RewardCard({ reward, onEdit, onToggleStatus, onDelete }: RewardC
             ? "bg-[var(--color-accent-muted)] text-[var(--color-accent)] border-[var(--color-border-accent)]" 
             : "bg-[var(--color-surface-elevated)] text-[var(--color-text-secondary)] border-[var(--color-border-subtle)]"}
         `}>
-          {reward.isActive ? "Active" : "Inactive"}
+          {reward.isActive ? "Visible" : "Hidden"}
         </span>
       </div>
 
@@ -86,9 +86,9 @@ export function RewardCard({ reward, onEdit, onToggleStatus, onDelete }: RewardC
               ? "text-[var(--color-text-tertiary)] bg-[var(--color-surface-elevated)] hover:bg-orange-500/10 hover:text-orange-500 hover:border-orange-500/30" 
               : "text-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/20"
           )}
-          title={reward.isActive ? "Deactivate" : "Activate"}
+          title={reward.isActive ? "Hide Reward" : "Show Reward"}
         >
-          {reward.isActive ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+          {reward.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
         </button>
 
         <button
