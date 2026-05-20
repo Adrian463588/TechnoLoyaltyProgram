@@ -1,6 +1,7 @@
 import { BentoCard } from "@/components/ui/bento-card";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/shared/stat-card";
+import { Breadcrumb } from "@/components/shared/breadcrumb";
 import {
   Table,
   TableBody,
@@ -58,16 +59,22 @@ function formatDate(iso: string) {
 
 export default function SnapshotsPage() {
   return (
-    <div className="max-w-6xl mx-auto w-full space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Period Snapshots
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Historical cut-off snapshots used for redemption eligibility and audit.
-        </p>
+    <div className="flex flex-col min-h-screen">
+      <div className="glass-nav px-6">
+        <Breadcrumb className="py-4" />
       </div>
+
+      <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto">
+        <div className="space-y-6">
+          {/* Header */}
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">
+              Period Snapshots
+            </h1>
+            <p className="text-[var(--color-text-secondary)] mt-1">
+              Historical cut-off snapshots used for redemption eligibility and audit.
+            </p>
+          </div>
 
       {/* Active Period Banner */}
       <BentoCard className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-secondary/5 border-secondary/20">
@@ -170,6 +177,8 @@ export default function SnapshotsPage() {
           redemption eligibility calculations.
         </span>
       </div>
+      </div>
+      </main>
     </div>
   );
 }

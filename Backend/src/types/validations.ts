@@ -146,3 +146,13 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 export const uuidSchema = z.string().uuid("Invalid UUID format");
 
 export type UuidInput = z.infer<typeof uuidSchema>;
+
+// ============================================================
+// TOKEN CONVERSION RULE (HC ADMIN)
+// ============================================================
+
+export const updateTokenRuleSchema = z.object({
+  tokensPerUnit: z.number().int().min(1, "Tokens per unit must be at least 1"),
+});
+
+export type UpdateTokenRuleInput = z.infer<typeof updateTokenRuleSchema>;

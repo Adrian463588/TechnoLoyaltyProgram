@@ -171,17 +171,18 @@ model ProjectClaim {
 
 // ── Rewards & Redemptions ──
 model RewardItem {
-  id          String   @id @default(uuid())
+  id          String         @id @default(uuid())
   name        String
   description String?
   tokenCost   Int
   imageUrl    String?
   category    String? // optional eligibility category
-  isActive    Boolean  @default(true)
+  minTier     MemberTierType @default(SAPHIRE)
+  isActive    Boolean        @default(true)
   stock       Int? // null = unlimited
   createdBy   String // actor ID
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   redemptions RedemptionRequest[]
 }
@@ -276,4 +277,16 @@ model PartnerStatusConfirmation {
 
   @@index([redemptionRequestId])
   @@index([assignedTo, status])
+}
+
+// ── Token Conversion Rules ──
+// Admin-configurable conversion rates per division group
+model TokenConversionRule {
+  id            String   @id @default(uuid())
+  divisionGroup String   @unique // "OPCENT_TELE" | "TECHNO"
+  tokensPerUnit Int // how many tokens per 1 slot/project
+  label         String // human-readable label e.g. "Slot (Opcent/Tele)"
+  updatedBy     String // actor ID who last changed this
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
