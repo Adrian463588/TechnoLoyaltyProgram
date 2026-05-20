@@ -215,7 +215,8 @@ adminRoutes.post( "/rewards",                            RewardCatalogController
  *         description: Reward deactivated
  */
 adminRoutes.patch("/rewards/:id",                        RewardCatalogController.update            as RequestHandler);
-adminRoutes.delete("/rewards/:id",                       RewardCatalogController.deactivate        as RequestHandler);
+adminRoutes.delete("/rewards/:id",                       RewardCatalogController.delete            as RequestHandler);
+adminRoutes.post("/rewards/:id/toggle-status",           RewardCatalogController.toggleStatus      as RequestHandler);
 
 // ── Partner Status Confirmations (HC-06) ─────────────────────────────────────
 /**

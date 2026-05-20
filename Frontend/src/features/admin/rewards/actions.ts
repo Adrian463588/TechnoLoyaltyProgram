@@ -51,11 +51,21 @@ export async function updateRewardAction(
   return result;
 }
 
-/** Deactivate a reward item */
-export async function deactivateRewardAction(id: string): Promise<void> {
+/** Toggle a reward item active/inactive status */
+export async function toggleRewardStatusAction(id: string, active: boolean): Promise<RewardCatalogItem> {
   const token = await getServerToken();
   if (!token) throw new Error("Unauthorized");
 
-  await adminApi.deactivateReward(token, id);
+  const result = await adminApi.toggleRewardStatus(token, id, active);
+  revalidatePath("/admin/reward-catalog");
+  return result.item;
+}
+
+/** Permanently delete a reward item */
+export async function deleteRewardAction(id: string): Promise<void> {
+  const token = await getServerToken();
+  if (!token) throw new Error("Unauthorized");
+
+  await adminApi.deleteReward(token, id);
   revalidatePath("/admin/reward-catalog");
 }

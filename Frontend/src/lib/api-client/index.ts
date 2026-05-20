@@ -159,7 +159,7 @@ export const adminApi = {
 
   /** HC-02: Reward Catalog — list all (incl. inactive) */
   listRewards: (token: string) =>
-    apiFetch<RewardCatalogItem[]>("/api/admin/rewards", {
+    apiFetch<RewardCatalogItem[]>("/api/admin/rewards?includeInactive=true", {
       headers: withAuth(token),
     }),
 
@@ -192,8 +192,16 @@ export const adminApi = {
       body: JSON.stringify(payload),
     }),
 
-  /** HC-02: Deactivate reward item */
-  deactivateReward: (token: string, id: string) =>
+  /** HC-02: Toggle reward active/inactive status */
+  toggleRewardStatus: (token: string, id: string, active: boolean) =>
+    apiFetch<{ success: boolean; item: RewardCatalogItem }>(`/api/admin/rewards/${id}/toggle-status`, {
+      method: "POST",
+      headers: withAuth(token),
+      body: JSON.stringify({ active }),
+    }),
+
+  /** HC-02: Permanently delete reward item */
+  deleteReward: (token: string, id: string) =>
     apiFetch<{ success: boolean; message: string }>(`/api/admin/rewards/${id}`, {
       method: "DELETE",
       headers: withAuth(token),

@@ -1,15 +1,17 @@
 "use client";
 
-import { Box, PackageX, PowerOff, Edit } from "lucide-react";
+import { Box, PackageX, Power, PowerOff, Edit, Trash2 } from "lucide-react";
 import type { RewardCatalogItem } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 interface RewardCardProps {
   reward: RewardCatalogItem;
   onEdit: (reward: RewardCatalogItem) => void;
-  onDeactivate: (id: string) => void;
+  onToggleStatus: (id: string, active: boolean) => void;
+  onDelete: (id: string) => void;
 }
 
-export function RewardCard({ reward, onEdit, onDeactivate }: RewardCardProps) {
+export function RewardCard({ reward, onEdit, onToggleStatus, onDelete }: RewardCardProps) {
   const isOutOfStock = reward.stock !== null && reward.stock <= 0;
   
   return (
@@ -76,15 +78,26 @@ export function RewardCard({ reward, onEdit, onDeactivate }: RewardCardProps) {
           Edit
         </button>
         
-        {reward.isActive && (
-          <button
-            onClick={() => onDeactivate(reward.id)}
-            className="inline-flex items-center justify-center p-2 text-[var(--color-error)] bg-[var(--color-surface-elevated)] hover:bg-[var(--color-error)]/10 border border-[var(--color-border-subtle)] hover:border-[var(--color-error)]/30 rounded-lg transition-colors"
-            title="Deactivate"
-          >
-            <PowerOff className="w-4 h-4" />
-          </button>
-        )}
+        <button
+          onClick={() => onToggleStatus(reward.id, !reward.isActive)}
+          className={cn(
+            "inline-flex items-center justify-center p-2 rounded-lg transition-colors border border-[var(--color-border-subtle)]",
+            reward.isActive 
+              ? "text-[var(--color-text-tertiary)] bg-[var(--color-surface-elevated)] hover:bg-orange-500/10 hover:text-orange-500 hover:border-orange-500/30" 
+              : "text-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/20"
+          )}
+          title={reward.isActive ? "Deactivate" : "Activate"}
+        >
+          {reward.isActive ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+        </button>
+
+        <button
+          onClick={() => onDelete(reward.id)}
+          className="inline-flex items-center justify-center p-2 text-[var(--color-error)] bg-[var(--color-surface-elevated)] hover:bg-[var(--color-error)]/10 border border-[var(--color-border-subtle)] hover:border-[var(--color-error)]/30 rounded-lg transition-colors"
+          title="Delete Permanently"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );
