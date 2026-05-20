@@ -2,6 +2,7 @@ import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { adminApi } from "@/lib/api-client";
 import { getServerToken } from "@/lib/auth";
 import AdjustmentsClient from "./adjustments-client";
+import { Zap } from "lucide-react";
 
 export default async function AdjustmentsPage() {
   const token = await getServerToken();
@@ -16,13 +17,14 @@ export default async function AdjustmentsPage() {
       <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto space-y-6">
         <div className="bento-grid">
           {/* Header */}
-          <div className="bento-span-12 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">
+              <h1 className="text-card-heading text-2xl mb-1 flex items-center gap-3">
+                <Zap className="h-6 w-6 text-[--color-accent]" />
                 Token Adjustments
               </h1>
-              <p className="text-[var(--color-text-secondary)] mt-1">
-                Manually adjust tokens for Mitras and Team Leaders due to special policies or corrections.
+              <p className="text-[var(--color-text-secondary)]">
+                Manually adjust tokens for Mitras due to special policies or corrections.
               </p>
             </div>
           </div>
