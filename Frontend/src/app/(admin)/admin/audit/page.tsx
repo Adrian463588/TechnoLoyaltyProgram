@@ -21,25 +21,29 @@ import {
   Settings,
   ShieldAlert,
   User,
+  History,
+  Zap,
 } from "lucide-react";
 import { Suspense } from "react";
+import { cn } from "@/lib/utils";
 
 function getActionIcon(action: string) {
-  if (action.includes("Upload"))        return <FileSpreadsheet className="w-4 h-4 text-secondary" />;
-  if (action.includes("Verified"))      return <CheckCircle className="w-4 h-4 text-primary" />;
-  if (action.includes("Rejected"))      return <ShieldAlert className="w-4 h-4 text-destructive" />;
-  if (action.includes("Snapshot"))      return <Activity className="w-4 h-4 text-muted-foreground" />;
-  if (action.includes("Redemption") || action.includes("Reward")) return <Gift className="w-4 h-4 text-primary" />;
-  if (action.includes("User") || action.includes("Role"))         return <User className="w-4 h-4 text-muted-foreground" />;
-  return <Settings className="w-4 h-4 text-muted-foreground" />;
+  if (action.includes("Upload"))        return <FileSpreadsheet className="w-3.5 h-3.5" />;
+  if (action.includes("Verified"))      return <CheckCircle className="w-3.5 h-3.5" />;
+  if (action.includes("Rejected"))      return <ShieldAlert className="w-3.5 h-3.5" />;
+  if (action.includes("Snapshot"))      return <Activity className="w-3.5 h-3.5" />;
+  if (action.includes("Redemption") || action.includes("Reward")) return <Gift className="w-3.5 h-3.5" />;
+  if (action.includes("User") || action.includes("Role") || action.includes("Adjustment")) return <User className="w-3.5 h-3.5" />;
+  return <Settings className="w-3.5 h-3.5" />;
 }
 
-function getActionBadgeColor(action: string): string {
-  if (action.includes("Verified"))  return "bg-primary/10 border-primary/20 text-primary shadow-sm backdrop-blur-md";
-  if (action.includes("Rejected"))  return "bg-destructive/10 border-destructive/20 text-destructive shadow-sm backdrop-blur-md";
-  if (action.includes("Upload"))    return "bg-secondary/10 border-secondary/20 text-secondary shadow-sm backdrop-blur-md";
-  if (action.includes("Snapshot"))  return "bg-muted/40 border-border/50 text-muted-foreground shadow-sm backdrop-blur-md";
-  return "bg-muted/30 border-border/50 text-muted-foreground shadow-sm backdrop-blur-md";
+function getActionBadgeStyles(action: string): string {
+  if (action.includes("Verified"))  return "bg-emerald-500/10 border-emerald-200 text-emerald-600";
+  if (action.includes("Rejected"))  return "bg-red-500/10 border-red-200 text-red-600";
+  if (action.includes("Upload"))    return "bg-blue-500/10 border-blue-200 text-blue-600";
+  if (action.includes("Snapshot"))  return "bg-purple-500/10 border-purple-200 text-purple-600";
+  if (action.includes("Adjustment")) return "bg-orange-500/10 border-orange-200 text-orange-600";
+  return "bg-neutral-500/10 border-neutral-200 text-neutral-600";
 }
 
 function formatDate(dateStr: string): string {
@@ -57,7 +61,6 @@ function formatDetails(details: unknown): string {
   if (typeof details === "string") return details;
   if (typeof details === "object") {
     const d = details as Record<string, unknown>;
-    // Pretty-print common fields
     const parts: string[] = [];
     if (d.fileName)    parts.push(`File: ${d.fileName}`);
     if (d.rowCount)    parts.push(`Rows: ${d.rowCount}`);
@@ -87,10 +90,10 @@ async function AuditTable({ filter }: { filter?: string }) {
 
   if (logs.length === 0) {
     return (
-      <BentoCard className="p-12 text-center">
-        <Activity className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-        <p className="text-sm font-medium text-foreground">No audit events found</p>
-        <p className="text-xs text-muted-foreground mt-1">
+      <BentoCard className="p-16 text-center animate-fade-up-in">
+        <Activity className="h-12 w-12 text-[var(--color-text-tertiary)] mx-auto mb-4 opacity-20" />
+        <h3 className="text-lg font-medium text-[var(--color-text-primary)]">No audit events found</h3>
+        <p className="text-sm text-[var(--color-text-secondary)] mt-1 max-w-xs mx-auto">
           {filter ? `No events match the "${filter}" filter.` : "Admin actions and system events will appear here."}
         </p>
       </BentoCard>
@@ -98,82 +101,97 @@ async function AuditTable({ filter }: { filter?: string }) {
   }
 
   return (
-    <BentoCard className="overflow-hidden p-0">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
-        <p className="text-sm font-medium text-foreground">Audit Events</p>
-        <Badge variant="outline" className="text-xs">{logs.length} entries</Badge>
+    <BentoCard className="overflow-hidden p-0 shadow-sm border-[var(--color-border-subtle)] animate-fade-up-in" style={{ animationDelay: "100ms" }}>
+      <div className="p-5 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/30 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <History className="h-4 w-4 text-[var(--color-text-tertiary)]" />
+          <span className="text-sm font-semibold text-[var(--color-text-primary)]">Audit Events</span>
+        </div>
+        <Badge variant="outline" className="font-mono bg-[var(--color-surface-base)] text-[var(--color-text-secondary)]">
+          {logs.length} Entries
+        </Badge>
       </div>
-      <Table>
-        <TableHeader className="bg-muted/30">
-          <TableRow>
-            <TableHead className="w-[160px]">Timestamp</TableHead>
-            <TableHead>Action</TableHead>
-            <TableHead>Actor</TableHead>
-            <TableHead>Target</TableHead>
-            <TableHead>Details</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {logs.map((log) => (
-            <TableRow
-              key={log.id}
-              className="hover:bg-muted/20 transition-colors border-border group"
-            >
-              <TableCell className="text-xs text-muted-foreground whitespace-nowrap font-mono">
-                {formatDate(log.createdAt)}
-              </TableCell>
-              <TableCell>
-                <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${getActionBadgeColor(log.action)}`}>
-                  {getActionIcon(log.action)}
-                  <span className="font-semibold">{log.action}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div>
-                  <p className="text-sm font-medium text-foreground">{log.actorName ?? "System"}</p>
-                  <p className="text-xs text-muted-foreground font-mono">{log.actorNpk ?? log.actorId.slice(0, 8)}</p>
-                </div>
-              </TableCell>
-              <TableCell>
-                {log.targetId ? (
-                  <span className="font-mono text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">
-                    {log.targetId}
-                    {log.targetType && (
-                      <span className="ml-1 text-muted-foreground/60">({log.targetType})</span>
-                    )}
-                  </span>
-                ) : (
-                  <span className="text-xs text-muted-foreground">—</span>
-                )}
-              </TableCell>
-              <TableCell className="max-w-xs">
-                <p className="text-xs text-muted-foreground line-clamp-2 group-hover:line-clamp-none transition-all">
-                  {formatDetails(log.details)}
-                </p>
-              </TableCell>
+
+      <div className="overflow-x-auto overflow-y-hidden hide-scrollbar">
+        <Table className="min-w-[1000px]">
+          <TableHeader className="bg-[var(--color-surface-elevated)]/50">
+            <TableRow className="border-[var(--color-border-subtle)] hover:bg-transparent">
+              <TableHead className="w-[180px] py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Timestamp</TableHead>
+              <TableHead className="w-[160px] py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Action</TableHead>
+              <TableHead className="w-[180px] py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Actor</TableHead>
+              <TableHead className="w-[140px] py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Target</TableHead>
+              <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Details</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {logs.map((log) => (
+              <TableRow
+                key={log.id}
+                className="group border-b border-[var(--color-border-subtle)] transition-all duration-200 hover:bg-[var(--color-accent)]/[0.05] cursor-default"
+              >
+                <TableCell className="py-4 px-6 text-xs text-[var(--color-text-tertiary)] font-mono whitespace-nowrap">
+                  {formatDate(log.createdAt)}
+                </TableCell>
+                <TableCell className="py-4 px-6">
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5 rounded-full border shadow-sm flex items-center w-fit gap-1.5 whitespace-nowrap",
+                      getActionBadgeStyles(log.action)
+                    )}
+                  >
+                    {getActionIcon(log.action)}
+                    {log.action}
+                  </Badge>
+                </TableCell>
+                <TableCell className="py-4 px-6">
+                  <div className="flex flex-col min-w-[120px]">
+                    <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors truncate">
+                      {log.actorName ?? "System"}
+                    </span>
+                    <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono uppercase tracking-tight">
+                      {log.actorNpk ?? log.actorId.slice(0, 8)}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell className="py-4 px-6">
+                  {log.targetId ? (
+                    <span className="text-[11px] text-[var(--color-text-tertiary)] bg-[var(--color-surface-elevated)] px-2 py-0.5 rounded border border-[var(--color-border-subtle)] font-mono">
+                      {log.targetId.slice(0, 12)}...
+                    </span>
+                  ) : (
+                    <span className="text-xs text-[var(--color-text-tertiary)]">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="py-4 px-6 min-w-[300px]">
+                  <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                    {formatDetails(log.details)}
+                  </p>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </BentoCard>
   );
 }
 
 function AuditTableSkeleton() {
   return (
-    <BentoCard className="overflow-hidden p-0">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
-        <div className="h-4 w-24 rounded bg-muted/50 animate-skeleton" />
-        <div className="h-5 w-16 rounded-full bg-muted/50 animate-skeleton" />
+    <BentoCard className="overflow-hidden p-0 shadow-sm border-[var(--color-border-subtle)]">
+      <div className="p-5 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/30 flex items-center justify-between">
+        <div className="h-4 w-32 rounded bg-[var(--color-border-subtle)] animate-pulse" />
+        <div className="h-6 w-20 rounded-md bg-[var(--color-border-subtle)] animate-pulse" />
       </div>
-      <div className="p-4 space-y-3">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="flex gap-4 items-center" style={{ animationDelay: `${i * 60}ms` }}>
-            <div className="h-4 w-28 rounded bg-muted/40 animate-skeleton" />
-            <div className="h-6 w-40 rounded-full bg-muted/40 animate-skeleton" />
-            <div className="h-4 w-24 rounded bg-muted/40 animate-skeleton" />
-            <div className="h-4 w-20 rounded bg-muted/40 animate-skeleton" />
-            <div className="h-4 flex-1 rounded bg-muted/40 animate-skeleton" />
+      <div className="p-4 space-y-4">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div key={i} className="flex gap-6 items-center px-2">
+            <div className="h-3 w-28 rounded bg-[var(--color-border-subtle)] animate-pulse" />
+            <div className="h-6 w-32 rounded-full bg-[var(--color-border-subtle)] animate-pulse" />
+            <div className="h-4 w-24 rounded bg-[var(--color-border-subtle)] animate-pulse" />
+            <div className="h-3 w-20 rounded bg-[var(--color-border-subtle)] animate-pulse" />
+            <div className="h-3 flex-1 rounded bg-[var(--color-border-subtle)] animate-pulse" />
           </div>
         ))}
       </div>
@@ -197,33 +215,47 @@ export default async function AuditLogPage({
 
       <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto space-y-6">
         <div className="bento-grid">
-          {/* Header */}
-        <div className="bento-span-12 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Audit Log</h1>
-            <p className="text-muted-foreground mt-1">
-              Immutable record of all system events and administrative actions.
-            </p>
+          {/* Header Card */}
+          <div className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
+            <div>
+              <h1 className="text-card-heading text-2xl mb-1 flex items-center gap-3">
+                <History className="h-6 w-6 text-[--color-accent]" />
+                Audit Log
+              </h1>
+              <p className="text-[var(--color-text-secondary)]">
+                Immutable record of all system events and administrative actions.
+              </p>
+            </div>
           </div>
-        </div>
 
         {/* Action Type Filters */}
-        <div className="bento-span-12 flex flex-wrap gap-3">
+        <div className="bento-span-12 flex flex-wrap gap-2 animate-fade-up-in" style={{ animationDelay: "50ms" }}>
           {[
-            { icon: <Info            className="w-3.5 h-3.5 text-foreground" />,        label: "All",          color: "bg-muted/50 border-border/50 text-foreground" },
-            { icon: <FileSpreadsheet className="w-3.5 h-3.5 text-secondary" />,         label: "Upload",       color: "bg-secondary/10 border-secondary/20 text-secondary" },
-            { icon: <CheckCircle     className="w-3.5 h-3.5 text-primary" />,           label: "Verification", color: "bg-primary/10 border-primary/20 text-primary"   },
-            { icon: <ShieldAlert     className="w-3.5 h-3.5 text-destructive" />,       label: "Rejection",    color: "bg-destructive/10 border-destructive/20 text-destructive" },
-            { icon: <Activity        className="w-3.5 h-3.5 text-muted-foreground" />,  label: "System",       color: "bg-muted/40 border-border/50 text-muted-foreground"         },
+            { icon: <Info            className="w-3.5 h-3.5" />, label: "All",          color: "hover:bg-neutral-500/10 text-neutral-600 active:bg-neutral-500/20" },
+            { icon: <FileSpreadsheet className="w-3.5 h-3.5" />, label: "Upload",       color: "hover:bg-blue-500/10 text-blue-600 active:bg-blue-500/20" },
+            { icon: <CheckCircle     className="w-3.5 h-3.5" />, label: "Verification", color: "hover:bg-emerald-500/10 text-emerald-600 active:bg-emerald-500/20"   },
+            { icon: <ShieldAlert     className="w-3.5 h-3.5" />, label: "Rejection",    color: "hover:bg-red-500/10 text-red-600 active:bg-red-500/20" },
+            { icon: <Activity        className="w-3.5 h-3.5" />, label: "System",       color: "hover:bg-purple-500/10 text-purple-600 active:bg-purple-500/20" },
           ].map(({ icon, label, color }) => {
             const isActive = filter === label || (label === "All" && !filter);
-            const activeStyles = isActive ? "ring-2 ring-ring ring-offset-2 ring-offset-background opacity-100" : "opacity-60 hover:opacity-100";
+            const activeStyles = isActive 
+              ? "bg-[var(--color-surface-elevated)] border-[var(--color-accent)] text-[var(--color-accent)] ring-1 ring-[var(--color-accent)]/20 shadow-sm" 
+              : "bg-[var(--color-surface-base)] border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] opacity-80 hover:opacity-100 hover:shadow-sm";
+            
             const href = label === "All" 
               ? { pathname: "/admin/audit" as const } 
               : { pathname: "/admin/audit" as const, query: { filter: label } };
             
             return (
-              <Link key={label} href={href as any} className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold shadow-sm backdrop-blur-md transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer hover:shadow-md ${color} ${activeStyles}`}>
+              <Link 
+                key={label} 
+                href={href as any} 
+                className={cn(
+                  "flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition-all duration-300 active:scale-95 cursor-pointer",
+                  color,
+                  activeStyles
+                )}
+              >
                 {icon}
                 <span>{label}</span>
               </Link>
@@ -231,7 +263,7 @@ export default async function AuditLogPage({
           })}
         </div>
 
-        {/* Audit Table — Suspense boundary for streaming */}
+        {/* Audit Table */}
         <div className="bento-span-12">
           <Suspense fallback={<AuditTableSkeleton />} key={filter ?? "all"}>
             <AuditTable filter={filter} />
@@ -239,12 +271,12 @@ export default async function AuditLogPage({
         </div>
 
         {/* Info banner */}
-        <div className="bento-span-12 flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border border-border">
-          <Info className="w-4 h-4 mt-0.5 shrink-0" />
-          <span>
+        <div className="bento-span-12 flex items-start gap-3 text-xs text-[var(--color-text-tertiary)] bg-[var(--color-surface-elevated)]/30 rounded-2xl p-5 border border-[var(--color-border-subtle)] animate-fade-up-in" style={{ animationDelay: "200ms" }}>
+          <Info className="w-4 h-4 mt-0.5 shrink-0 text-[var(--color-info)]" />
+          <span className="leading-relaxed">
             Audit logs are append-only and cannot be modified. Every admin action,
             system event, and status change is captured here for compliance and traceability.
-            Showing last 100 events.
+            Showing last 100 events recorded in the system ledger.
           </span>
         </div>
       </div>
@@ -252,3 +284,4 @@ export default async function AuditLogPage({
     </div>
   );
 }
+
