@@ -13,6 +13,21 @@ interface RewardCardProps {
 
 export function RewardCard({ reward, onEdit, onToggleStatus, onDelete }: RewardCardProps) {
   const isOutOfStock = reward.stock !== null && reward.stock <= 0;
+
+  const getTierStyles = (tier: string) => {
+    switch (tier?.toUpperCase()) {
+      case "SAPHIRE":
+        return "bg-blue-500/10 text-blue-600 border-blue-200";
+      case "EMERALD":
+        return "bg-emerald-500/10 text-emerald-600 border-emerald-200";
+      case "RUBY":
+        return "bg-red-500/10 text-red-600 border-red-200";
+      case "DIAMOND":
+        return "bg-purple-500/10 text-purple-600 border-purple-200";
+      default:
+        return "bg-neutral-100 text-neutral-600 border-neutral-200";
+    }
+  };
   
   return (
     <div className={`bento-card p-6 flex flex-col h-full transition-all duration-300 group transform-gpu
@@ -46,23 +61,31 @@ export function RewardCard({ reward, onEdit, onToggleStatus, onDelete }: RewardC
 
       {/* Stats */}
       <div className="flex flex-col gap-3 py-4 mt-2 border-t border-[var(--color-border-subtle)]">
-        <div className="flex items-end justify-between">
+        <div className="flex items-start justify-between">
           <div className="flex flex-col">
-            <span className="text-xs text-[var(--color-text-tertiary)] uppercase tracking-wider mb-1">Cost</span>
-            <span className="text-xl font-bold text-[var(--color-accent)] leading-none font-mono">
-              {reward.tokenCost.toLocaleString()} <span className="text-sm font-normal text-[var(--color-text-secondary)]">tokens</span>
-            </span>
+            <span className="text-xs text-[var(--color-text-tertiary)] uppercase tracking-wider mb-2">Cost</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-base font-bold text-[var(--color-accent)] leading-none">
+                {reward.tokenCost.toLocaleString()}
+              </span>
+              <span className="text-base font-bold text-[var(--color-text-secondary)] leading-none">
+                tokens
+              </span>
+            </div>
           </div>
           <div className="flex flex-col items-end">
-             <span className="text-xs text-[var(--color-text-tertiary)] uppercase tracking-wider mb-1">Stock</span>
-             <span className={`text-sm font-medium leading-none ${isOutOfStock ? "text-[var(--color-error)]" : "text-[var(--color-text-primary)]"}`}>
+             <span className="text-xs text-[var(--color-text-tertiary)] uppercase tracking-wider mb-2">Stock</span>
+             <span className={`text-base font-bold leading-none ${isOutOfStock ? "text-[var(--color-error)]" : "text-[var(--color-text-primary)]"}`}>
                {reward.stock === null ? "Unlimited" : reward.stock.toLocaleString()}
              </span>
           </div>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-xs text-[var(--color-text-tertiary)] uppercase tracking-wider">Min Tier</span>
-          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] text-[var(--color-text-secondary)]">
+          <span className={cn(
+            "text-[10px] font-bold px-2.5 py-0.5 rounded-full border shadow-sm uppercase tracking-wider",
+            getTierStyles(reward.minTier)
+          )}>
             {reward.minTier || "SAPHIRE"}
           </span>
         </div>
