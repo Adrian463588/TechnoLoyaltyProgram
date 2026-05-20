@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState, useEffect } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Trash2 } from "lucide-react";
 import type { RewardCatalogItem } from "@/lib/api-client";
 
 const rewardSchema = z.object({
@@ -23,10 +23,11 @@ interface RewardFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => Promise<void>;
+  onDelete?: (reward: RewardCatalogItem) => void;
   initialData?: RewardCatalogItem | null;
 }
 
-export function RewardFormModal({ isOpen, onClose, onSubmit, initialData }: RewardFormModalProps) {
+export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialData }: RewardFormModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -245,23 +246,37 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, initialData }: Rewa
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-neutral-100 bg-neutral-50 flex-shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="px-5 py-2.5 text-sm font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200 rounded-xl transition-colors disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            form="reward-form"
-            disabled={isSubmitting}
-            className="flex items-center justify-center min-w-[120px] px-5 py-2.5 text-sm font-semibold text-black bg-accent hover:bg-accent/90 rounded-xl transition-all shadow-md shadow-accent/20 disabled:opacity-50 disabled:shadow-none"
-          >
-            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Save Changes" : "Create Reward"}
-          </button>
+        <div className="flex items-center justify-between p-6 border-t border-neutral-100 bg-neutral-50 flex-shrink-0">
+          <div>
+            {isEditing && onDelete && initialData && (
+              <button
+                type="button"
+                onClick={() => onDelete(initialData)}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="px-5 py-2.5 text-sm font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200 rounded-xl transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="reward-form"
+              disabled={isSubmitting}
+              className="flex items-center justify-center min-w-[120px] px-5 py-2.5 text-sm font-semibold text-black bg-accent hover:bg-accent/90 rounded-xl transition-all shadow-md shadow-accent/20 disabled:opacity-50 disabled:shadow-none"
+            >
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Save Changes" : "Create Reward"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
