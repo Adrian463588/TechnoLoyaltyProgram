@@ -63,16 +63,16 @@ export default function AdjustmentsClient({ users: initialUsers }: { users: User
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <Table>
+      <div className="overflow-x-auto hide-scrollbar">
+        <Table className="min-w-[800px]">
           <TableHeader className="bg-[var(--color-surface-elevated)]/50">
             <TableRow className="border-[var(--color-border-subtle)] hover:bg-transparent">
-              <TableHead className="w-[120px] py-4 px-6 font-semibold text-[var(--color-text-secondary)]">NPK</TableHead>
+              <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">NPK</TableHead>
               <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Mitra Name</TableHead>
               <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Division</TableHead>
               <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Membership Tier</TableHead>
               <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)] text-right">Token</TableHead>
-              <TableHead className="w-[80px] py-4 px-6 text-right font-semibold text-[var(--color-text-secondary)]">Action</TableHead>
+              <TableHead className="w-[100px] py-4 px-6 text-center font-semibold text-[var(--color-text-secondary)]">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -94,15 +94,10 @@ export default function AdjustmentsClient({ users: initialUsers }: { users: User
                   <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)]">
                     {user.npk}
                   </TableCell>
-                  <TableCell className="py-4 px-6">
-                    <div className="flex flex-col">
-                      <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">
-                        {user.name}
-                      </span>
-                      <span className="text-[10px] text-[var(--color-text-tertiary)] uppercase tracking-tight md:hidden">
-                        {user.division}
-                      </span>
-                    </div>
+                  <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)]">
+                    <span className="group-hover:text-[var(--color-text-primary)] transition-colors">
+                      {user.name}
+                    </span>
                   </TableCell>
                   <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)]">
                     {user.division}
@@ -119,11 +114,11 @@ export default function AdjustmentsClient({ users: initialUsers }: { users: User
                     </Badge>
                   </TableCell>
                   <TableCell className="py-4 px-6 text-right">
-                    <span className="text-sm text-[var(--color-text-secondary)]">
+                    <span className="text-sm text-[var(--color-text-secondary)] font-mono">
                       {(user.tokens ?? 0).toLocaleString()}
                     </span>
                   </TableCell>
-                  <TableCell className="py-4 px-6 text-right">
+                  <TableCell className="py-4 px-6 text-center">
                     <button
                       onClick={() => setSelectedUser(user)}
                       className="p-2.5 text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 rounded-xl transition-all border border-transparent hover:border-[var(--color-accent)]/20 active:scale-95"
