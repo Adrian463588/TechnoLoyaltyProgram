@@ -244,25 +244,6 @@ export const adminApi = {
         headers: withAuth(token),
       },
     ),
-
-  /** Token conversion rules — list all */
-  getTokenRules: (token: string) =>
-    apiFetch<TokenConversionRuleResponse[]>("/api/admin/token-rules", {
-      headers: withAuth(token),
-      cache: "no-store",
-    } as RequestInit),
-
-  /** Token conversion rules — update rate */
-  updateTokenRule: (
-    token: string,
-    id: string,
-    payload: { tokensPerUnit: number },
-  ) =>
-    apiFetch<TokenConversionRuleResponse>(`/api/admin/token-rules/${id}`, {
-      method: "PATCH",
-      headers: withAuth(token),
-      body: JSON.stringify(payload),
-    }),
 };
 
 // ── Leader API ─────────────────────────────────────────────────────────────
@@ -418,16 +399,6 @@ export interface PartnerConfirmationResponse {
   note: string | null;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface TokenConversionRuleResponse {
-  id: string;
-  divisionGroup: string;
-  tokensPerUnit: number;
-  label: string;
-  updatedBy: string;
-  updatedAt: string;
-  createdAt: string;
 }
 
 export interface UserResponse {

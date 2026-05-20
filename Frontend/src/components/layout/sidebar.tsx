@@ -48,7 +48,6 @@ const navItems = {
     { href: "/admin/adjustments", label: "Token Adjustments", icon: Zap },
     { href: "/admin/mitra-validation", label: "Mitra Validation", icon: UserCheck },
     { href: "/admin/audit", label: "Audit Log", icon: History },
-    { href: "/admin/token-rules", label: "Token Rules", icon: Settings },
   ],
   TEAM_LEADER: [
     { href: "/leader/team", label: "Team Overview", icon: Users },
