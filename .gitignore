@@ -1,6 +1,34 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# ============================================================================
+# SECURITY: CREDENTIALS & ENVIRONMENT
+# ============================================================================
+.env
+.env.local
+.env.*.local
+.env*.backup
+.env*.prod
+.env*.dev
+.env*.test
+.env*.staging
+.pem
+*.key
+*.pub
+*.p12
+*.pfx
+*.jks
+credentials.json
+secrets.yaml
+secrets.yml
+*.gpg
+.ssh/
+.aws/
+.azure/
+~/.kube/config
+
+# ============================================================================
+# DEPENDENCIES
+# ============================================================================
 /node_modules
 /.pnp
 .pnp.*
@@ -9,47 +37,220 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+pnpm-lock.yaml.backup
 
-# testing
-/coverage
-
-# next.js
+# ============================================================================
+# BUILD & OUTPUT
+# ============================================================================
 /.next/
 /out/
-
-# production
 /build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
+/dist
 *.tsbuildinfo
 next-env.d.ts
+*.js.map
+*.css.map
 
-# ide
+# ============================================================================
+# TESTING & COVERAGE
+# ============================================================================
+/coverage
+/coverage.*
+.nyc_output
+*.lcov
+test-results/
+cypress/videos/
+cypress/screenshots/
+.test-cache
+
+# ============================================================================
+# IDE & EDITOR
+# ============================================================================
 .vscode/
+!.vscode/*.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-workspace
+*.sublime-project
+*.iml
+.classpath
+.project
+.settings/
+.eslintcache
 
-# agents
-.agents/
-.gemini/
+# ============================================================================
+# LOGS
+# ============================================================================
+npm-debug.log*
+npm-error.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+pnpm-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+logs/
+*.log
+*.log.*
 
-# test artifacts
+# ============================================================================
+# OS FILES
+# ============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ============================================================================
+# TERRAFORM & INFRASTRUCTURE
+# ============================================================================
+# Terraform files
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.*
+terraform.tfvars
+terraform.tfvars.json
+!terraform.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Terraform provider binaries (LARGE FILES)
+**/.terraform/providers/**/*.exe
+**/.terraform/providers/**/*.bin
+**/.terraform/providers/**/*.so
+**/.terraform/providers/**/*.dylib
+
+# ============================================================================
+# KUBERNETES
+# ============================================================================
+kubeconfig
+.kubeconfig
+kind-config
+k8s-config
+
+# ============================================================================
+# DOCKER & COMPOSE
+# ============================================================================
+.docker/
+.dockerignore.bak
+
+# ============================================================================
+# DEPLOYMENT & ARTIFACTS
+# ============================================================================
+dist/
+build/
+*.tar
+*.tar.gz
+*.zip
+*.dmg
+*.exe
+*.iso
+
+# ============================================================================
+# BACKEND SPECIFIC
+# ============================================================================
+Backend/node_modules/
+Backend/.env*
+Backend/.env*.local
+Backend/dist/
+Backend/build/
+Backend/.tsc-errors.txt
+Backend/eslint-errors.txt
+Backend/eslint-report.txt
+Backend/lint-output.txt
+
+# Prisma
+prisma/dev.db
+prisma/dev.db-shm
+prisma/dev.db-wal
+*.db
+*.db-journal
+
+# ============================================================================
+# FRONTEND SPECIFIC
+# ============================================================================
+Frontend/node_modules/
+Frontend/.env*
+Frontend/.env*.local
+Frontend/.next/
+Frontend/out/
+Frontend/build/
+Frontend/.tsc-errors.txt
+Frontend/eslint-output.txt
+Frontend/eslint-report.json
+Frontend/lint_output.txt
+
+# ============================================================================
+# TEST SUITE SPECIFIC
+# ============================================================================
+TestSuite/node_modules/
+TestSuite/.env*
+TestSuite/cypress/videos/
+TestSuite/cypress/screenshots/
 TestSuite/*.txt
 TestSuite/*.html
+cypress_output*.txt
+cypress_result*.txt
 
-# Frontend lint output
-Frontend/lint_output.txt
+# ============================================================================
+# GEMINI & AI AGENT ARTIFACTS
+# ============================================================================
+.gemini/
+.agents/temp/
+.agents/cache/
+*.backup.md
+*.original.md
+
+# ============================================================================
+# IDE TEMP FILES
+# ============================================================================
+.vscode/settings.json.bak
+.vscode/extensions.json.bak
+**/node_modules/.cache/
+.eslintcache
+.stylelintcache
+
+# ============================================================================
+# GENERATED FILES
+# ============================================================================
+*.generated.ts
+*.generated.js
+*.spec.js
+*.spec.ts
+!*.test.ts
+!*.test.js
+
+# ============================================================================
+# TEMPORARY FILES
+# ============================================================================
+*.tmp
+*.temp
+.tmp/
+tmp/
+*.swp
+*.swn
+*~
+.#*
+
+# ============================================================================
+# REPORTS & DOCUMENTATION (GENERATED)
+# ============================================================================
+coverage-report.html
+test-report.html
+audit-report.json

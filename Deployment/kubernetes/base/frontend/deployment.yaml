@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loyalty-frontend
+  labels:
+    app: loyalty-frontend
+spec:
+  selector:
+    matchLabels:
+      app: loyalty-frontend
+  template:
+    metadata:
+      labels:
+        app: loyalty-frontend
+    spec:
+      serviceAccountName: loyalty-frontend-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: loyalty-frontend
+        image: asia-southeast2-docker.pkg.dev/project-654b743a-b24b-45ad-85e/loyalty-program-repo/frontend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "300m"
+            memory: "256Mi"
+        envFrom:
+        - secretRef:
+            name: loyalty-frontend-secrets
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 10
