@@ -9,12 +9,12 @@ const STEPS: {
   key: PipelineStep;
   label: string;
   icon: React.ElementType;
-  completedAt?: PipelineStep;
 }[] = [
-  { key: "submitted", label: "Submit",  icon: Circle },
-  { key: "verified",  label: "Verify",  icon: CheckCircle2 },
+  { key: "submitted", label: "Submit",   icon: Circle },
+  { key: "verified",  label: "Verify",   icon: CheckCircle2 },
   { key: "purchased", label: "Purchase", icon: ShoppingCart },
-  { key: "pickup",    label: "Pickup",  icon: Truck },
+  { key: "pickup",    label: "Pickup",   icon: Truck },
+  { key: "completed", label: "Done",     icon: Package },
 ];
 
 const STEP_ORDER: PipelineStep[] = ["submitted", "verified", "purchased", "pickup", "completed"];
@@ -44,22 +44,22 @@ export function RedemptionPipeline({
     >
       <div className="flex items-center w-full">
         {STEPS.map((step, idx) => {
-          const done = isCompleted || currentIdx > idx;
+          const done = currentIdx > idx || (isCompleted && currentIdx === idx);
           const active = !isCompleted && currentIdx === idx;
 
           return (
             <div key={step.key} className="flex items-center flex-1 last:flex-none">
               {/* Step node */}
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex flex-col items-center gap-1.5">
                 <div
                   className={cn(
                     "relative flex items-center justify-center rounded-full transition-all duration-500",
-                    compact ? "w-7 h-7" : "w-9 h-9",
+                    compact ? "w-7 h-7" : "w-10 h-10",
                     done
-                      ? "bg-primary text-primary-foreground shadow-[0_0_12px_rgba(124,196,70,0.4)]"
+                      ? "bg-[var(--color-accent)] text-black shadow-md shadow-[var(--color-accent)]/20"
                       : active
-                      ? "bg-primary/20 text-primary border-2 border-primary animate-glow-ring"
-                      : "bg-muted/50 text-muted-foreground border border-border"
+                      ? "bg-[var(--color-accent)]/20 text-[var(--color-accent)] border-2 border-[var(--color-accent)] shadow-sm"
+                      : "bg-[var(--color-surface-elevated)] text-[var(--color-text-tertiary)] border border-[var(--color-border-subtle)]"
                   )}
                 >
                   {done ? (
@@ -69,23 +69,17 @@ export function RedemptionPipeline({
                         compact ? "w-4 h-4" : "w-5 h-5"
                       )}
                     />
-                  ) : active ? (
-                    <step.icon
-                      className={cn(
-                        compact ? "w-3.5 h-3.5" : "w-4.5 h-4.5"
-                      )}
-                    />
                   ) : (
                     <step.icon
                       className={cn(
-                        "opacity-40",
-                        compact ? "w-3.5 h-3.5" : "w-4.5 h-4.5"
+                        compact ? "w-3.5 h-3.5" : "w-5 h-5",
+                        !active && "opacity-40"
                       )}
                     />
                   )}
                   {/* Pulsing ring for active */}
                   {active && (
-                    <span className="absolute inset-0 rounded-full border-2 border-primary/50 animate-glow-ring" />
+                    <span className="absolute inset-0 rounded-full border-2 border-[var(--color-accent)]/50 animate-glow-ring" />
                   )}
                 </div>
 
@@ -93,12 +87,12 @@ export function RedemptionPipeline({
                 {!compact && (
                   <span
                     className={cn(
-                      "text-[10px] font-medium whitespace-nowrap",
+                      "text-[10px] font-bold tracking-wider uppercase",
                       done
-                        ? "text-primary"
+                        ? "text-[var(--color-accent)]"
                         : active
-                        ? "text-foreground"
-                        : "text-muted-foreground"
+                        ? "text-[var(--color-text-primary)]"
+                        : "text-[var(--color-text-tertiary)]"
                     )}
                   >
                     {step.label}
@@ -111,38 +105,15 @@ export function RedemptionPipeline({
                 <div
                   className={cn(
                     "flex-1 h-0.5 mx-1 transition-all duration-700 ease-out rounded-full",
-                    done ? "bg-primary shadow-[0_0_4px_rgba(124,196,70,0.5)]" : "bg-border"
+                    currentIdx > idx || (isCompleted && currentIdx > idx)
+                      ? "bg-[var(--color-accent)]"
+                      : "bg-[var(--color-border-subtle)]"
                   )}
                 />
               )}
             </div>
           );
         })}
-
-        {/* Final "Completed" node */}
-        <div className="flex flex-col items-center gap-1 ml-1">
-          <div
-            className={cn(
-              "flex items-center justify-center rounded-full transition-all duration-500",
-              compact ? "w-7 h-7" : "w-9 h-9",
-              isCompleted
-                ? "bg-primary text-primary-foreground shadow-[0_0_12px_rgba(124,196,70,0.4)]"
-                : "bg-muted/50 text-muted-foreground border border-border opacity-40"
-            )}
-          >
-            <Package className={compact ? "w-3.5 h-3.5" : "w-4.5 h-4.5"} />
-          </div>
-          {!compact && (
-            <span
-              className={cn(
-                "text-[10px] font-medium",
-                isCompleted ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              Done
-            </span>
-          )}
-        </div>
       </div>
     </div>
   );
