@@ -138,16 +138,24 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
             <BentoCard
               key={reward.id}
               className={cn(
-                "flex flex-col h-full animate-fade-up-in transform-gpu will-change-transform",
+                "flex flex-col h-full animate-fade-up-in transform-gpu will-change-transform p-0 overflow-hidden",
                 !canRedeem && "bg-neutral-50/50"
               )}
               style={{ animationDelay: `${i * 40}ms` } as React.CSSProperties}
             >
               {/* Thumbnail area */}
-              <div className="aspect-[4/3] bg-muted/50 relative overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <ShoppingBag className="w-14 h-14 text-muted-foreground/20" />
-                </div>
+              <div className="aspect-[4/3] bg-muted/50 relative overflow-hidden flex items-center justify-center border-b border-border">
+                {reward.imageUrl ? (
+                  <img 
+                    src={reward.imageUrl} 
+                    alt={reward.name} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center opacity-20">
+                    <ShoppingBag className="w-14 h-14 text-muted-foreground" />
+                  </div>
+                )}
                 
                 {/* Badges overlay */}
                 <div className="absolute bottom-2 left-2 flex items-center gap-2">

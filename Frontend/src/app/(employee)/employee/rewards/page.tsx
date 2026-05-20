@@ -25,6 +25,7 @@ export default async function RewardsPage() {
     tokenCost: r.tokenCost,
     // Backend does not yet expose category — default to "Voucher" until added
     category: "Voucher" as const,
+    imageUrl: r.imageUrl,
     isAvailable: r.isActive,
     minTier: r.minTier,
   }));
