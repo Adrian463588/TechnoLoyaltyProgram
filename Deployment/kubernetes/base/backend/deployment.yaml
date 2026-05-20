@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loyalty-backend
+  labels:
+    app: loyalty-backend
+spec:
+  selector:
+    matchLabels:
+      app: loyalty-backend
+  template:
+    metadata:
+      labels:
+        app: loyalty-backend
+    spec:
+      serviceAccountName: loyalty-backend-sa
+      # DevSecOps: securityContext for the Pod
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: loyalty-backend
+        image: asia-southeast2-docker.pkg.dev/project-654b743a-b24b-45ad-85e/loyalty-program-repo/backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        # DevSecOps: securityContext for the container
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        envFrom:
+        - secretRef:
+            name: loyalty-backend-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 10

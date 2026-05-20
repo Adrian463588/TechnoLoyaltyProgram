@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: loyalty-program
+  namespace: argocd
+spec:
+  description: Loyalty Program Application Project
+  sourceRepos:
+  - 'https://github.com/Adrian463588/TechnoLoyaltyProgram'
+  destinations:
+  - namespace: loyalty-prod
+    server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+  - group: ''
+    kind: Namespace
+  namespaceResourceBlacklist:
+  - group: ''
+    kind: ResourceQuota
+  - group: ''
+    kind: LimitRange
