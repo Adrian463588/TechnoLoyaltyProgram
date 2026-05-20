@@ -139,7 +139,7 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
               key={reward.id}
               className={cn(
                 "flex flex-col h-full animate-fade-up-in transform-gpu will-change-transform",
-                !canRedeem && "opacity-70"
+                !canRedeem && "bg-neutral-50/50"
               )}
               style={{ animationDelay: `${i * 40}ms` } as React.CSSProperties}
             >
@@ -151,22 +151,25 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
                 
                 {/* Badges overlay */}
                 <div className="absolute bottom-2 left-2 flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/90 text-neutral-600 border border-neutral-200 shadow-sm">
+                  <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
                     {reward.category}
                   </span>
-                  <TierBadge tier={reward.minTier} className="text-[10px] py-0.5 px-2 h-auto" />
+                  <TierBadge tier={reward.minTier} className="text-[10px] py-1 px-3 h-auto opacity-100" />
                 </div>
 
                 {!isAvailable && (
                   <div className="absolute top-2 right-2">
-                    <Badge variant="destructive" className="text-[9px] font-bold uppercase tracking-wider">Out of Stock</Badge>
+                    <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider bg-red-600 text-white border border-red-700">
+                      Out of Stock
+                    </span>
                   </div>
                 )}
                 {!tierMet && isAvailable && (
                   <div className="absolute top-2 right-2">
-                    <Badge className="bg-orange-500 text-white text-[9px] font-bold uppercase tracking-wider border-none shadow-md">
-                      Tier Locked
-                    </Badge>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 text-orange-700 text-[10px] font-black uppercase tracking-widest border border-orange-200 px-3 py-1.5">
+                      <Lock className="w-3 h-3" />
+                      TIER LOCKED
+                    </span>
                   </div>
                 )}
               </div>
