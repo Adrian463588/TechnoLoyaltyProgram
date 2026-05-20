@@ -15,6 +15,7 @@ import { RedemptionController }              from "@/controllers/redemption.cont
 import { ManualAdjustmentController }        from "@/controllers/manual-adjustment.controller";
 import { RewardCatalogController }           from "@/controllers/reward-catalog.controller";
 import { PartnerStatusConfirmationController } from "@/controllers/partner-status-confirmation.controller";
+import { TokenRuleController }               from "@/controllers/token-rule.controller";
 import {
   AdminFoundationController,
   uploadProcessMiddleware,
@@ -264,3 +265,44 @@ adminRoutes.post( "/partner-confirmations",              PartnerStatusConfirmati
  *         description: Request cancelled
  */
 adminRoutes.post( "/partner-confirmations/:id/cancel",   PartnerStatusConfirmationController.cancel          as RequestHandler);
+
+// ── Token Conversion Rules ───────────────────────────────────────────────────
+/**
+ * @openapi
+ * /api/admin/token-rules:
+ *   get:
+ *     tags: [Admin]
+ *     summary: List all token conversion rules
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: List of conversion rules
+ */
+adminRoutes.get(  "/token-rules",                        TokenRuleController.listRules             as RequestHandler);
+
+/**
+ * @openapi
+ * /api/admin/token-rules/{id}:
+ *   patch:
+ *     tags: [Admin]
+ *     summary: Update a token conversion rule
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [tokensPerUnit]
+ *             properties:
+ *               tokensPerUnit: { type: integer, minimum: 1 }
+ *     responses:
+ *       200:
+ *         description: Rule updated
+ */
+adminRoutes.patch("/token-rules/:id",                    TokenRuleController.updateRule            as RequestHandler);

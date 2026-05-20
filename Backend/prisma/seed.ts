@@ -37,6 +37,7 @@ async function main() {
   await prisma.membershipHistory.deleteMany();
   await prisma.shiftClaim.deleteMany();
   await prisma.projectClaim.deleteMany();
+  await prisma.tokenConversionRule.deleteMany();
   await prisma.user.deleteMany();
 
   // ============================================================
@@ -455,6 +456,27 @@ async function main() {
       ipAddress: "127.0.0.1",
       userAgent: "Seed Script",
     }
+  });
+
+  // ============================================================
+  // TOKEN CONVERSION RULES
+  // ============================================================
+  console.log("⚙️ Adding Token Conversion Rules...");
+  await prisma.tokenConversionRule.create({
+    data: {
+      divisionGroup: "OPCENT_TELE",
+      tokensPerUnit: 1,
+      label: "Slot (Opcent/Tele)",
+      updatedBy: adminUser.id,
+    },
+  });
+  await prisma.tokenConversionRule.create({
+    data: {
+      divisionGroup: "TECHNO",
+      tokensPerUnit: 1,
+      label: "Project (Techno)",
+      updatedBy: adminUser.id,
+    },
   });
 
   console.log("\n🎉 Seed complete! All conditions and best practices applied.");

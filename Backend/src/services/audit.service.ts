@@ -27,7 +27,8 @@ export type AuditAction =
   | "REWARD_UPDATED"
   | "REWARD_DEACTIVATED"
   | "SCHEDULED_MEMBERSHIP_EVALUATION"
-  | "TOKEN_EXPIRY";
+  | "TOKEN_EXPIRY"
+  | "TOKEN_RULE_UPDATED";
 
 interface LogAuditParams {
   action: AuditAction;

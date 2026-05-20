@@ -165,6 +165,8 @@ export const adminApi = {
       name: string;
       description: string;
       tokenCost: number;
+      stock?: number | null;
+      imageUrl?: string;
     },
   ) =>
     apiFetch<RewardCatalogItem>("/api/admin/rewards", {
@@ -177,12 +179,19 @@ export const adminApi = {
   updateReward: (
     token: string,
     id: string,
-    payload: Partial<{ name: string; description: string; tokenCost: number; isActive: boolean }>,
+    payload: Partial<{ name: string; description: string; tokenCost: number; stock: number | null; imageUrl: string; isActive: boolean }>,
   ) =>
     apiFetch<RewardCatalogItem>(`/api/admin/rewards/${id}`, {
       method: "PATCH",
       headers: withAuth(token),
       body: JSON.stringify(payload),
+    }),
+
+  /** HC-02: Deactivate reward item */
+  deactivateReward: (token: string, id: string) =>
+    apiFetch<{ success: boolean; message: string }>(`/api/admin/rewards/${id}`, {
+      method: "DELETE",
+      headers: withAuth(token),
     }),
 
   /** HC-06: Request partner status confirmation from Team Leader */
@@ -214,6 +223,25 @@ export const adminApi = {
         headers: withAuth(token),
       },
     ),
+
+  /** Token conversion rules — list all */
+  getTokenRules: (token: string) =>
+    apiFetch<TokenConversionRuleResponse[]>("/api/admin/token-rules", {
+      headers: withAuth(token),
+      cache: "no-store",
+    } as RequestInit),
+
+  /** Token conversion rules — update rate */
+  updateTokenRule: (
+    token: string,
+    id: string,
+    payload: { tokensPerUnit: number },
+  ) =>
+    apiFetch<TokenConversionRuleResponse>(`/api/admin/token-rules/${id}`, {
+      method: "PATCH",
+      headers: withAuth(token),
+      body: JSON.stringify(payload),
+    }),
 };
 
 // ── Leader API ─────────────────────────────────────────────────────────────
@@ -295,6 +323,9 @@ export interface RewardCatalogItem {
   name: string;
   description: string;
   tokenCost: number;
+  imageUrl?: string;
+  stock: number | null;
+  minTier: "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
   isActive: boolean;
   createdAt: string;
 }
@@ -361,4 +392,14 @@ export interface PartnerConfirmationResponse {
   note: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TokenConversionRuleResponse {
+  id: string;
+  divisionGroup: string;
+  tokensPerUnit: number;
+  label: string;
+  updatedBy: string;
+  updatedAt: string;
+  createdAt: string;
 }

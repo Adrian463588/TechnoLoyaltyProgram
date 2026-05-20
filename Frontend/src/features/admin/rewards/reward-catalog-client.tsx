@@ -1,0 +1,108 @@
+"use client";
+
+import { useState } from "react";
+import { Plus, Gift } from "lucide-react";
+import type { RewardCatalogItem } from "@/lib/api-client";
+import { RewardCard } from "./reward-card";
+import { RewardFormModal } from "./reward-form-modal";
+import { createRewardAction, updateRewardAction, deactivateRewardAction } from "./actions";
+
+interface RewardCatalogClientProps {
+  initialRewards: RewardCatalogItem[];
+}
+
+export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps) {
+  const [rewards, setRewards] = useState<RewardCatalogItem[]>(initialRewards);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingReward, setEditingReward] = useState<RewardCatalogItem | null>(null);
+
+  const handleCreateNew = () => {
+    setEditingReward(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (reward: RewardCatalogItem) => {
+    setEditingReward(reward);
+    setIsModalOpen(true);
+  };
+
+  const handleDeactivate = async (id: string) => {
+    if (!confirm("Are you sure you want to deactivate this reward?")) return;
+    
+    try {
+      await deactivateRewardAction(id);
+      // Optimistically update UI
+      setRewards((prev) => 
+        prev.map(r => r.id === id ? { ...r, isActive: false } : r)
+      );
+    } catch (err: any) {
+      alert("Failed to deactivate reward: " + err.message);
+    }
+  };
+
+  const handleFormSubmit = async (data: any) => {
+    if (editingReward) {
+      const updated = await updateRewardAction(editingReward.id, data);
+      setRewards((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    } else {
+      const created = await createRewardAction(data);
+      setRewards((prev) => [created, ...prev]);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bento-card p-6 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
+        <div>
+          <h1 className="text-card-heading text-2xl mb-1 flex items-center gap-3">
+            <Gift className="h-6 w-6 text-[--color-accent]" />
+            Reward Catalog
+          </h1>
+          <p className="text-[--color-text-secondary]">
+            Manage the list of rewards available for Mitra to redeem. Add items, update costs, and track stock.
+          </p>
+        </div>
+        <div className="mt-4 md:mt-0">
+          <button
+            onClick={handleCreateNew}
+            className="btn-primary inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl transition-all shadow-lg"
+          >
+            <Plus className="w-5 h-5" />
+            Add Reward
+          </button>
+        </div>
+      </div>
+
+      {/* Grid */}
+      {rewards.length === 0 ? (
+        <div className="bento-card p-12 text-center animate-fade-up-in" style={{ animationDelay: "100ms" }}>
+          <Gift className="w-12 h-12 text-[var(--color-text-tertiary)] mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">No rewards yet</h3>
+          <p className="text-[var(--color-text-secondary)] max-w-sm mx-auto">
+            Click the Add Reward button to create the first item in your catalog.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-fade-up-in" style={{ animationDelay: "100ms" }}>
+          {rewards.map((reward) => (
+            <RewardCard
+              key={reward.id}
+              reward={reward}
+              onEdit={handleEdit}
+              onDeactivate={handleDeactivate}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Form Modal */}
+      <RewardFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleFormSubmit}
+        initialData={editingReward}
+      />
+    </div>
+  );
+}
