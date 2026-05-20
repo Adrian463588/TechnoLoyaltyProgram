@@ -6,6 +6,15 @@ import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { LazyMotion, domAnimation, m, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -56,9 +65,14 @@ const navItems = {
 export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const role = (session?.user?.role as "MITRA" | "TEAM_LEADER" | "HC_PM") || "MITRA";
 
   const links = navItems[role] || navItems.MITRA;
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: "/login" });
+  };
 
   return (
     <LazyMotion features={domAnimation}>
@@ -173,42 +187,63 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
             })}
           </nav>
 
-          {/* Footer with user info */}
+          {/* Footer with sign out */}
           <div className={cn(
-            "border-t border-border p-4 space-y-2",
+            "p-4",
             isCollapsed && "p-2"
           )}>
             <button
               type="button"
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={() => setShowLogoutConfirm(true)}
+              title={isCollapsed ? "Sign Out" : ""}
               className={cn(
-                "w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50 cursor-pointer hover:bg-slate-100 transition-all text-left",
+                "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left group",
+                "bg-red-50/50 hover:bg-red-50 text-red-600 border border-red-100/50 hover:border-red-200",
                 isCollapsed && "justify-center px-0 h-12 w-12 mx-auto"
               )}
             >
-              <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
-                <span className="text-primary font-bold text-sm">
-                  {session?.user?.name?.charAt(0) || "U"}
+              <LogOut size={18} className="shrink-0 transition-transform group-hover:-translate-x-0.5" />
+              {!isCollapsed && (
+                <span className="text-sm font-semibold tracking-tight">
+                  Sign Out
                 </span>
-              </div>
-              {!isCollapsed && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {session?.user?.name || "User"}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-mono">
-                    {role}
-                  </p>
-                </div>
-              )}
-              {!isCollapsed && (
-                <m.div whileHover={{ x: 2 }} className="text-muted-foreground">
-                  <LogOut size={14} />
-                </m.div>
               )}
             </button>
           </div>
         </aside>
+
+        {/* Logout Confirmation Modal */}
+        <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+          <DialogContent className="rounded-2xl bg-white border border-neutral-200 shadow-2xl p-0 overflow-hidden max-w-sm">
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <LogOut size={32} />
+              </div>
+              <DialogHeader className="mb-0 p-0">
+                <DialogTitle className="text-xl font-bold text-neutral-900 text-center">Confirm Sign Out</DialogTitle>
+                <DialogDescription className="text-neutral-500 text-sm leading-relaxed text-center mt-2">
+                  Are you sure you want to sign out of your account? You will need to log in again to access the portal.
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+
+            <DialogFooter className="bg-neutral-50 p-6 border-t border-neutral-100 flex flex-row gap-3 mt-0">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 rounded-xl border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleLogout}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold shadow-md active:scale-95 transition-all"
+              >
+                Sign Out
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </>
     </AnimatePresence>
     </LazyMotion>
