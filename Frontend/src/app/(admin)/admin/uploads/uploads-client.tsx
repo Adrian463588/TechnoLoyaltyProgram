@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { MonthlyUpload } from "@/types";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,

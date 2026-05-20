@@ -4,6 +4,7 @@ import { useState, Fragment } from "react";
 import { RewardRequest, RewardRequestStatus } from "@/types";
 import { adminApi } from "@/lib/api-client";
 import { BentoCard } from "@/components/ui/bento-card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -31,7 +32,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { AutosaveIndicator } from "@/components/shared/autosave-indicator";
 import { RedemptionPipeline, PipelineStep } from "@/components/shared/redemption-pipeline";
-import { MoreHorizontal, ChevronDown } from "lucide-react";
+import { MoreHorizontal, ChevronDown, CheckSquare, Activity, Info, ExternalLink, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STATUS_TO_STEP: Record<RewardRequestStatus, PipelineStep> = {
@@ -54,8 +55,9 @@ export default function RedemptionsClient({
 }) {
   const [requests, setRequests] = useState(initialRequests);
   const [filter, setFilter] = useState<"All" | "PENDING_VERIFICATION">("All");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<RewardRequest | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [rejectDialog, setRejectDialog] = useState<{ open: boolean; reqId: string | null }>({
     open: false,
     reqId: null,
@@ -70,22 +72,27 @@ export default function RedemptionsClient({
     newStatus: RewardRequestStatus,
     reason?: string
   ) => {
-    // Optimistic update
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, status: newStatus, rejectReason: reason } : r
-      )
-    );
-    setSavedId(id);
-    setTimeout(() => setSavedId(null), 100);
-
+    setIsUpdating(true);
     try {
       await adminApi.updateRedemptionStatus(sessionToken, id, newStatus, reason);
+      
+      const updated = requests.map((r) =>
+        r.id === id ? { ...r, status: newStatus, rejectReason: reason } : r
+      );
+      setRequests(updated);
+      
+      // Update selectedRequest if it's the one being modified
+      if (selectedRequest?.id === id) {
+        setSelectedRequest(updated.find(r => r.id === id) || null);
+      }
+
+      setSavedId(id);
+      setTimeout(() => setSavedId(null), 1000);
       toast.success(`Request updated to ${newStatus}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed — please retry");
-      // Rollback
-      setRequests(initialRequests);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -98,216 +105,286 @@ export default function RedemptionsClient({
   };
 
   const getStatusBadge = (status: RewardRequestStatus) => {
-    const base = "text-xs font-medium px-2.5 py-1 rounded-full border";
+    const base = "font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5 rounded-full border shadow-sm flex items-center w-fit gap-1.5";
     switch (status) {
       case "PENDING_VERIFICATION":
         return (
-          <span className={cn(base, "bg-secondary/10 text-secondary border-secondary/20")}>
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-secondary mr-1.5 animate-dot-pulse" />
+          <span className={cn(base, "bg-orange-500/10 text-orange-600 border-orange-200")}>
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
             Pending
           </span>
         );
       case "VERIFIED":
         return (
-          <span className={cn(base, "bg-primary/10 text-primary border-primary/20")}>
+          <span className={cn(base, "bg-emerald-500/10 text-emerald-600 border-emerald-200")}>
             Verified
           </span>
         );
       case "REJECTED":
         return (
-          <span className={cn(base, "bg-destructive/10 text-destructive border-destructive/20")}>
+          <span className={cn(base, "bg-red-500/10 text-red-600 border-red-200")}>
             Rejected
           </span>
         );
       case "PURCHASED":
         return (
-          <span className={cn(base, "bg-secondary/10 text-secondary border-secondary/20")}>
+          <span className={cn(base, "bg-blue-500/10 text-blue-600 border-blue-200")}>
             Purchased
           </span>
         );
       case "PICKUP_SCHEDULED":
         return (
-          <span className={cn(base, "bg-blue-500/10 text-blue-400 border-blue-400/20")}>
+          <span className={cn(base, "bg-purple-500/10 text-purple-600 border-purple-200")}>
             Scheduled
           </span>
         );
       case "COMPLETED":
         return (
-          <span className={cn(base, "bg-primary/20 text-primary border-primary/30")}>
+          <span className={cn(base, "bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-[var(--color-accent)]/20")}>
             Completed
           </span>
         );
       default:
-        return <span className={cn(base, "bg-muted text-muted-foreground")}>{status}</span>;
+        return <span className={cn(base, "bg-neutral-100 text-neutral-600")}>{status}</span>;
     }
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Filter */}
-      <div className="flex gap-2" data-testid="redemption-status-filter">
-        <Button
-          variant={filter === "All" ? "default" : "outline"}
-          onClick={() => setFilter("All")}
-          size="sm"
-        >
-          All Requests
-        </Button>
-        <Button
-          variant={filter === "PENDING_VERIFICATION" ? "default" : "outline"}
-          onClick={() => setFilter("PENDING_VERIFICATION")}
-          size="sm"
-        >
-          Pending Verification
-        </Button>
+      <div className="flex flex-wrap gap-2 animate-fade-up-in" data-testid="redemption-status-filter">
+        {[
+          { label: "All Requests", value: "All" as const },
+          { label: "Pending Verification", value: "PENDING_VERIFICATION" as const },
+        ].map((item) => {
+          const isActive = filter === item.value;
+          return (
+            <button
+              key={item.value}
+              onClick={() => setFilter(item.value)}
+              className={cn(
+                "flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition-all duration-300 active:scale-95 cursor-pointer",
+                isActive 
+                  ? "bg-[var(--color-surface-elevated)] border-[var(--color-accent)] text-[var(--color-accent)] ring-1 ring-[var(--color-accent)]/20 shadow-sm" 
+                  : "bg-[var(--color-surface-base)] border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] opacity-80 hover:opacity-100 hover:shadow-sm"
+              )}
+            >
+              {item.label}
+            </button>
+          );
+        })}
       </div>
 
-      <BentoCard className="p-0 overflow-hidden" glow={false}>
-        <div className="overflow-x-auto">
-          <Table data-testid="redemptions-table">
-            <TableHeader className="bg-muted/30">
-              <TableRow className="hover:bg-transparent border-border">
-                <TableHead className="w-[100px]">ID</TableHead>
-                <TableHead>Employee</TableHead>
-                <TableHead>Reward</TableHead>
-                <TableHead>Cost</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+      <BentoCard className="p-0 overflow-hidden shadow-sm border-[var(--color-border-subtle)] animate-fade-up-in" style={{ animationDelay: "100ms" }}>
+        <div className="p-5 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/30 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckSquare className="h-4 w-4 text-[var(--color-text-tertiary)]" />
+            <span className="text-sm font-semibold text-[var(--color-text-secondary)]">Redemption Requests</span>
+          </div>
+          <Badge variant="outline" className="font-mono bg-[var(--color-surface-base)] text-[var(--color-text-secondary)]">
+            {filtered.length} Requests
+          </Badge>
+        </div>
+
+        <div className="overflow-x-auto hide-scrollbar">
+          <Table data-testid="redemptions-table" className="min-w-[900px]">
+            <TableHeader className="bg-[var(--color-surface-elevated)]/50">
+              <TableRow className="border-[var(--color-border-subtle)] hover:bg-transparent">
+                <TableHead className="w-[120px] py-4 px-6 font-semibold text-[var(--color-text-secondary)]">ID</TableHead>
+                <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Employee</TableHead>
+                <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Reward</TableHead>
+                <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)] text-right">Cost</TableHead>
+                <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Status</TableHead>
+                <TableHead className="w-[100px] py-4 px-6 text-right font-semibold text-[var(--color-text-secondary)]">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((req) => (
-                <Fragment key={req.id}>
+              {filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-40 text-center text-[var(--color-text-tertiary)]">
+                    No requests match your criteria.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filtered.map((req) => (
                   <TableRow
-                    className="hover:bg-muted/20 transition-colors duration-150 cursor-pointer border-border"
-                    onClick={() => setExpandedId(expandedId === req.id ? null : req.id)}
+                    key={req.id}
+                    className="group border-b border-[var(--color-border-subtle)] transition-all duration-200 hover:bg-[var(--color-accent)]/[0.05] cursor-default"
                   >
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {req.id}
+                    <TableCell className="py-4 px-6 text-xs text-[var(--color-text-tertiary)] font-mono">
+                      #{req.id.slice(0, 8)}
                     </TableCell>
-                    <TableCell className="font-medium text-foreground">{req.userName}</TableCell>
-                    <TableCell className="text-muted-foreground">{req.rewardName}</TableCell>
-                    <TableCell className="font-semibold text-foreground tabular-nums">
-                      {req.tokensSpent.toLocaleString()}
+                    <TableCell className="py-4 px-6 text-sm font-medium text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">
+                      {req.userName}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)]">
+                      {req.rewardName}
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-right">
+                      <span className="text-sm font-mono font-bold text-[var(--color-text-primary)]">
+                        {req.tokensSpent.toLocaleString()}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-4 px-6">
                       <div className="flex items-center gap-2">
                         {getStatusBadge(req.status)}
                         {savedId === req.id && <AutosaveIndicator show label="Updated" />}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            onClick={(e) => e.stopPropagation()}
-                            data-testid={`manage-btn-${req.id}`}
-                          >
-                            <MoreHorizontal className="w-4 h-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="min-w-[160px]">
-                            {req.status === "PENDING_VERIFICATION" && (
-                              <>
-                                <DropdownMenuItem
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleStatusUpdate(req.id, "VERIFIED");
-                                  }}
-                                  className="text-primary focus:text-primary"
-                                >
-                                  Mark Verified
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setRejectDialog({ open: true, reqId: req.id });
-                                  }}
-                                >
-                                  Reject Request
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                            {req.status === "VERIFIED" && (
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleStatusUpdate(req.id, "PURCHASED");
-                                }}
-                              >
-                                Mark Purchased
-                              </DropdownMenuItem>
-                            )}
-                            {req.status === "PURCHASED" && (
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleStatusUpdate(req.id, "PICKUP_SCHEDULED");
-                                }}
-                              >
-                                Schedule Pickup
-                              </DropdownMenuItem>
-                            )}
-                            {req.status === "PICKUP_SCHEDULED" && (
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleStatusUpdate(req.id, "COMPLETED");
-                                }}
-                              >
-                                Mark Completed
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                        <ChevronDown
-                          className={cn(
-                            "w-4 h-4 text-muted-foreground transition-transform duration-200",
-                            expandedId === req.id && "rotate-180"
-                          )}
-                        />
-                      </div>
+                    <TableCell className="py-4 px-6 text-right">
+                      <button
+                        onClick={() => setSelectedRequest(req)}
+                        className="p-2.5 text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 rounded-xl transition-all border border-transparent hover:border-[var(--color-accent)]/20 active:scale-95"
+                        title="Track & Manage"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </button>
                     </TableCell>
                   </TableRow>
-
-                  {/* Expanded pipeline row */}
-                  {expandedId === req.id && (
-                    <TableRow
-                      key={`${req.id}-pipeline`}
-                      className="bg-muted/10 border-t-0 border-border"
-                    >
-                      <TableCell colSpan={6} className="py-4 px-6 animate-fade-up-in">
-                        <div className="max-w-md">
-                          <p className="text-xs text-muted-foreground mb-3 font-medium">
-                            Redemption Progress
-                          </p>
-                          <RedemptionPipeline
-                            currentStep={STATUS_TO_STEP[req.status]}
-                            compact={false}
-                          />
-                          {req.rejectReason && (
-                            <p className="mt-3 text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
-                              Rejection reason: {req.rejectReason}
-                            </p>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </Fragment>
-              ))}
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
       </BentoCard>
+
+      {/* Tracker & Management Modal */}
+      {selectedRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white border border-neutral-200 rounded-2xl shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-neutral-100 flex-shrink-0">
+              <div>
+                <h2 className="text-xl font-bold text-neutral-900">Track Redemption</h2>
+                <p className="text-sm text-neutral-500 mt-1">
+                  ID: #{selectedRequest.id.slice(0, 12)} • {selectedRequest.userName}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedRequest(null)}
+                className="p-2 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-8 overflow-y-auto">
+              <div className="space-y-10">
+                {/* Reward Info Summary */}
+                <div className="grid grid-cols-2 gap-4 p-5 bg-neutral-50 border border-neutral-100 rounded-2xl">
+                  <div>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Requested Reward</p>
+                    <p className="text-sm font-semibold text-neutral-900">{selectedRequest.rewardName}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Token Cost</p>
+                    <p className="text-sm font-mono font-bold text-[var(--color-accent)]">{selectedRequest.tokensSpent.toLocaleString()} tokens</p>
+                  </div>
+                </div>
+
+                {/* Pipeline */}
+                <div>
+                  <div className="flex items-center gap-2 mb-6">
+                    <Activity className="w-4 h-4 text-[var(--color-accent)]" />
+                    <p className="text-xs font-bold text-neutral-600 uppercase tracking-widest">
+                      Processing Timeline
+                    </p>
+                  </div>
+                  <div className="px-2">
+                    <RedemptionPipeline
+                      currentStep={STATUS_TO_STEP[selectedRequest.status]}
+                      compact={false}
+                    />
+                  </div>
+                </div>
+
+                {/* Rejection Info */}
+                {selectedRequest.rejectReason && (
+                  <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex gap-3 items-start">
+                    <Info className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold text-red-900 uppercase tracking-tight mb-1">Rejection Reason</p>
+                      <p className="text-sm text-red-700 leading-relaxed">
+                        {selectedRequest.rejectReason}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions Section */}
+                <div className="pt-6 border-t border-neutral-100">
+                   <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-4 text-center">Available Actions</p>
+                   <div className="flex flex-wrap justify-center gap-3">
+                      {selectedRequest.status === "PENDING_VERIFICATION" && (
+                        <>
+                          <Button
+                            onClick={() => handleStatusUpdate(selectedRequest.id, "VERIFIED")}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-6"
+                            disabled={isUpdating}
+                          >
+                            {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Mark Verified"}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => setRejectDialog({ open: true, reqId: selectedRequest.id })}
+                            className="rounded-xl px-6"
+                            disabled={isUpdating}
+                          >
+                            Reject Request
+                          </Button>
+                        </>
+                      )}
+                      
+                      {selectedRequest.status === "VERIFIED" && (
+                        <Button
+                          onClick={() => handleStatusUpdate(selectedRequest.id, "PURCHASED")}
+                          className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6"
+                          disabled={isUpdating}
+                        >
+                          {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm Purchase"}
+                        </Button>
+                      )}
+
+                      {selectedRequest.status === "PURCHASED" && (
+                        <Button
+                          onClick={() => handleStatusUpdate(selectedRequest.id, "PICKUP_SCHEDULED")}
+                          className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-6"
+                          disabled={isUpdating}
+                        >
+                          {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Schedule Pickup"}
+                        </Button>
+                      )}
+
+                      {selectedRequest.status === "PICKUP_SCHEDULED" && (
+                        <Button
+                          onClick={() => handleStatusUpdate(selectedRequest.id, "COMPLETED")}
+                          className="bg-[var(--color-accent)] hover:opacity-90 text-white rounded-xl px-6"
+                          disabled={isUpdating}
+                        >
+                          {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Mark Completed"}
+                        </Button>
+                      )}
+
+                      {["COMPLETED", "REJECTED", "CANCELLED"].includes(selectedRequest.status) && (
+                        <p className="text-sm text-neutral-400 italic">No further actions available for this request status.</p>
+                      )}
+                   </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* Reject Dialog */}
       <Dialog
         open={rejectDialog.open}
         onOpenChange={(open) => setRejectDialog((prev) => ({ ...prev, open }))}
       >
-        <DialogContent>
+        <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>Reject Request</DialogTitle>
             <DialogDescription>
@@ -319,23 +396,25 @@ export default function RedemptionsClient({
             placeholder="e.g., Ineligible due to recent performance downgrade."
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            className="min-h-[100px]"
+            className="min-h-[120px] rounded-xl bg-neutral-50 border-neutral-200"
             data-testid="reject-reason-input"
           />
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
               onClick={() => setRejectDialog({ open: false, reqId: null })}
+              className="rounded-xl"
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={handleRejectSubmit}
-              disabled={!rejectReason.trim()}
+              disabled={!rejectReason.trim() || isUpdating}
+              className="rounded-xl"
               data-testid="confirm-reject-btn"
             >
-              Reject Request
+              {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Reject Request"}
             </Button>
           </DialogFooter>
         </DialogContent>

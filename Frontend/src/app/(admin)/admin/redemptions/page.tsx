@@ -2,6 +2,7 @@ import { auth, getServerToken } from "@/lib/auth";
 import { adminApi } from "@/lib/api-client";
 import RedemptionsClient from "./redemptions-client";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
+import { CheckSquare } from "lucide-react";
 
 export default async function RedemptionsPage() {
   await auth();
@@ -36,20 +37,24 @@ export default async function RedemptionsPage() {
         <Breadcrumb className="py-4" />
       </div>
 
-      <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto">
-        <div className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto space-y-6">
+        <div className="bento-grid">
+          {/* Header Card */}
+          <div className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">
+              <h1 className="text-card-heading text-2xl mb-1 flex items-center gap-3">
+                <CheckSquare className="h-6 w-6 text-[--color-accent]" />
                 Redemption Management
               </h1>
-              <p className="text-[var(--color-text-secondary)] mt-1">
+              <p className="text-[var(--color-text-secondary)]">
                 Review, verify, and process employee reward requests.
               </p>
             </div>
           </div>
 
-          <RedemptionsClient initialRequests={mapped} sessionToken={token} />
+          <div className="bento-span-12">
+            <RedemptionsClient initialRequests={mapped} sessionToken={token} />
+          </div>
         </div>
       </main>
     </div>
