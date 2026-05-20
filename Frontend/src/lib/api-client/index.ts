@@ -134,6 +134,11 @@ export const adminApi = {
       headers: withAuth(token),
     }),
 
+  listUsers: (token: string) =>
+    apiFetch<UserResponse[]>("/api/admin/users", {
+      headers: withAuth(token),
+    }),
+
   /** HC-01: Manual token adjustment — append-only ledger entry */
   createManualAdjustment: (
     token: string,
@@ -402,4 +407,15 @@ export interface TokenConversionRuleResponse {
   updatedBy: string;
   updatedAt: string;
   createdAt: string;
+}
+
+export interface UserResponse {
+  id: string;
+  name: string;
+  npk: string;
+  email: string;
+  division: string;
+  role: string;
+  membershipTier: string;
+  tokens?: number;
 }

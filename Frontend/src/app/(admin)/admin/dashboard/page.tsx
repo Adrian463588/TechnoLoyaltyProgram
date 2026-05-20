@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { Upload, Users, ShoppingBag, Coins, ChevronRight } from "lucide-react";
 import { RedemptionQueueTable } from "@/features/admin/redemption-queue-table";
-import { ManualTokenAdjustment } from "@/features/admin/manual-token-adjustment";
 
 export default function AdminDashboardPage() {
   return (
@@ -96,7 +95,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Quick Actions & Manual Adjustment */}
+          {/* Quick Actions */}
           <div className="bento-span-12 lg:bento-span-4 animate-fade-up-in stagger-5 flex flex-col gap-6">
             <div className="bento-card p-6">
               <h3 className="text-card-heading mb-6">Quick Actions</h3>
@@ -117,9 +116,6 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
             </div>
-            
-            {/* Manual Token Adjustment Form */}
-            <ManualTokenAdjustment />
           </div>
           
           {/* Redemption Queue Table */}

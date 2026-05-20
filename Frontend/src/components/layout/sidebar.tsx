@@ -33,6 +33,7 @@ const navItems = {
     { href: "/admin/uploads", label: "Monthly Uploads", icon: FileUp },
     { href: "/admin/redemptions", label: "Redemptions", icon: CheckSquare },
     { href: "/admin/reward-catalog", label: "Reward Catalog", icon: Gift },
+    { href: "/admin/adjustments", label: "Token Adjustments", icon: Sparkles },
     { href: "/admin/audit", label: "Audit Log", icon: History },
     { href: "/admin/token-rules", label: "Token Rules", icon: Settings },
   ],

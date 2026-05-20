@@ -19,6 +19,7 @@ const createRewardSchema = z.object({
   name:        z.string().min(1).max(200),
   description: z.string().max(1000).optional(),
   tokenCost:   z.number().int().positive(),
+  minTier:     z.enum(["SAPHIRE", "EMERALD", "RUBY", "DIAMOND"]).optional(),
   imageUrl:    z.url().optional(),
   category:    z.string().max(100).optional(),
   stock:       z.number().int().nonnegative().nullable().optional(),

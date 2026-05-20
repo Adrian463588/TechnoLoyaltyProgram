@@ -3,6 +3,7 @@ import multer, { type FileFilterCallback } from "multer";
 import * as XLSX from "xlsx";
 import { prisma } from "@/db/prisma";
 import { ValidationError } from "@/errors";
+import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -105,6 +106,37 @@ export const AdminFoundationController = {
 
   listUploads: ((_req, res) => {
     res.json([]);
+  }) satisfies RequestHandler,
+
+  listUsers: (async (_req, res, next) => {
+    try {
+      const users = await prisma.user.findMany({
+        where: {
+          role: "MITRA"
+        },
+        select: {
+          id: true,
+          name: true,
+          npk: true,
+          email: true,
+          division: true,
+          role: true,
+          membershipTier: true
+        },
+        orderBy: { name: "asc" }
+      });
+
+      const usersWithTokens = await Promise.all(
+        users.map(async (user) => ({
+          ...user,
+          tokens: await tokenLedgerRepository.getBalance(user.id)
+        }))
+      );
+
+      res.json(usersWithTokens);
+    } catch (err) {
+      next(err);
+    }
   }) satisfies RequestHandler,
 
   processUpload: ((req, res, next) => {
