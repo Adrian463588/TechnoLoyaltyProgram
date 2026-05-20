@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 
-export function AdminClock() {
+export function DashboardClock() {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export function AdminClock() {
 
   return (
     <div className="flex flex-col items-end text-right">
-      <div className="text-2xl font-bold text-[--color-text-primary] tabular-nums leading-none mb-1">
+      <div className="text-2xl font-bold text-[--color-text-primary] tabular-nums leading-none mb-3">
         {timeString}
       </div>
       <div className="text-sm font-medium text-[--color-text-tertiary] leading-none">
