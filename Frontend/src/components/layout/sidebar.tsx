@@ -19,11 +19,14 @@ import {
   Settings,
   Gift,
   Zap,
+  Menu,
 } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 const navItems = {
@@ -48,11 +51,10 @@ const navItems = {
   ],
 };
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const role = (session?.user?.role as "MITRA" | "TEAM_LEADER" | "HC_PM") || "MITRA";
-  const [hoveredLink, setHoveredLink] = useState<string | null>(null);
 
   const links = navItems[role] || navItems.MITRA;
 
@@ -75,26 +77,40 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-border transform flex flex-col shrink-0",
-            "transition-transform duration-300 ease-in-out",
+            "fixed inset-y-0 left-0 z-50 bg-white border-r border-border transform flex flex-col shrink-0 transition-all duration-300 ease-in-out",
             "lg:translate-x-0",
-            isOpen ? "translate-x-0" : "-translate-x-full"
+            isOpen ? "translate-x-0" : "-translate-x-full",
+            isCollapsed ? "w-20" : "w-64"
           )}
         >
           {/* Logo Header */}
-          <div className="h-16 flex items-center justify-between px-6 border-b border-border shrink-0">
-            <Link href="/" className="flex items-center gap-3 group">
-              <m.div
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                whileTap={{ scale: 0.95 }}
-                className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/30"
+          <div className={cn(
+            "h-16 flex items-center border-b border-border shrink-0 transition-all duration-300 px-4",
+            isCollapsed ? "justify-center" : "justify-between px-6"
+          )}>
+            <div className="flex items-center gap-3">
+              <m.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onToggleCollapse}
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                aria-label="Toggle Sidebar"
               >
-                <LayoutDashboard size={20} />
-              </m.div>
-              <span className="font-display font-bold text-xl text-foreground tracking-tight">
-                Berijalan
-              </span>
-            </Link>
+                <Menu size={22} />
+              </m.button>
+              {!isCollapsed && (
+                <Link href="/" className="flex items-center">
+                  <m.span 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="font-display font-bold text-xl text-foreground tracking-tight"
+                  >
+                    Berijalan
+                  </m.span>
+                </Link>
+              )}
+            </div>
+
             <m.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -106,11 +122,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+          <nav className={cn(
+            "flex-1 overflow-y-auto py-6 px-4 space-y-1 hide-scrollbar",
+            isCollapsed && "px-2"
+          )}>
             {links.map((link, index) => {
               const isActive = pathname.startsWith(link.href);
               const Icon = link.icon;
-              const isHovered = hoveredLink === link.href;
 
               return (
                 <m.div
@@ -118,62 +136,74 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  onMouseEnter={() => setHoveredLink(link.href)}
-                  onMouseLeave={() => setHoveredLink(null)}
                 >
                   <Link
                     href={link.href as Route}
                     onClick={() => onClose()}
+                    title={isCollapsed ? link.label : ""}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium",
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-sm font-medium",
                       isActive
                         ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-slate-50 hover:text-foreground"
+                        : "text-muted-foreground hover:bg-slate-50 hover:text-foreground",
+                      isCollapsed && "justify-center px-0 h-11 w-11 mx-auto"
                     )}
                   >
                     <Icon
                       size={18}
                       className={cn(
-                        "transition-colors",
+                        "transition-colors shrink-0",
                         isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                       )}
                     />
-                    <span>{link.label}</span>
+                    {!isCollapsed && (
+                      <m.span
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="truncate"
+                      >
+                        {link.label}
+                      </m.span>
+                    )}
                   </Link>
                 </m.div>
               );
             })}
           </nav>
 
-          {/* Footer with user info and settings */}
-          <div className="border-t border-border p-4 space-y-2">
-            {/* User Info */}
+          {/* Footer with user info */}
+          <div className={cn(
+            "border-t border-border p-4 space-y-2",
+            isCollapsed && "p-2"
+          )}>
             <button
               type="button"
               onClick={() => signOut({ callbackUrl: "/login" })}
-              aria-label="Sign out"
-              data-testid="sidebar-logout"
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors text-left"
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50 cursor-pointer hover:bg-slate-100 transition-all text-left",
+                isCollapsed && "justify-center px-0 h-12 w-12 mx-auto"
+              )}
             >
-              <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+              <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
                 <span className="text-primary font-bold text-sm">
                   {session?.user?.name?.charAt(0) || "U"}
                 </span>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {session?.user?.name || "User"}
-                </p>
-                <p className="text-[10px] text-muted-foreground font-mono">
-                  {role}
-                </p>
-              </div>
-              <m.div
-                whileHover={{ x: 2 }}
-                className="text-muted-foreground"
-              >
-                <LogOut size={14} />
-              </m.div>
+              {!isCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {session?.user?.name || "User"}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground font-mono">
+                    {role}
+                  </p>
+                </div>
+              )}
+              {!isCollapsed && (
+                <m.div whileHover={{ x: 2 }} className="text-muted-foreground">
+                  <LogOut size={14} />
+                </m.div>
+              )}
             </button>
           </div>
         </aside>
