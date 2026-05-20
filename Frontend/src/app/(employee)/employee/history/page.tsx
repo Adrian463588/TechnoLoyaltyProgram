@@ -6,6 +6,7 @@
 import { auth, getServerToken } from "@/lib/auth";
 import { employeeApi, type RedemptionResponse } from "@/lib/api-client";
 import { BentoCard } from "@/components/ui/bento-card";
+import { Badge } from "@/components/ui/badge";
 import { RedemptionStatusChip } from "@/components/shared/status-badge";
 import {
   Table,
@@ -15,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Coins, History, Info } from "lucide-react";
+import { Coins, History, Info, Clock } from "lucide-react";
 
 export const metadata = { title: "Redemption History | Berijalan Loyalty" };
 
@@ -49,107 +50,128 @@ export default async function RedemptionHistoryPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto w-full space-y-6 p-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Redemption History
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Track all your past and ongoing redemption requests.
-        </p>
+    <div className="max-w-[1400px] mx-auto w-full space-y-6 p-6">
+      {/* Header Card */}
+      <div className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
+        <div>
+          <h1 className="text-card-heading text-2xl mb-1 flex items-center gap-3">
+            <History className="h-6 w-6 text-[--color-accent]" />
+            Redemption History
+          </h1>
+          <p className="text-[var(--color-text-secondary)]">
+            Track all your past and ongoing redemption requests.
+          </p>
+        </div>
       </div>
 
       {/* Summary Chips */}
-      <div className="flex flex-wrap gap-3" role="status" aria-label="Redemption summary">
+      <div className="flex flex-wrap gap-2 animate-fade-up-in" style={{ animationDelay: "50ms" }}>
         {[
           { label: "Total Requests", value: counts.total },
           { label: "Completed", value: counts.completed },
           { label: "Pending", value: counts.pending },
           { label: "Rejected", value: counts.rejected },
         ].map(({ label, value }) => (
-          <div key={label} className="flex items-center gap-2 rounded-full border border-border bg-muted/30 px-4 py-1.5">
-            <span className="text-xs text-muted-foreground">{label}:</span>
-            <span className="text-sm font-bold text-foreground">{value}</span>
+          <div key={label} className="flex items-center gap-2 bg-[var(--color-surface-elevated)]/30 px-4 py-2">
+            <span className="text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider">{label}:</span>
+            <span className="text-sm font-bold text-[var(--color-text-primary)]">{value}</span>
           </div>
         ))}
       </div>
 
-      {/* History Table */}
-      {redemptions.length === 0 ? (
-        <BentoCard className="p-16 flex flex-col items-center justify-center text-center gap-4">
-          <div className="p-4 bg-muted rounded-full">
-            <History className="w-8 h-8 text-muted-foreground" aria-hidden="true" />
+      {/* History Table Card */}
+      <BentoCard className="p-0 overflow-hidden shadow-sm border-[var(--color-border-subtle)] animate-fade-up-in" style={{ animationDelay: "100ms" }}>
+        <div className="p-5 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/30 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-[var(--color-text-tertiary)]" />
+            <span className="text-sm font-semibold text-[var(--color-text-secondary)]">My Redemptions</span>
           </div>
-          <div>
-            <h2 className="font-semibold text-lg">No Redemption History</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              You haven&apos;t submitted any redemption requests yet.
-            </p>
+          <Badge variant="outline" className="font-mono bg-[var(--color-surface-base)] text-[var(--color-text-secondary)]">
+            {redemptions.length} Records
+          </Badge>
+        </div>
+
+        {redemptions.length === 0 ? (
+          <div className="p-16 flex flex-col items-center justify-center text-center gap-4">
+            <div className="p-4 bg-[var(--color-surface-elevated)] rounded-full text-[var(--color-text-tertiary)]">
+              <History className="w-8 h-8" aria-hidden="true" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-lg text-[var(--color-text-primary)]">No Redemption History</h2>
+              <p className="text-sm text-[var(--color-text-secondary)] mt-1 max-w-xs">
+                You haven&apos;t submitted any redemption requests yet. Start exploring the rewards catalog!
+              </p>
+            </div>
           </div>
-        </BentoCard>
-      ) : (
-        <BentoCard className="overflow-hidden p-0">
-          <Table data-testid="history-table">
-            <TableHeader className="bg-muted/50">
-              <TableRow>
-                <TableHead className="w-[130px]">Request ID</TableHead>
-                <TableHead>Reward</TableHead>
-                <TableHead>Tokens</TableHead>
-                <TableHead>Requested</TableHead>
-                <TableHead>Last Updated</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {redemptions.map((req) => (
-                <TableRow key={req.id} data-testid="history-row">
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {req.id.slice(0, 8)}…
-                  </TableCell>
-                  <TableCell>
-                    <p className="font-medium text-foreground">{req.item?.name ?? "—"}</p>
-                    {req.status === "REJECTED" && (
-                      <div className="flex items-start gap-1 mt-1 text-xs text-destructive">
-                        <Info className="w-3 h-3 mt-0.5 shrink-0" aria-hidden="true" />
-                        <span>Rejected — contact HC PM for details.</span>
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span className="flex items-center gap-1 font-semibold text-destructive">
-                      <Coins className="w-3 h-3" aria-hidden="true" />
-                      {(req.item?.tokenCost ?? 0).toLocaleString()}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(req.createdAt)}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(req.createdAt)}
-                  </TableCell>
-                  <TableCell>
-                    <RedemptionStatusChip
-                      status={req.status as import("@/types").RewardRequestStatus}
-                    />
-                  </TableCell>
+        ) : (
+          <div className="overflow-x-auto hide-scrollbar">
+            <Table data-testid="history-table" className="min-w-[900px]">
+              <TableHeader className="bg-[var(--color-surface-elevated)]/50">
+                <TableRow className="border-[var(--color-border-subtle)] hover:bg-transparent">
+                  <TableHead className="w-[120px] py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Request ID</TableHead>
+                  <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Reward Item</TableHead>
+                  <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)] text-right">Tokens</TableHead>
+                  <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Requested At</TableHead>
+                  <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </BentoCard>
-      )}
+              </TableHeader>
+              <TableBody>
+                {redemptions.map((req) => (
+                  <TableRow
+                    key={req.id}
+                    className="group border-b border-[var(--color-border-subtle)] transition-all duration-200 hover:bg-[var(--color-accent)]/[0.05] cursor-default"
+                  >
+                    <TableCell className="py-4 px-6 text-xs text-[var(--color-text-tertiary)] font-mono">
+                      #{req.id.slice(0, 8)}
+                    </TableCell>
+                    <TableCell className="py-4 px-6">
+                      <p className="text-sm font-medium text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">
+                        {req.item?.name ?? "—"}
+                      </p>
+                      {req.status === "REJECTED" && (
+                        <div className="flex items-start gap-1.5 mt-1.5 text-[11px] text-red-500 font-medium">
+                          <Info className="w-3 h-3 mt-0.5 shrink-0" aria-hidden="true" />
+                          <span>Contact HC PM for details.</span>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-right">
+                      <span className="flex items-center justify-end gap-1.5 text-sm font-mono font-bold text-red-500">
+                        -{(req.item?.tokenCost ?? 0).toLocaleString()}
+                        <Coins className="w-3.5 h-3.5" aria-hidden="true" />
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-sm text-[var(--color-text-tertiary)]">
+                      {formatDate(req.createdAt)}
+                    </TableCell>
+                    <TableCell className="py-4 px-6">
+                      <RedemptionStatusChip
+                        status={req.status as import("@/types").RewardRequestStatus}
+                        className="shadow-sm"
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </BentoCard>
 
       {/* Info banner */}
       <div
-        className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border border-border"
+        className="flex items-start gap-3 text-xs text-[var(--color-text-secondary)] bg-[var(--color-surface-elevated)]/30 rounded-2xl p-5 border border-[var(--color-border-subtle)] animate-fade-up-in"
+        style={{ animationDelay: "200ms" }}
         role="note"
       >
-        <Info className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
-        <span>
-          Redemption requests are verified by HC PM before processing. Rejected requests
-          will include a reason. Contact your HC PM for questions.
-        </span>
+        <div className="p-1.5 bg-blue-500/10 rounded-lg text-blue-500 shrink-0">
+          <Info className="w-4 h-4" aria-hidden="true" />
+        </div>
+        <p className="leading-relaxed">
+          Redemption requests are verified by the HC team before processing. 
+          Rejected requests will include a reason for your reference. 
+          If you have any questions, please contact your HC PM directly.
+        </p>
       </div>
     </div>
   );
