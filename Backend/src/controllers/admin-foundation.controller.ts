@@ -150,8 +150,8 @@ export const AdminFoundationController = {
         throw new ValidationError("userId and status are required");
       }
 
-      if (!["ACTIVE", "RESIGNED"].includes(status)) {
-        throw new ValidationError("Status must be either ACTIVE or RESIGNED");
+      if (!["ACTIVE", "INACTIVE", "RESIGNED"].includes(status)) {
+        throw new ValidationError("Status must be one of ACTIVE, INACTIVE, or RESIGNED");
       }
 
       const existing = await prisma.user.findUnique({ where: { id: userId } });
