@@ -1,8 +1,7 @@
-
 import React from "react";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
-import { Upload, Users, ShoppingBag, Coins, ChevronRight } from "lucide-react";
+import { Upload, Users, ShoppingBag, Coins, ChevronRight, UserCheck } from "lucide-react";
 import { RedemptionQueueTable } from "@/features/admin/redemption-queue-table";
 
 export default function AdminDashboardPage() {
@@ -58,54 +57,69 @@ export default function AdminDashboardPage() {
             <p className="text-metric-hero text-[--color-accent]">14.2k</p>
           </div>
 
-          {/* Upload Activity Table */}
-          <div className="bento-span-12 lg:bento-span-8 bento-card p-6 animate-fade-up-in stagger-5 min-h-[300px]">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-card-heading">Recent Upload Activity</h3>
-            </div>
-            
-            <div className="w-full overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="text-label border-b border-[--color-border-subtle]">
-                    <th className="pb-3 px-4 font-medium">Date</th>
-                    <th className="pb-3 px-4 font-medium">Filename</th>
-                    <th className="pb-3 px-4 font-medium">Rows</th>
-                    <th className="pb-3 px-4 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm">
-                  {[1, 2, 3].map((_, i) => (
-                    <tr key={i} className="table-row border-b border-[--color-border-subtle] last:border-0">
-                      <td className="py-4 px-4 text-[--color-text-secondary]">Oct 12, 2026</td>
-                      <td className="py-4 px-4 font-medium text-[--color-text-primary]">loyalty-optel-oct.tsv</td>
-                      <td className="py-4 px-4 font-mono text-[--color-text-secondary]">124</td>
-                      <td className="py-4 px-4">
-                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-medium tracking-[0.06em] uppercase bg-[--color-accent-muted] text-[--color-success]">
-                          COMPLETED
-                        </span>
-                        <div className="table-cell-action inline-block ml-4 text-[--color-brand-hover]">
-                          <ChevronRight className="h-4 w-4" />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Action Center */}
+          <div className="bento-span-12 lg:bento-span-8 flex flex-col gap-6 animate-fade-up-in stagger-5">
+            <div className="bento-card p-6 flex-1 flex flex-col">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-card-heading">Action Center</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 flex-1">
+                <Link
+                  href="/admin/uploads"
+                  className="group relative p-5 rounded-2xl border border-[--color-border-subtle] bg-[--color-surface-base] hover:bg-[--color-surface-elevated] hover:border-[--color-accent] transition-all flex flex-col items-start gap-4 overflow-hidden"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-[--color-accent-muted] flex items-center justify-center border border-[--color-border-accent] text-[--color-accent] group-hover:scale-110 transition-transform">
+                    <Upload size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-[--color-text-primary] mb-1">Process Uploads</h4>
+                    <p className="text-xs text-[--color-text-secondary] leading-relaxed">
+                      Upload spreadsheets to issue tokens.
+                    </p>
+                  </div>
+                  <ChevronRight size={18} className="absolute right-5 bottom-5 text-[--color-text-tertiary] opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                </Link>
+                
+                <Link
+                  href="/admin/adjustments"
+                  className="group relative p-5 rounded-2xl border border-[--color-border-subtle] bg-[--color-surface-base] hover:bg-[--color-surface-elevated] hover:border-[--color-error] transition-all flex flex-col items-start gap-4 overflow-hidden"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-[--color-error]/10 flex items-center justify-center border border-[--color-error]/20 text-[--color-error] group-hover:scale-110 transition-transform">
+                    <Coins size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-[--color-text-primary] mb-1">Token Adjustments</h4>
+                    <p className="text-xs text-[--color-text-secondary] leading-relaxed">
+                      Manually add or deduct tokens.
+                    </p>
+                  </div>
+                  <ChevronRight size={18} className="absolute right-5 bottom-5 text-[--color-text-tertiary] opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                </Link>
+
+                <Link
+                  href="/admin/mitra-validation"
+                  className="group relative p-5 rounded-2xl border border-[--color-border-subtle] bg-[--color-surface-base] hover:bg-[--color-surface-elevated] hover:border-[--color-info] transition-all flex flex-col items-start gap-4 overflow-hidden"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-[--color-info]/10 flex items-center justify-center border border-[--color-info]/20 text-[--color-info] group-hover:scale-110 transition-transform">
+                    <UserCheck size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-[--color-text-primary] mb-1">Status Validation</h4>
+                    <p className="text-xs text-[--color-text-secondary] leading-relaxed">
+                      Toggle Mitra active or resigned status.
+                    </p>
+                  </div>
+                  <ChevronRight size={18} className="absolute right-5 bottom-5 text-[--color-text-tertiary] opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                </Link>
+              </div>
             </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* Quick Actions Placeholder */}
           <div className="bento-span-12 lg:bento-span-4 animate-fade-up-in stagger-5 flex flex-col gap-6">
-            <div className="bento-card p-6">
-              <h3 className="text-card-heading mb-6">Quick Actions</h3>
+            <div className="bento-card p-6 h-full">
+              <h3 className="text-card-heading mb-6">System Jobs</h3>
               <div className="space-y-4">
-                <Link href={'/admin/uploads'}>
-                  <button className="btn-primary w-full text-left flex justify-between items-center px-4 py-3 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
-                    Upload Data File
-                    <Upload className="h-4 w-4" />
-                  </button>
-                </Link>
                 <button className="btn-ghost w-full text-left flex justify-between items-center px-4 py-3 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
                   Process Month End
                   <ChevronRight className="h-4 w-4" />
@@ -129,4 +143,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-

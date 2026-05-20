@@ -135,8 +135,16 @@ export const adminApi = {
     }),
 
   listUsers: (token: string) =>
-    apiFetch<UserResponse[]>("/api/admin/users", {
+    apiFetch<UserResponse[]>("/api/admin/users?includeInactive=true", {
       headers: withAuth(token),
+    }),
+
+  /** HC-01: Update user status (ACTIVE/RESIGNED) */
+  updateUserStatus: (token: string, userId: string, status: "ACTIVE" | "RESIGNED") =>
+    apiFetch<{ success: boolean; user: UserResponse }>("/api/admin/users/status", {
+      method: "POST",
+      headers: withAuth(token),
+      body: JSON.stringify({ userId, status }),
     }),
 
   /** HC-01: Manual token adjustment — append-only ledger entry */
@@ -425,5 +433,6 @@ export interface UserResponse {
   division: string;
   role: string;
   membershipTier: string;
+  partnerStatus: "ACTIVE" | "INACTIVE" | "RESIGNED";
   tokens?: number;
 }
