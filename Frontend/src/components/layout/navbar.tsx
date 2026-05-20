@@ -113,7 +113,7 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
                       {session?.user?.name || "Account"}
                     </span>
                     <span className="text-[10px] text-muted-foreground font-mono tracking-tighter">
-                      {session?.user?.id?.slice(0, 8) || "NPK-XXXX"} • {role}
+                      {(session?.user as any)?.npk || "NPK-XXXX"} • {role}
                     </span>
                   </div>
                 </DropdownMenuLabel>
