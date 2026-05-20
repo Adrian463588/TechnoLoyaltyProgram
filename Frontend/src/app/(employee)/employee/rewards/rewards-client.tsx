@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { RewardItem } from "@/types";
+import { RewardItem, MembershipTier } from "@/types";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SuccessAnimation } from "@/components/shared/success-animation";
 import { RedemptionPipeline } from "@/components/shared/redemption-pipeline";
 import { TooltipWrapper } from "@/components/shared/tooltip-wrapper";
+import { TierBadge } from "@/components/shared/status-badge";
 import { Coins, Lock, ShoppingBag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -19,15 +20,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { submitRedemptionRequest } from "@/features/redemptions/actions";
 
 interface RewardsClientProps {
   rewards: RewardItem[];
   userTokens: number;
   isEligible: boolean;
+  userTier: MembershipTier;
 }
 
-export default function RewardsClient({ rewards, userTokens, isEligible }: RewardsClientProps) {
+const TIER_RANK: Record<MembershipTier, number> = {
+  "SAPHIRE": 0,
+  "EMERALD": 1,
+  "RUBY": 2,
+  "DIAMOND": 3
+};
+
+export default function RewardsClient({ rewards, userTokens, isEligible, userTier }: RewardsClientProps) {
   const [selectedReward, setSelectedReward] = useState<RewardItem | null>(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -35,11 +44,27 @@ export default function RewardsClient({ rewards, userTokens, isEligible }: Rewar
   const handleRedeem = async () => {
     if (!selectedReward) return;
     setIsRedeeming(true);
-    setTimeout(() => {
+    
+    try {
+      const result = await submitRedemptionRequest({ rewardItemId: selectedReward.id });
+      
+      if (result.success) {
+        setSuccess(true);
+        toast.success("Reward request submitted successfully!", {
+          style: { background: "#10b981", color: "#fff", border: "none", borderRadius: "12px" }
+        });
+      } else {
+        toast.error(result.error ?? "Failed to submit request", {
+          style: { background: "#ef4444", color: "#fff", border: "none", borderRadius: "12px" }
+        });
+      }
+    } catch (err: any) {
+      toast.error("An unexpected error occurred. Please try again.", {
+        style: { background: "#ef4444", color: "#fff", border: "none", borderRadius: "12px" }
+      });
+    } finally {
       setIsRedeeming(false);
-      setSuccess(true);
-      toast.success("Reward request submitted successfully!");
-    }, 1000);
+    }
   };
 
   const closeDialog = () => {
@@ -106,14 +131,15 @@ export default function RewardsClient({ rewards, userTokens, isEligible }: Rewar
         {rewards.map((reward, i) => {
           const canAfford = userTokens >= reward.tokenCost;
           const isAvailable = reward.isAvailable;
-          const canRedeem = canAfford && isAvailable;
+          const tierMet = TIER_RANK[userTier] >= TIER_RANK[reward.minTier];
+          const canRedeem = canAfford && isAvailable && tierMet;
 
           return (
             <BentoCard
               key={reward.id}
               className={cn(
                 "flex flex-col h-full animate-fade-up-in",
-                !canRedeem && "opacity-80"
+                !canRedeem && "opacity-80 grayscale-[20%]"
               )}
               style={{ animationDelay: `${i * 50}ms` } as React.CSSProperties}
             >
@@ -122,15 +148,25 @@ export default function RewardsClient({ rewards, userTokens, isEligible }: Rewar
                 <div className="absolute inset-0 flex items-center justify-center">
                   <ShoppingBag className="w-14 h-14 text-muted-foreground/20" />
                 </div>
-                {/* Category chip */}
-                <div className="absolute bottom-2 left-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-background/80 text-primary border border-primary/20">
+                
+                {/* Badges overlay */}
+                <div className="absolute bottom-2 left-2 flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/90 text-neutral-600 border border-neutral-200 shadow-sm">
                     {reward.category}
                   </span>
+                  <TierBadge tier={reward.minTier} className="text-[10px] py-0.5 px-2 h-auto" />
                 </div>
+
                 {!isAvailable && (
                   <div className="absolute top-2 right-2">
-                    <Badge variant="destructive" className="text-[10px]">Out of Stock</Badge>
+                    <Badge variant="destructive" className="text-[9px] font-bold uppercase tracking-wider">Out of Stock</Badge>
+                  </div>
+                )}
+                {!tierMet && isAvailable && (
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-orange-500 text-white text-[9px] font-bold uppercase tracking-wider border-none shadow-md">
+                      Tier Locked
+                    </Badge>
                   </div>
                 )}
               </div>
@@ -150,7 +186,7 @@ export default function RewardsClient({ rewards, userTokens, isEligible }: Rewar
                   <div
                     className={cn(
                       "flex items-center font-bold text-sm",
-                      canAfford ? "text-primary" : "text-destructive"
+                      canAfford ? "text-primary" : "text-red-500"
                     )}
                   >
                     {reward.tokenCost.toLocaleString()}
@@ -162,7 +198,7 @@ export default function RewardsClient({ rewards, userTokens, isEligible }: Rewar
                       size="sm"
                       onClick={() => setSelectedReward(reward)}
                       data-testid={`redeem-btn-${reward.id}`}
-                      className="transition-all hover:scale-105 active:scale-95"
+                      className="transition-all hover:scale-105 active:scale-95 px-4"
                     >
                       Redeem
                     </Button>
@@ -171,16 +207,18 @@ export default function RewardsClient({ rewards, userTokens, isEligible }: Rewar
                       label={
                         !isAvailable
                           ? "This reward is currently out of stock"
-                          : `Need ${(reward.tokenCost - userTokens).toLocaleString()} more tokens`
+                          : !tierMet
+                          ? `This reward requires ${reward.minTier} membership tier or higher. You are currently ${userTier}.`
+                          : `You need ${(reward.tokenCost - userTokens).toLocaleString()} more tokens to claim this.`
                       }
                     >
                       <Button
                         size="sm"
                         disabled
                         data-testid={`redeem-btn-${reward.id}`}
-                        className="cursor-not-allowed"
+                        className="cursor-not-allowed bg-neutral-200 text-neutral-400 border-none"
                       >
-                        Redeem
+                        {!tierMet ? "Locked" : "Redeem"}
                       </Button>
                     </TooltipWrapper>
                   )}
