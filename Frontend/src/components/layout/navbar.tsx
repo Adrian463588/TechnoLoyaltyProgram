@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
-import { Menu, LogOut, User, Bell, Search, ChevronDown } from "lucide-react";
+import { Menu, LogOut, User, Bell, ChevronDown } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { LazyMotion, domAnimation, m, AnimatePresence } from "framer-motion";
 import {
@@ -13,12 +13,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
 
 export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { data: session } = useSession();
   const role = (session?.user?.role as string) || "MITRA";
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const router = useRouter();
 
   return (
@@ -40,54 +38,6 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
         >
           <Menu size={22} />
         </m.button>
-
-        {/* Search Bar with microinteractions */}
-        <m.div
-          initial={{ opacity: 0, width: 0 }}
-          animate={{
-            opacity: 1,
-            width: isSearchFocused ? "280px" : "auto",
-          }}
-          transition={{ duration: 0.3 }}
-          className={cn(
-            "hidden md:flex items-center gap-2 px-4 py-2 rounded-xl border transition-all duration-300",
-            isSearchFocused
-              ? "bg-white border-primary ring-1 ring-primary"
-              : "bg-slate-50 border-border"
-          )}
-        >
-          <m.div
-            animate={{ scale: isSearchFocused ? 1.1 : 1 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Search
-              size={16}
-              className={cn(
-                "transition-colors",
-                isSearchFocused ? "text-primary" : "text-muted-foreground"
-              )}
-            />
-          </m.div>
-          <input
-            type="text"
-            placeholder="Search..."
-            className="bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground w-32 focus:outline-none transition-all"
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setIsSearchFocused(false)}
-          />
-          <AnimatePresence>
-            {isSearchFocused && (
-              <m.kbd
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5 rounded"
-              >
-                ⌘K
-              </m.kbd>
-            )}
-          </AnimatePresence>
-        </m.div>
       </div>
 
       <div className="flex items-center gap-2">
