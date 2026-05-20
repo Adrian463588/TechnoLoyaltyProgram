@@ -151,7 +151,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Keep going to maintain <span className="text-primary font-bold">Emerald!</span>
+                Keep going to maintain <span className="text-primary font-bold">{data.tier.charAt(0) + data.tier.slice(1).toLowerCase()}!</span>
               </p>
             </div>
           </div>

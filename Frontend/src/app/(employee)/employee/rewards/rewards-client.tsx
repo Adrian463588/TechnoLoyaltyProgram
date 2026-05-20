@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { SuccessAnimation } from "@/components/shared/success-animation";
 import { RedemptionPipeline } from "@/components/shared/redemption-pipeline";
 import { TooltipWrapper } from "@/components/shared/tooltip-wrapper";
-import { Coins, Lock, ShoppingBag } from "lucide-react";
+import { Coins, Lock, ShoppingBag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
