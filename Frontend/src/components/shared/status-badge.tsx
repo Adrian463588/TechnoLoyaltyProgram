@@ -43,11 +43,11 @@ export function RedemptionStatusChip({ status, className }: { status: Redemption
 // Mapping Tiers from PRD (SAPHIRE, EMERALD, RUBY, DIAMOND)
 export type MembershipTier = "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
 
-const tierConfig: Record<MembershipTier, { bg: string; color: string; glow: string }> = {
-  SAPHIRE: { bg: "rgba(148, 163, 184, 0.15)", color: "#94A3B8", glow: "rgba(148, 163, 184, 0.30)" }, // Muted blue/slate
-  EMERALD: { bg: "rgba(107, 206, 83, 0.15)", color: "#6BCE53", glow: "rgba(107, 206, 83, 0.30)" }, // Green
-  RUBY: { bg: "rgba(239, 68, 68, 0.15)", color: "#EF4444", glow: "rgba(239, 68, 68, 0.30)" }, // Red
-  DIAMOND: { bg: "rgba(103, 232, 249, 0.15)", color: "#67E8F9", glow: "rgba(103, 232, 249, 0.30)" }, // Cyan
+const tierConfig: Record<MembershipTier, { bg: string; color: string; border: string }> = {
+  SAPHIRE: { bg: "bg-blue-500/10", color: "text-blue-600", border: "border-blue-200" },
+  EMERALD: { bg: "bg-emerald-500/10", color: "text-emerald-600", border: "border-emerald-200" },
+  RUBY:    { bg: "bg-red-500/10", color: "text-red-600", border: "border-red-200" },
+  DIAMOND: { bg: "bg-purple-500/10", color: "text-purple-600", border: "border-purple-200" },
 };
 
 export function TierBadge({ tier, className }: { tier: MembershipTier; className?: string }) {
@@ -55,14 +55,12 @@ export function TierBadge({ tier, className }: { tier: MembershipTier; className
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-3 py-1 text-[12px] font-semibold tracking-[0.06em] uppercase",
+        "inline-flex items-center rounded-full px-3 py-1 text-[12px] font-bold tracking-wider uppercase border",
+        config.bg,
+        config.color,
+        config.border,
         className
       )}
-      style={{
-        backgroundColor: config.bg,
-        color: config.color,
-        boxShadow: `0 0 12px ${config.glow}`,
-      }}
     >
       {tier}
     </span>
