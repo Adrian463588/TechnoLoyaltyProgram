@@ -4,6 +4,7 @@ import * as XLSX from "xlsx";
 import { prisma } from "@/db/prisma";
 import { ValidationError } from "@/errors";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
+import { logAudit } from "@/services/audit.service";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -121,7 +122,8 @@ export const AdminFoundationController = {
           email: true,
           division: true,
           role: true,
-          membershipTier: true
+          membershipTier: true,
+          partnerStatus: true
         },
         orderBy: { name: "asc" }
       });
@@ -134,6 +136,42 @@ export const AdminFoundationController = {
       );
 
       res.json(usersWithTokens);
+    } catch (err) {
+      next(err);
+    }
+  }) satisfies RequestHandler,
+
+  updateUserStatus: (async (req, res, next) => {
+    try {
+      const { userId, status } = req.body;
+      const { user: actor } = req;
+
+      if (!userId || !status) {
+        throw new ValidationError("userId and status are required");
+      }
+
+      if (!["ACTIVE", "RESIGNED"].includes(status)) {
+        throw new ValidationError("Status must be either ACTIVE or RESIGNED");
+      }
+
+      const existing = await prisma.user.findUnique({ where: { id: userId } });
+      if (!existing) throw new Error("User not found");
+
+      const updated = await prisma.user.update({
+        where: { id: userId },
+        data: { partnerStatus: status },
+      });
+
+      await logAudit({
+        action: "PARTNER_STATUS_UPDATED",
+        actorId: actor.id,
+        targetType: "User",
+        targetId: userId,
+        previousValue: { name: existing.name, status: existing.partnerStatus },
+        newValue: { status: updated.partnerStatus },
+      });
+
+      res.json({ success: true, user: updated });
     } catch (err) {
       next(err);
     }

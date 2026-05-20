@@ -20,6 +20,7 @@ import {
   Gift,
   Zap,
   Menu,
+  UserCheck,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -36,6 +37,7 @@ const navItems = {
     { href: "/admin/redemptions", label: "Redemptions", icon: CheckSquare },
     { href: "/admin/reward-catalog", label: "Reward Catalog", icon: Gift },
     { href: "/admin/adjustments", label: "Token Adjustments", icon: Zap },
+    { href: "/admin/mitra-validation", label: "Mitra Validation", icon: UserCheck },
     { href: "/admin/audit", label: "Audit Log", icon: History },
     { href: "/admin/token-rules", label: "Token Rules", icon: Settings },
   ],
