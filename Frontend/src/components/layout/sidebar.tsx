@@ -16,10 +16,9 @@ import {
   CheckSquare,
   X,
   LogOut,
-  ChevronRight,
-  Sparkles,
   Settings,
   Gift,
+  Zap,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -33,7 +32,7 @@ const navItems = {
     { href: "/admin/uploads", label: "Monthly Uploads", icon: FileUp },
     { href: "/admin/redemptions", label: "Redemptions", icon: CheckSquare },
     { href: "/admin/reward-catalog", label: "Reward Catalog", icon: Gift },
-    { href: "/admin/adjustments", label: "Token Adjustments", icon: Sparkles },
+    { href: "/admin/adjustments", label: "Token Adjustments", icon: Zap },
     { href: "/admin/audit", label: "Audit Log", icon: History },
     { href: "/admin/token-rules", label: "Token Rules", icon: Settings },
   ],
@@ -126,70 +125,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     href={link.href as Route}
                     onClick={() => onClose()}
                     className={cn(
-                      "relative flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 text-sm font-medium overflow-hidden group",
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-sm font-medium",
                       isActive
-                        ? "bg-primary/10 text-primary border border-primary/20"
-                        : "text-muted-foreground hover:text-foreground border border-transparent"
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-slate-50 hover:text-foreground"
                     )}
                   >
-                    {/* Hover background effect */}
-                    <m.div
-                      className="absolute inset-0 bg-primary/5 rounded-xl"
-                      initial={{ scale: 0, opacity: 0 }}
-                      whileHover={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.2 }}
+                    <Icon
+                      size={18}
+                      className={cn(
+                        "transition-colors",
+                        isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                      )}
                     />
-
-                    {/* Active indicator */}
-                    {isActive && (
-                      <m.div
-                        layoutId="activeIndicator"
-                        className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      />
-                    )}
-
-                    {/* Icon with animation */}
-                    <m.div
-                      whileHover={{ scale: 1.1, rotate: isActive ? 0 : 3 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                      className="relative z-10"
-                    >
-                      <Icon
-                        size={18}
-                        className={cn(
-                          "transition-colors duration-200",
-                          isActive
-                            ? "text-primary"
-                            : "text-muted-foreground group-hover:text-foreground"
-                        )}
-                      />
-                    </m.div>
-
-                    {/* Label */}
-                    <span className="relative z-10">{link.label}</span>
-
-                    {/* Arrow indicator on hover */}
-                    <m.span
-                      className="absolute right-4 text-primary opacity-0"
-                      initial={{ x: -10, opacity: 0 }}
-                      animate={{ x: isHovered ? 0 : -10, opacity: isHovered ? 1 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <ChevronRight size={16} />
-                    </m.span>
-
-                    {/* Sparkle effect on active */}
-                    {isActive && (
-                      <m.div
-                        className="absolute right-10 text-primary"
-                        animate={{ opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        <Sparkles size={12} />
-                      </m.div>
-                    )}
+                    <span>{link.label}</span>
                   </Link>
                 </m.div>
               );
