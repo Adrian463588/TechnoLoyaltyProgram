@@ -139,8 +139,8 @@ export const adminApi = {
       headers: withAuth(token),
     }),
 
-  /** HC-01: Update user status (ACTIVE/RESIGNED) */
-  updateUserStatus: (token: string, userId: string, status: "ACTIVE" | "RESIGNED") =>
+  /** HC-01: Update user status (ACTIVE/INACTIVE/RESIGNED) */
+  updateUserStatus: (token: string, userId: string, status: "ACTIVE" | "INACTIVE" | "RESIGNED") =>
     apiFetch<{ success: boolean; user: UserResponse }>("/api/admin/users/status", {
       method: "POST",
       headers: withAuth(token),

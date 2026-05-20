@@ -85,13 +85,14 @@ export function EligibilityChip({ eligible, reason, className }: { eligible: boo
 }
 
 // Partner/Employee Status Badge
-export type PartnerStatus = "ACTIVE" | "DOWNGRADED" | "RESET" | "INACTIVE";
+export type PartnerStatus = "ACTIVE" | "DOWNGRADED" | "RESET" | "INACTIVE" | "RESIGNED";
 
 const partnerStatusConfig: Record<PartnerStatus, { bg: string; color: string; label: string }> = {
   ACTIVE: { bg: "rgba(107, 206, 83, 0.15)", color: "#6BCE53", label: "ACTIVE" },
   DOWNGRADED: { bg: "rgba(245, 158, 11, 0.15)", color: "#FCD34D", label: "DOWNGRADED" },
   RESET: { bg: "rgba(239, 68, 68, 0.15)", color: "#FCA5A5", label: "RESET" },
   INACTIVE: { bg: "rgba(148, 163, 184, 0.15)", color: "#94A3B8", label: "INACTIVE" },
+  RESIGNED: { bg: "rgba(239, 68, 68, 0.15)", color: "#EF4444", label: "RESIGNED" },
 };
 
 export function EmployeeStatusBadge({ status, className }: { status: PartnerStatus | string; className?: string }) {
