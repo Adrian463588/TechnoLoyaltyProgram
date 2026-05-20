@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { FileUp, Users, ShoppingBag, Zap, ChevronRight, UserCheck } from "lucide-react";
 import { RedemptionQueueTable } from "@/features/admin/redemption-queue-table";
-import { AdminClock } from "@/features/admin/admin-clock";
+import { DashboardClock } from "@/components/dashboard/dashboard-clock";
 
 export default function AdminDashboardPage() {
   return (
@@ -17,11 +17,11 @@ export default function AdminDashboardPage() {
           {/* Active Period Banner */}
           <div className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-start justify-between animate-fade-up-in">
             <div>
-              <h1 className="text-card-heading text-2xl mb-1 leading-none">HC Admin Dashboard</h1>
+              <h1 className="text-2xl font-extrabold text-[--color-text-secondary] mb-3 leading-none">HC Admin Dashboard</h1>
               <p className="text-sm text-[--color-text-secondary] leading-none">Active Earning Period: P2 (Jun 16 → Dec 15)</p>
             </div>
             <div className="mt-4 md:mt-0">
-              <AdminClock />
+              <DashboardClock />
             </div>
           </div>
 

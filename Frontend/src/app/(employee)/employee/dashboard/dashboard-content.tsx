@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ShoppingBag, TrendingUp, ChevronRight, ArrowUpRight, Clock, Gift } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { TokenHeroSection } from "@/components/dashboard/token-hero-section";
+import { DashboardClock } from "@/components/dashboard/dashboard-clock";
 import { Button } from "@/components/ui/button";
 import { BentoCard } from "@/components/ui/bento-card";
 import { cn } from "@/lib/utils";
@@ -34,14 +35,6 @@ const itemVariants: Variants = {
   },
 };
 
-const pulseVariants: Variants = {
-  initial: { scale: 1 },
-  pulse: {
-    scale: [1, 1.02, 1],
-    transition: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-  },
-};
-
 const tokenHistoryData = [
   { id: 1, title: "Monthly Token Award", date: "Oct 2024", division: "Opcent Division", amount: 120, icon: TrendingUp },
   { id: 2, title: "Project Completion Bonus", date: "Sep 2024", division: "Techno Center", amount: 250, icon: Gift },
@@ -64,15 +57,15 @@ export function DashboardContent({ data }: { data: DashboardData }) {
       animate="visible"
       className="bento-grid"
     >
-      {/* Welcome Banner */}
+      {/* Welcome Banner Card */}
       <motion.div
         variants={itemVariants}
-        className="bento-span-12 p-6 flex items-center justify-between"
+        className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-start justify-between bg-linear-to-br from-[--color-surface] to-[--color-bg-subtle]"
       >
         <div>
           <motion.h1
             data-testid="employee-dashboard-heading"
-            className="text-hero"
+            className="text-2xl font-extrabold text-[--color-text-secondary]-black mb-3 leading-none"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
@@ -80,7 +73,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
             Dashboard
           </motion.h1>
           <motion.p
-            className="text-body mt-1"
+            className="text-sm text-[--color-text-secondary] leading-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -88,14 +81,14 @@ export function DashboardContent({ data }: { data: DashboardData }) {
             Active Earning Period: <span className="text-primary font-bold">{data.period}</span>
           </motion.p>
         </div>
+        
         <motion.div
-          variants={pulseVariants}
-          initial="initial"
-          animate="pulse"
-          className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-4 md:mt-0 flex flex-col items-end text-right"
         >
-          <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-          <span className="text-xs font-medium text-primary">Earning Active</span>
+          <DashboardClock />
         </motion.div>
       </motion.div>
 
