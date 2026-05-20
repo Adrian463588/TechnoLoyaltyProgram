@@ -124,33 +124,67 @@ export class RewardCatalogService {
   }
 
   /**
-   * Soft-deactivate a reward item.
-   * Does NOT delete — existing redemptions reference it.
+   * Deactivate a reward item.
    */
   async deactivate(id: string, actorId: string): Promise<RewardItem> {
-    const existing = await this.getById(id);
+    return this.toggleStatus(id, false, actorId);
+  }
 
-    if (!existing.isActive) {
-      throw new ValidationError("Reward item is already inactive.");
-    }
+  /**
+   * Toggle reward active status
+   */
+  async toggleStatus(id: string, active: boolean, actorId: string): Promise<RewardItem> {
+    const existing = await this.getById(id);
 
     const updated = await prisma.rewardItem.update({
       where: { id },
-      data:  { isActive: false },
+      data:  { isActive: active },
     });
 
     await logAudit({
-      action:        "REWARD_DEACTIVATED",
+      action:        active ? "REWARD_ACTIVATED" : "REWARD_DEACTIVATED",
       actorId,
       targetType:    "RewardItem",
       targetId:      id,
-      previousValue: { isActive: true },
-      newValue:      { isActive: false },
+      previousValue: { isActive: existing.isActive },
+      newValue:      { isActive: active },
     });
 
     await cacheInvalidationService.invalidateAfterCommit({ type: "REWARD_CATALOG_MUTATED" });
 
     return updated;
+  }
+
+  /**
+   * Permanently delete a reward item.
+   * Only allowed if no redemption requests reference it.
+   */
+  async delete(id: string, actorId: string): Promise<void> {
+    const existing = await this.getById(id);
+
+    // Check if redemptions exist
+    const count = await prisma.redemptionRequest.count({
+      where: { rewardItemId: id }
+    });
+
+    if (count > 0) {
+      throw new ValidationError(`Cannot delete reward "${existing.name}" because it has ${count} existing redemption requests. Deactivate it instead.`);
+    }
+
+    await prisma.rewardItem.delete({
+      where: { id }
+    });
+
+    await logAudit({
+      action:        "REWARD_DELETED",
+      actorId,
+      targetType:    "RewardItem",
+      targetId:      id,
+      previousValue: { name: existing.name },
+      newValue:      {},
+    });
+
+    await cacheInvalidationService.invalidateAfterCommit({ type: "REWARD_CATALOG_MUTATED" });
   }
 }
 

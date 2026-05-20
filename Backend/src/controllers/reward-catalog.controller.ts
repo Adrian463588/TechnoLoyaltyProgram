@@ -84,15 +84,32 @@ export const RewardCatalogController = {
     }
   }) satisfies RequestHandler,
 
-  /** DELETE /api/admin/rewards/:id — soft-deactivate */
-  deactivate: (async (req, res, next) => {
+  /** POST /api/admin/rewards/:id/toggle-status — toggle active/inactive */
+  toggleStatus: (async (req, res, next) => {
     try {
       const { user } = req;
       const idResult = uuidSchema.safeParse(req.params["id"]);
       if (!idResult.success) throw new ValidationError("Invalid reward ID", {});
 
-      const item = await rewardCatalogService.deactivate(idResult.data, user.id);
-      res.json({ success: true, message: "Reward deactivated", item });
+      const { active } = req.body;
+      if (typeof active !== "boolean") throw new ValidationError("Missing 'active' boolean in body", {});
+
+      const item = await rewardCatalogService.toggleStatus(idResult.data, active, user.id);
+      res.json({ success: true, message: `Reward ${active ? 'activated' : 'deactivated'}`, item });
+    } catch (err) {
+      next(err);
+    }
+  }) satisfies RequestHandler,
+
+  /** DELETE /api/admin/rewards/:id — permanent delete (only if no redemptions) */
+  delete: (async (req, res, next) => {
+    try {
+      const { user } = req;
+      const idResult = uuidSchema.safeParse(req.params["id"]);
+      if (!idResult.success) throw new ValidationError("Invalid reward ID", {});
+
+      await rewardCatalogService.delete(idResult.data, user.id);
+      res.json({ success: true, message: "Reward deleted permanently" });
     } catch (err) {
       next(err);
     }

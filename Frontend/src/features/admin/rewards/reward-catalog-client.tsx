@@ -5,7 +5,8 @@ import { Plus, Gift } from "lucide-react";
 import type { RewardCatalogItem } from "@/lib/api-client";
 import { RewardCard } from "./reward-card";
 import { RewardFormModal } from "./reward-form-modal";
-import { createRewardAction, updateRewardAction, deactivateRewardAction } from "./actions";
+import { createRewardAction, updateRewardAction, toggleRewardStatusAction, deleteRewardAction } from "./actions";
+import { toast } from "sonner";
 
 interface RewardCatalogClientProps {
   initialRewards: RewardCatalogItem[];
@@ -26,17 +27,25 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
     setIsModalOpen(true);
   };
 
-  const handleDeactivate = async (id: string) => {
-    if (!confirm("Are you sure you want to deactivate this reward?")) return;
+  const handleToggleStatus = async (id: string, active: boolean) => {
+    try {
+      const updated = await toggleRewardStatusAction(id, active);
+      setRewards((prev) => prev.map(r => r.id === id ? updated : r));
+      toast.success(`Reward ${active ? 'activated' : 'deactivated'} successfully`);
+    } catch (err: any) {
+      toast.error(`Failed to update status: ${err.message}`);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this reward? This action cannot be undone.")) return;
     
     try {
-      await deactivateRewardAction(id);
-      // Optimistically update UI
-      setRewards((prev) => 
-        prev.map(r => r.id === id ? { ...r, isActive: false } : r)
-      );
+      await deleteRewardAction(id);
+      setRewards((prev) => prev.filter(r => r.id !== id));
+      toast.success("Reward deleted successfully");
     } catch (err: any) {
-      alert("Failed to deactivate reward: " + err.message);
+      toast.error(`Failed to delete: ${err.message}`);
     }
   };
 
@@ -90,7 +99,8 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
               key={reward.id}
               reward={reward}
               onEdit={handleEdit}
-              onDeactivate={handleDeactivate}
+              onToggleStatus={handleToggleStatus}
+              onDelete={handleDelete}
             />
           ))}
         </div>
