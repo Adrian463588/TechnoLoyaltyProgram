@@ -92,7 +92,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed = false, onToggleCollapse
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-50 bg-white border-r border-border transform flex flex-col shrink-0 transition-all duration-300 ease-in-out",
+            "fixed inset-y-0 left-0 z-50 bg-white transform flex flex-col shrink-0 transition-all duration-300 ease-in-out",
             "lg:translate-x-0",
             isOpen ? "translate-x-0" : "-translate-x-full",
             isCollapsed ? "w-20" : "w-64"
