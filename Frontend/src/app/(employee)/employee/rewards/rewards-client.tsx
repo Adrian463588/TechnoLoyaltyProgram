@@ -138,10 +138,10 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
             <BentoCard
               key={reward.id}
               className={cn(
-                "flex flex-col h-full animate-fade-up-in",
-                !canRedeem && "opacity-80 grayscale-[20%]"
+                "flex flex-col h-full animate-fade-up-in transform-gpu will-change-transform",
+                !canRedeem && "opacity-70"
               )}
-              style={{ animationDelay: `${i * 50}ms` } as React.CSSProperties}
+              style={{ animationDelay: `${i * 40}ms` } as React.CSSProperties}
             >
               {/* Thumbnail area */}
               <div className="aspect-[4/3] bg-muted/50 relative overflow-hidden">

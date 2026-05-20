@@ -15,8 +15,8 @@ export function RewardCard({ reward, onEdit, onToggleStatus, onDelete }: RewardC
   const isOutOfStock = reward.stock !== null && reward.stock <= 0;
   
   return (
-    <div className={`bento-card p-6 flex flex-col h-full transition-all duration-300 group
-      ${!reward.isActive ? "opacity-75 grayscale-[30%]" : ""}
+    <div className={`bento-card p-6 flex flex-col h-full transition-all duration-300 group transform-gpu
+      ${!reward.isActive ? "opacity-75" : ""}
     `}>
       {/* Header section with Icon & Badge */}
       <div className="flex justify-between items-start mb-4">
