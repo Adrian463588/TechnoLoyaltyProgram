@@ -14,12 +14,13 @@ import { NotFoundError, ValidationError } from "@/errors/index";
 import { CacheService } from "./cache.service";
 import { cacheInvalidationService } from "@/utils/cache/cache-invalidation.service";
 import { CacheKeys } from "@/utils/cache/cache-key.registry";
-import type { RewardItem } from "@prisma/client";
+import type { RewardItem, MemberTierType } from "@prisma/client";
 
 export interface CreateRewardInput {
   name:         string;
   description?: string | undefined;
   tokenCost:    number;
+  minTier?:     MemberTierType | undefined;
   imageUrl?:    string | undefined;
   category?:    string | undefined;
   stock?:       number | null | undefined;
@@ -29,6 +30,7 @@ export interface UpdateRewardInput {
   name?:        string | undefined;
   description?: string | undefined;
   tokenCost?:   number | undefined;
+  minTier?:     MemberTierType | undefined;
   imageUrl?:    string | undefined;
   category?:    string | undefined;
   stock?:       number | null | undefined;
@@ -67,6 +69,7 @@ export class RewardCatalogService {
         name:        input.name,
         description: input.description ?? null,
         tokenCost:   input.tokenCost,
+        minTier:     input.minTier ?? "SAPHIRE",
         imageUrl:    input.imageUrl ?? null,
         category:    input.category ?? null,
         stock:       input.stock ?? null,

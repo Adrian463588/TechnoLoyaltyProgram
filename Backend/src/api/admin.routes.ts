@@ -26,6 +26,7 @@ export const adminRoutes = Router();
 // ── Apply auth guards to all admin routes ──────────────────────────────────
 adminRoutes.use(authenticate, authorize("HC_PM"));
 
+adminRoutes.get("/users", AdminFoundationController.listUsers as RequestHandler);
 adminRoutes.get("/audit", AdminFoundationController.listAuditLogs as RequestHandler);
 adminRoutes.get("/uploads", AdminFoundationController.listUploads as RequestHandler);
 adminRoutes.post(
