@@ -13,7 +13,7 @@ async function getDashboardData(token: string) {
     const summary = await employeeApi.getDashboard(token);
     return {
       tokenBalance:      summary.tokenSummary.totalTokens,
-      tier:              summary.tokenSummary.currentTier,
+      tier:              summary.user.membershipTier,
       eligibilityStatus: { eligible: summary.tokenSummary.isEligibleForReward },
       period:            "P2: Jun 16 → Dec 15",  // TODO: derive from backend once endpoint exposes period
     };

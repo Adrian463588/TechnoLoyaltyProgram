@@ -52,22 +52,25 @@ export function TokenHeroSection({
             </motion.div>
             Total Tokens
           </h3>
-          <motion.button
-            whileHover="hover"
-            whileTap={{ scale: 0.9 }}
-            className="p-1.5 rounded-full hover:bg-slate-100 transition-colors relative group"
-            onClick={() => setShowInfo(true)}
-          >
-            <Info className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-            <motion.span
-              className="absolute inset-0 rounded-full border border-primary/30"
-              variants={{
-                initial: { scale: 1.5, opacity: 0 },
-                hover: { scale: 1, opacity: 1, transition: { duration: 0.3 } }
-              }}
-              initial="initial"
-            />
-          </motion.button>
+          <div className="flex items-center gap-3">
+            <TierBadge tier={tier} />
+            <motion.button
+              whileHover="hover"
+              whileTap={{ scale: 0.9 }}
+              className="p-1.5 rounded-full hover:bg-slate-100 transition-colors relative group"
+              onClick={() => setShowInfo(true)}
+            >
+              <Info className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <motion.span
+                className="absolute inset-0 rounded-full border border-primary/30"
+                variants={{
+                  initial: { scale: 1.5, opacity: 0 },
+                  hover: { scale: 1, opacity: 1, transition: { duration: 0.3 } }
+                }}
+                initial="initial"
+              />
+            </motion.button>
+          </div>
         </div>
 
         <div className="mb-6 relative z-10">
@@ -93,13 +96,6 @@ export function TokenHeroSection({
             reason={eligibilityStatus.reason}
           />
         </div>
-
-        {/* Tier Badge - shows on hover */}
-        <motion.div
-          className="absolute top-4 right-12 opacity-0 hover:opacity-100 transition-opacity"
-        >
-          <TierBadge tier={tier} />
-        </motion.div>
       </motion.div>
 
       {/* Info Dialog */}

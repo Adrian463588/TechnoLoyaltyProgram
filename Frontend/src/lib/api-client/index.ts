@@ -311,7 +311,12 @@ export const leaderApi = {
 // ── Response types (Frontend-safe DTOs — no Prisma) ───────────────────────
 
 export interface EmployeeDashboardResponse {
-  user: { id: string; name: string; npk: string };
+  user: { 
+    id: string; 
+    name: string; 
+    npk: string;
+    membershipTier: "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
+  };
   tokenSummary: TokenSummaryResponse;
   recentRedemptions: RedemptionResponse[];
 }
