@@ -5,8 +5,10 @@ import { Plus, Gift } from "lucide-react";
 import type { RewardCatalogItem } from "@/lib/api-client";
 import { RewardCard } from "./reward-card";
 import { RewardFormModal } from "./reward-form-modal";
+import { DeleteRewardModal } from "./delete-reward-modal";
 import { createRewardAction, updateRewardAction, toggleRewardStatusAction, deleteRewardAction } from "./actions";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface RewardCatalogClientProps {
   initialRewards: RewardCatalogItem[];
@@ -16,6 +18,12 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
   const [rewards, setRewards] = useState<RewardCatalogItem[]>(initialRewards);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReward, setEditingReward] = useState<RewardCatalogItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; rewardId: string | null; rewardName: string }>({
+    open: false,
+    rewardId: null,
+    rewardName: "",
+  });
 
   const handleCreateNew = () => {
     setEditingReward(null);
@@ -51,12 +59,21 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to permanently delete this reward? This action cannot be undone.")) return;
+  const handleDeleteTrigger = (reward: RewardCatalogItem) => {
+    setDeleteConfirm({
+      open: true,
+      rewardId: reward.id,
+      rewardName: reward.name,
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirm.rewardId) return;
     
+    setIsDeleting(true);
     try {
-      await deleteRewardAction(id);
-      setRewards((prev) => prev.filter(r => r.id !== id));
+      await deleteRewardAction(deleteConfirm.rewardId);
+      setRewards((prev) => prev.filter(r => r.id !== deleteConfirm.rewardId));
       toast.success("Reward deleted successfully", {
         style: {
           background: "#10b981",
@@ -65,6 +82,8 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
           borderRadius: "12px",
         },
       });
+      setDeleteConfirm({ open: false, rewardId: null, rewardName: "" });
+      setIsModalOpen(false);
     } catch (err: any) {
       toast.error(`Failed to delete: ${err.message}`, {
         style: {
@@ -74,6 +93,8 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
           borderRadius: "12px",
         },
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -140,7 +161,7 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
               reward={reward}
               onEdit={handleEdit}
               onToggleStatus={handleToggleStatus}
-              onDelete={handleDelete}
+              onDelete={() => handleDeleteTrigger(reward)}
             />
           ))}
         </div>
@@ -151,7 +172,17 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleFormSubmit}
+        onDelete={handleDeleteTrigger}
         initialData={editingReward}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteRewardModal
+        isOpen={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, rewardId: null, rewardName: "" })}
+        onConfirm={handleConfirmDelete}
+        rewardName={deleteConfirm.rewardName}
+        isDeleting={isDeleting}
       />
     </div>
   );
