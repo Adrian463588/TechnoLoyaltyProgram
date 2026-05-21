@@ -25,11 +25,11 @@ import {
   CheckSquare,
   X,
   LogOut,
-  Settings,
   Gift,
   Zap,
   Menu,
   UserCheck,
+  FileText,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -53,11 +53,13 @@ const navItems = {
     { href: "/leader/team", label: "Team Overview", icon: Users },
     { href: "/employee/dashboard", label: "My Dashboard", icon: LayoutDashboard },
     { href: "/employee/rewards", label: "Rewards", icon: ShoppingBag },
+    { href: "/employee/documents", label: "My Documents", icon: FileText },
   ],
   MITRA: [
     { href: "/employee/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/employee/rewards", label: "Rewards", icon: ShoppingBag },
     { href: "/employee/history", label: "History", icon: History },
+    { href: "/employee/documents", label: "My Documents", icon: FileText },
   ],
 };
 

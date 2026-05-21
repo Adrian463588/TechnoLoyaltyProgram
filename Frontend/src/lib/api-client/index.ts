@@ -20,13 +20,22 @@ async function apiFetch<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const url = `${BACKEND_URL}${path}`;
+  
+  const headers: Record<string, string> = { ...options.headers as Record<string, string> };
+  
+  // Only default to JSON if no content-type is set AND body is NOT FormData
+  if (!headers["Content-Type"] && !(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const response = await fetch(url, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
+    headers,
   });
+
+  if (response.status === 204) {
+    return {} as T;
+  }
 
   if (!response.ok) {
     const body = (await response
@@ -87,10 +96,36 @@ export const employeeApi = {
   },
 
   changePassword: (token: string, payload: Record<string, string>) =>
-    apiFetch<{ success: boolean }>("/api/employee/profile/change-password", {
+    apiFetch<void>("/api/employee/profile/change-password", {
       method: "POST",
       headers: withAuth(token),
       body: JSON.stringify(payload),
+    }),
+
+  // ── Documents ─────────────────────────────────────────────────────────────
+  getDocuments: (token: string) =>
+    apiFetch<UserDocumentResponse[]>("/api/employee/documents", {
+      headers: withAuth(token),
+    }),
+
+  uploadDocument: (token: string, type: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", type);
+
+    return apiFetch<UserDocumentResponse>("/api/employee/documents/upload", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+  },
+
+  deleteDocument: (token: string, type: string) =>
+    apiFetch<void>(`/api/employee/documents/${type}`, {
+      method: "DELETE",
+      headers: withAuth(token),
     }),
 };
 
@@ -299,6 +334,17 @@ export const leaderApi = {
 };
 
 // ── Response types (Frontend-safe DTOs — no Prisma) ───────────────────────
+
+export interface UserDocumentResponse {
+  id: string;
+  userId: string;
+  type: "ID_CARD_MITRA" | "KTP" | "NPWP";
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  createdAt: string;
+}
 
 export interface EmployeeDashboardResponse {
   user: { 

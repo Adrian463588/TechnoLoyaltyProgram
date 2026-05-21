@@ -13,6 +13,7 @@ import { LoyaltyController }        from "@/controllers/loyalty.controller";
 import { RewardCatalogController }  from "@/controllers/reward-catalog.controller";
 import { NotificationsController }  from "@/controllers/notifications.controller";
 import { ProfileController }        from "@/controllers/profile.controller";
+import { DocumentController }       from "@/controllers/document.controller";
 
 export const employeeRoutes = Router();
 
@@ -101,6 +102,11 @@ employeeRoutes.get( "/rewards",     RewardCatalogController.listActive       as 
 
 // ── Token Ledger History ───────────────────────────────────────────────────
 employeeRoutes.get("/history",      LoyaltyController.getTokenHistory        as RequestHandler);
+
+// ── Documents ─────────────────────────────────────────────────────────────
+employeeRoutes.get(  "/documents",        DocumentController.listDocuments   as RequestHandler);
+employeeRoutes.post( "/documents/upload", DocumentController.uploadMiddleware, DocumentController.uploadDocument as RequestHandler);
+employeeRoutes.delete("/documents/:type",   DocumentController.deleteDocument as RequestHandler);
 
 // ── Notifications (stub) ───────────────────────────────────────────────────
 employeeRoutes.get("/notifications", NotificationsController.list             as RequestHandler);
