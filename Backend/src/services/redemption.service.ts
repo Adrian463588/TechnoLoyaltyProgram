@@ -10,7 +10,6 @@
 import { prisma } from "@/db/prisma";
 import { Prisma, RedemptionStatus, TokenEventType, type RedemptionRequest } from "@prisma/client";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
-import { tokenLedgerService } from "./token-ledger.service";
 import { checkRedemptionEligibility } from "./loyalty.service";
 import { logAudit } from "./audit.service";
 import { NotFoundError, ValidationError } from "@/errors/index";
@@ -23,25 +22,30 @@ import { CacheKeys } from "../utils/cache/cache-key.registry";
  * Section 13 - Redemption Status Workflow.
  */
 const VALID_TRANSITIONS: Record<RedemptionStatus, RedemptionStatus[]> = {
-  DRAFT:                ["PENDING_VERIFICATION", "CANCELLED"],
-  PENDING_VERIFICATION: ["VERIFIED", "REJECTED", "CANCELLED"],
-  VERIFIED:             ["PURCHASED", "CANCELLED"],
-  REJECTED:             [],
-  PURCHASED:            ["PICKUP_SCHEDULED"],
-  PICKUP_SCHEDULED:     ["COMPLETED"],
-  COMPLETED:            [],
-  CANCELLED:            [],
+  REQUESTED: ["REVIEWED", "REJECTED", "CANCELLED"],
+  REVIEWED:  ["ACCEPTED", "REJECTED", "CANCELLED"],
+  ACCEPTED:  [],
+  REJECTED:  [],
+  CANCELLED: [],
 };
 
 export class RedemptionService {
   /**
    * HC Admin: List all redemption requests with filtering.
    */
-  async listAll(status?: RedemptionStatus): Promise<RedemptionRequest[]> {
+  async listAll(status?: RedemptionStatus) {
     return prisma.redemptionRequest.findMany({
       where: status ? { status } : {},
       include: {
-        mitra: { select: { id: true, name: true, email: true } },
+        mitra: { 
+          select: { 
+            id: true, 
+            name: true, 
+            email: true, 
+            npk: true,
+            documents: true
+          } 
+        },
         rewardItem: { select: { id: true, name: true, tokenCost: true } },
       },
       orderBy: { submittedAt: "desc" },
@@ -51,11 +55,19 @@ export class RedemptionService {
   /**
    * HC Admin: Get detail of a specific request.
    */
-  async getById(id: string): Promise<RedemptionRequest | null> {
+  async getById(id: string) {
     return prisma.redemptionRequest.findUnique({
       where: { id },
       include: {
-        mitra: { select: { id: true, name: true, email: true } },
+        mitra: { 
+          select: { 
+            id: true, 
+            name: true, 
+            email: true, 
+            npk: true,
+            documents: true
+          } 
+        },
         rewardItem: { select: { id: true, name: true, tokenCost: true, description: true, imageUrl: true } },
         history: { orderBy: { createdAt: "asc" } },
       },
@@ -70,6 +82,7 @@ export class RedemptionService {
       where: { mitraId: userId },
       include: {
         rewardItem: { select: { id: true, name: true, tokenCost: true } },
+        mitra: { select: { documents: true } },
       },
       orderBy: { submittedAt: "desc" },
     });
@@ -144,31 +157,41 @@ export class RedemptionService {
           mitraId: userId,
           rewardItemId,
           tokenCost: item.tokenCost,
-          status: "PENDING_VERIFICATION",
+          status: "REQUESTED",
           isRepresented: options?.isRepresented ?? false,
           powerOfAttorneyUrl: options?.powerOfAttorneyUrl ?? null,
           powerOfAttorneyRequired: options?.isRepresented ?? false,
         },
       });
 
-      // 2. Append status history
+      // 2. Deduct tokens immediately
+      await tokenLedgerRepository.appendTokenEvent({
+        userId,
+        eventType: TokenEventType.REDEEMED,
+        amount: -item.tokenCost,
+        referenceId: request.id,
+        performedBy: userId,
+        reason: `Redemption: ${item.name}`,
+      }, tx);
+
+      // 3. Append status history
       await tx.redemptionStatusHistory.create({
         data: {
           redemptionRequestId: request.id,
-          previousStatus: "DRAFT",
-          newStatus: "PENDING_VERIFICATION",
+          previousStatus: "REQUESTED",
+          newStatus: "REQUESTED",
           changedBy: userId,
           note: options?.isRepresented ? "Initial submission (Representative pickup)" : "Initial submission",
         },
       });
 
-      // 3. Audit — PRD §5.6 REDEMPTION_SUBMITTED required
+      // 4. Audit — PRD §5.6 REDEMPTION_SUBMITTED required
       await logAudit({
         action: "REDEMPTION_SUBMITTED",
         actorId: userId,
         targetType: "RedemptionRequest",
         targetId: request.id,
-        newValue: { rewardItemId, tokenCost: item.tokenCost, status: "PENDING_VERIFICATION" },
+        newValue: { rewardItemId, tokenCost: item.tokenCost, status: "REQUESTED" },
         tx,
       });
 
@@ -176,6 +199,7 @@ export class RedemptionService {
     });
 
     await cacheInvalidationService.invalidateAfterCommit({ type: "REDEMPTION_MUTATED", userId });
+    await cacheInvalidationService.invalidateAfterCommit({ type: "TOKEN_MUTATED", userId });
     return result;
   }
 
@@ -252,38 +276,38 @@ export class RedemptionService {
       throw new ValidationError(`Invalid transition from ${currentStatus} to ${newStatus}`);
     }
 
-    // Guard: COMPLETED requires all docs verified
-    if (newStatus === "COMPLETED") {
-      const docsOk = request.idCardVerified && request.ktpVerified && request.npwpVerified;
-      const poaOk = request.powerOfAttorneyRequired ? request.powerOfAttorneyVerified : true;
-      
-      if (!docsOk || !poaOk) {
-        throw new ValidationError("Cannot complete redemption: documents not fully verified.");
-      }
-    }
-
     const result = await prisma.$transaction(async (tx) => {
-      // If moving to VERIFIED, debit tokens
-      // Requirement 3.7, 3.8, 3.9: Must use authoritative DB state, never cached balance
-      if (newStatus === "VERIFIED") {
-        const currentBalance = await tokenLedgerService.getTokenBalanceForUpdate(request.mitraId, tx);
-        if (currentBalance < request.tokenCost) {
-          throw new ValidationError("Insufficient tokens at verification time");
-        }
-
+      // Refund tokens if REJECTED or CANCELLED from a state that already deducted them (which is now all submissions)
+      if (["REJECTED", "CANCELLED"].includes(newStatus)) {
         await tokenLedgerRepository.appendTokenEvent({
           userId: request.mitraId,
-          eventType: TokenEventType.REDEEMED,
-          amount: -request.tokenCost,
+          eventType: TokenEventType.MANUAL_ADJUSTMENT,
+          amount: request.tokenCost,
           referenceId: request.id,
           performedBy: actorId,
-          reason: `Redemption: ${request.rewardItem.name}`,
+          reason: `Refund: Redemption ${newStatus.toLowerCase()} (${request.rewardItem.name})`,
         }, tx);
+      }
+
+      // ── New Simplification Logic ──
+      // If moving from REQUESTED to REVIEWED, we assume the HC admin has verified the documents
+      // as part of the "Konfirmasi" action in the Document Review phase.
+      const updateData: Prisma.RedemptionRequestUpdateInput = { 
+        status: newStatus 
+      };
+      
+      if (currentStatus === "REQUESTED" && newStatus === "REVIEWED") {
+        updateData.idCardVerified = true;
+        updateData.ktpVerified = true;
+        updateData.npwpVerified = true;
+        if (request.powerOfAttorneyRequired) {
+          updateData.powerOfAttorneyVerified = true;
+        }
       }
 
       const updated = await tx.redemptionRequest.update({
         where: { id: requestId },
-        data: { status: newStatus },
+        data: updateData,
       });
 
       await tx.redemptionStatusHistory.create({
@@ -311,7 +335,7 @@ export class RedemptionService {
     });
 
     await cacheInvalidationService.invalidateAfterCommit({ type: "REDEMPTION_MUTATED", userId: request.mitraId });
-    if (newStatus === "VERIFIED") {
+    if (["REJECTED", "CANCELLED"].includes(newStatus)) {
       await cacheInvalidationService.invalidateAfterCommit({ type: "TOKEN_MUTATED", userId: request.mitraId });
     }
 

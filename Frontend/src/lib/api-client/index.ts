@@ -98,6 +98,12 @@ export const employeeApi = {
       next: { revalidate: 30 },
     } as RequestInit),
 
+  cancelRedemption: (token: string, id: string) =>
+    apiFetch<{ success: boolean }>((`/api/employee/redemptions/${id}/cancel`), {
+      method: "POST",
+      headers: withAuth(token),
+    }),
+
   getTokenHistory: (token: string, params: { limit?: number; offset?: number } = {}) => {
     const query = new URLSearchParams();
     if (params.limit) query.append("limit", params.limit.toString());
@@ -376,6 +382,7 @@ export interface TokenLedgerEntryResponse {
   amount: number;
   balanceAfter: number;
   reason: string | null;
+  referenceId: string | null;
   createdAt: string;
 }
 
@@ -401,12 +408,30 @@ export interface RedemptionResponse {
   id: string;
   status: string;
   createdAt: string;
+  mitra?: {
+    id: string;
+    name: string;
+    email: string;
+    npk: string;
+    documents?: Array<{
+      id: string;
+      type: "ID_CARD_MITRA" | "KTP" | "NPWP";
+      fileUrl: string;
+    }>;
+  } | null;
   item: {
     id: string;
     name: string;
     tokenCost: number;
     imageUrl?: string;
   };
+  isRepresented: boolean;
+  powerOfAttorneyUrl?: string | null;
+  idCardVerified: boolean;
+  ktpVerified: boolean;
+  npwpVerified: boolean;
+  powerOfAttorneyVerified: boolean | null;
+  rejectReason?: string | null;
 }
 
 export interface RewardCatalogItem {

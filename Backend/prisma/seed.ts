@@ -38,6 +38,7 @@ async function main() {
   await prisma.shiftClaim.deleteMany();
   await prisma.projectClaim.deleteMany();
   await prisma.tokenConversionRule.deleteMany();
+  await prisma.userDocument.deleteMany();
   await prisma.user.deleteMany();
 
   // ============================================================
@@ -336,11 +337,11 @@ async function main() {
         mitraId: alice.id,
         rewardItemId: tumblerReward.id,
         tokenCost: tumblerReward.tokenCost,
-        status: RedemptionStatus.PENDING_VERIFICATION,
+        status: RedemptionStatus.REQUESTED,
         history: {
           create: {
-            previousStatus: RedemptionStatus.DRAFT,
-            newStatus: RedemptionStatus.PENDING_VERIFICATION,
+            previousStatus: RedemptionStatus.REQUESTED,
+            newStatus: RedemptionStatus.REQUESTED,
             changedBy: alice.id,
             note: "Request submitted by Mitra",
           }
@@ -364,15 +365,13 @@ async function main() {
         mitraId: alice.id,
         rewardItemId: gopayReward.id,
         tokenCost: gopayReward.tokenCost,
-        status: RedemptionStatus.COMPLETED,
+        status: RedemptionStatus.ACCEPTED,
         completedAt: new Date(),
         history: {
           createMany: {
             data: [
-              { previousStatus: RedemptionStatus.DRAFT, newStatus: RedemptionStatus.PENDING_VERIFICATION, changedBy: alice.id },
-              { previousStatus: RedemptionStatus.PENDING_VERIFICATION, newStatus: RedemptionStatus.VERIFIED, changedBy: adminUser.id },
-              { previousStatus: RedemptionStatus.VERIFIED, newStatus: RedemptionStatus.PURCHASED, changedBy: adminUser.id },
-              { previousStatus: RedemptionStatus.PURCHASED, newStatus: RedemptionStatus.COMPLETED, changedBy: adminUser.id },
+              { previousStatus: RedemptionStatus.REQUESTED, newStatus: RedemptionStatus.REVIEWED, changedBy: adminUser.id },
+              { previousStatus: RedemptionStatus.REVIEWED, newStatus: RedemptionStatus.ACCEPTED, changedBy: adminUser.id },
             ]
           }
         }
@@ -403,26 +402,24 @@ async function main() {
         history: {
           createMany: {
             data: [
-              { previousStatus: RedemptionStatus.DRAFT, newStatus: RedemptionStatus.PENDING_VERIFICATION, changedBy: saphireUser.id },
-              { previousStatus: RedemptionStatus.PENDING_VERIFICATION, newStatus: RedemptionStatus.REJECTED, changedBy: adminUser.id, note: "Insufficient validation" },
+              { previousStatus: RedemptionStatus.REQUESTED, newStatus: RedemptionStatus.REJECTED, changedBy: adminUser.id, note: "Insufficient validation" },
             ]
           }
         }
       }
     });
 
-    // 4. Verified Request for Ruby User
+    // 4. Reviewed Request for Ruby User
     await prisma.redemptionRequest.create({
       data: {
         mitraId: rubyUser.id,
         rewardItemId: mapReward.id,
         tokenCost: mapReward.tokenCost,
-        status: RedemptionStatus.VERIFIED,
+        status: RedemptionStatus.REVIEWED,
         history: {
           createMany: {
             data: [
-              { previousStatus: RedemptionStatus.DRAFT, newStatus: RedemptionStatus.PENDING_VERIFICATION, changedBy: rubyUser.id },
-              { previousStatus: RedemptionStatus.PENDING_VERIFICATION, newStatus: RedemptionStatus.VERIFIED, changedBy: adminUser.id },
+              { previousStatus: RedemptionStatus.REQUESTED, newStatus: RedemptionStatus.REVIEWED, changedBy: adminUser.id },
             ]
           }
         }

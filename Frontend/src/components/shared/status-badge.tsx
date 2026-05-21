@@ -3,28 +3,22 @@ import { cn } from "@/lib/utils";
 
 // Mapping Redemption Status
 export type RedemptionStatus =
-  | "DRAFT"
-  | "PENDING_VERIFICATION"
-  | "VERIFIED"
+  | "REQUESTED"
+  | "REVIEWED"
+  | "ACCEPTED"
   | "REJECTED"
-  | "PURCHASED"
-  | "PICKUP_SCHEDULED"
-  | "COMPLETED"
   | "CANCELLED";
 
 const statusConfig: Record<RedemptionStatus, { bg: string; color: string; label: string }> = {
-  DRAFT: { bg: "#F1F5F9", color: "#64748B", label: "DRAFT" },
-  PENDING_VERIFICATION: { bg: "#FEF3C7", color: "#D97706", label: "PENDING VERIFY" },
-  VERIFIED: { bg: "#DBEAFE", color: "#2563EB", label: "VERIFIED" },
-  REJECTED: { bg: "#FEE2E2", color: "#DC2626", label: "REJECTED" },
-  PURCHASED: { bg: "#DCFCE7", color: "#16A34A", label: "PURCHASED" },
-  PICKUP_SCHEDULED: { bg: "#DCFCE7", color: "#16A34A", label: "PICKUP SCHEDULED" },
-  COMPLETED: { bg: "#DCFCE7", color: "#16A34A", label: "COMPLETED" },
+  REQUESTED: { bg: "#FEF3C7", color: "#D97706", label: "REQUESTED" },
+  REVIEWED:  { bg: "#DBEAFE", color: "#2563EB", label: "REVIEWED" },
+  ACCEPTED:  { bg: "#DCFCE7", color: "#16A34A", label: "ACCEPTED" },
+  REJECTED:  { bg: "#FEE2E2", color: "#DC2626", label: "REJECTED" },
   CANCELLED: { bg: "#F1F5F9", color: "#475569", label: "CANCELLED" },
 };
 
 export function RedemptionStatusChip({ status, className }: { status: RedemptionStatus; className?: string }) {
-  const config = statusConfig[status] || statusConfig.DRAFT;
+  const config = statusConfig[status] || statusConfig.REQUESTED;
   return (
     <span
       role="status"
