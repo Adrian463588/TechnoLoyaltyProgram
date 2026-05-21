@@ -6,7 +6,7 @@
   "main": "dist/app.js",
   "scripts": {
     "dev": "cross-env NODE_OPTIONS=--max-old-space-size=512 tsx watch --tsconfig tsconfig.json src/app.ts",
-    "build": "tsc --project tsconfig.json",
+    "build": "tsc --project tsconfig.json && npx tsc-alias -p tsconfig.json",
     "start": "node dist/app.js",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
