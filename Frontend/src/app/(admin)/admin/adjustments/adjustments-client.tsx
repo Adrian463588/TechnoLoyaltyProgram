@@ -114,7 +114,7 @@ export default function AdjustmentsClient({ users: initialUsers }: { users: User
                     </Badge>
                   </TableCell>
                   <TableCell className="py-4 px-6 text-right">
-                    <span className="text-sm text-[var(--color-text-secondary)] font-mono">
+                    <span className="text-sm text-[var(--color-text-secondary)]">
                       {(user.tokens ?? 0).toLocaleString()}
                     </span>
                   </TableCell>

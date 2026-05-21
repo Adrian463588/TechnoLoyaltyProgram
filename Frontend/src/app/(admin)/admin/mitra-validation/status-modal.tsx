@@ -42,15 +42,11 @@ export default function StatusModal({ user, isOpen, onClose, onSuccess, sessionT
     startTransition(async () => {
       try {
         await adminApi.updateUserStatus(sessionToken, user.id, selectedStatus);
-        toast.success(`${user.name} status updated to ${selectedStatus}`, {
-          style: { background: "#10b981", color: "#fff", border: "none", borderRadius: "12px" }
-        });
+        toast.success(`${user.name} status updated to ${selectedStatus}`);
         onSuccess(user.id, selectedStatus);
         onClose();
       } catch (err: any) {
-        toast.error(`Failed to update status: ${err.message}`, {
-          style: { background: "#ef4444", color: "#fff", border: "none", borderRadius: "12px" }
-        });
+        toast.error(`Failed to update status: ${err.message}`);
       } finally {
         setShowConfirm(false);
       }

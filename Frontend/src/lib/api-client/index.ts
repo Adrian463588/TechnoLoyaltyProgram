@@ -70,7 +70,8 @@ export const employeeApi = {
   getMyRedemptions: (token: string) =>
     apiFetch<RedemptionResponse[]>("/api/employee/redemptions", {
       headers: withAuth(token),
-    }),
+      cache: "no-store",
+    } as RequestInit),
 
   createRedemption: (token: string, rewardItemId: string, options?: { isRepresented?: boolean, file?: File }) => {
     const formData = new FormData();

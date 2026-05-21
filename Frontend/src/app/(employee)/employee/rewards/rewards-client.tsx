@@ -111,19 +111,13 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
       
       if (result.success) {
         setSuccess(true);
-        toast.success("Permintaan hadiah berhasil dikirim!", {
-          style: { background: "#10b981", color: "#fff", border: "none", borderRadius: "12px" }
-        });
+        toast.success("Permintaan hadiah berhasil dikirim!");
       } else {
-        toast.error(result.error ?? "Gagal mengirim permintaan", {
-          style: { background: "#ef4444", color: "#fff", border: "none", borderRadius: "12px" }
-        });
+        toast.error(result.error ?? "Gagal mengirim permintaan");
       }
     } catch (err: unknown) {
       const error = err as Error;
-      toast.error(error.message || "Terjadi kesalahan tak terduga. Silakan coba lagi.", {
-        style: { background: "#ef4444", color: "#fff", border: "none", borderRadius: "12px" }
-      });
+      toast.error(error.message || "Terjadi kesalahan tak terduga. Silakan coba lagi.");
     } finally {
       setIsRedeeming(false);
     }

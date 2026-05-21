@@ -39,23 +39,9 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
     try {
       const updated = await toggleRewardStatusAction(id, active);
       setRewards((prev) => prev.map(r => r.id === id ? updated : r));
-      toast.success(`Reward ${active ? 'activated' : 'deactivated'} successfully`, {
-        style: {
-          background: "#10b981",
-          color: "#fff",
-          border: "none",
-          borderRadius: "12px",
-        },
-      });
+      toast.success(`Reward ${active ? 'activated' : 'deactivated'} successfully`);
     } catch (err: any) {
-      toast.error(`Failed to update status: ${err.message}`, {
-        style: {
-          background: "#ef4444",
-          color: "#fff",
-          border: "none",
-          borderRadius: "12px",
-        },
-      });
+      toast.error(`Failed to update status: ${err.message}`);
     }
   };
 
@@ -74,25 +60,11 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
     try {
       await deleteRewardAction(deleteConfirm.rewardId);
       setRewards((prev) => prev.filter(r => r.id !== deleteConfirm.rewardId));
-      toast.success("Reward deleted successfully", {
-        style: {
-          background: "#10b981",
-          color: "#fff",
-          border: "none",
-          borderRadius: "12px",
-        },
-      });
+      toast.success("Reward deleted successfully");
       setDeleteConfirm({ open: false, rewardId: null, rewardName: "" });
       setIsModalOpen(false);
     } catch (err: any) {
-      toast.error(`Failed to delete: ${err.message}`, {
-        style: {
-          background: "#ef4444",
-          color: "#fff",
-          border: "none",
-          borderRadius: "12px",
-        },
-      });
+      toast.error(`Failed to delete: ${err.message}`);
     } finally {
       setIsDeleting(false);
     }
@@ -103,20 +75,14 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
       if (editingReward) {
         const updated = await updateRewardAction(editingReward.id, data);
         setRewards((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
-        toast.success("Reward updated successfully", {
-          style: { background: "#10b981", color: "#fff", border: "none", borderRadius: "12px" },
-        });
+        toast.success("Reward updated successfully");
       } else {
         const created = await createRewardAction(data);
         setRewards((prev) => [created, ...prev]);
-        toast.success("Reward created successfully", {
-          style: { background: "#10b981", color: "#fff", border: "none", borderRadius: "12px" },
-        });
+        toast.success("Reward created successfully");
       }
     } catch (err: any) {
-      toast.error(`Operation failed: ${err.message}`, {
-        style: { background: "#ef4444", color: "#fff", border: "none", borderRadius: "12px" },
-      });
+      toast.error(`Operation failed: ${err.message}`);
     }
   };
 
