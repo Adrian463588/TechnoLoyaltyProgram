@@ -45,6 +45,7 @@ export const RedemptionController = {
           },
           isRepresented: r.isRepresented,
           powerOfAttorneyUrl: r.powerOfAttorneyUrl,
+          rejectReason: r.rejectionReason,
         };
       });
       res.json(mapped);
@@ -92,7 +93,7 @@ export const RedemptionController = {
         ktpVerified: r.ktpVerified,
         npwpVerified: r.npwpVerified,
         powerOfAttorneyVerified: r.powerOfAttorneyVerified,
-        rejectReason: r.rejectionReason,
+        rejectReason: r.rejectionReason ?? "Alasan tidak disebutkan oleh HC.",
         mitra: (r as any).mitra ? {
           documents: (r as any).mitra.documents.map((d: any) => ({
             id: d.id,

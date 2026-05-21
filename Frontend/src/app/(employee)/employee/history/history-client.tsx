@@ -278,11 +278,21 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
                       { key: "review",    label: "Document Review", icon: Info },
                       { key: "accepted",  label: "Confirmation", icon: ShieldCheck }
                     ].map((step, idx) => {
-                      const currentStep = STATUS_TO_STEP[selectedRedemption.status] || "submitted";
-                      const steps = ["submitted", "review", "accepted"];
-                      const currentIdx = steps.indexOf(currentStep);
-                      const isDone = currentIdx > idx || (currentStep === "accepted" && idx === 2);
-                      const isActive = currentStep === step.key && currentStep !== "accepted";
+                      let isDone = false;
+                      let isActive = false;
+                      
+                      if (selectedRedemption.status === "ACCEPTED") {
+                        isDone = true;
+                      } else if (selectedRedemption.status === "REVIEWED") {
+                        if (step.key === "submitted" || step.key === "review") isDone = true;
+                        if (step.key === "accepted") isActive = true;
+                      } else if (selectedRedemption.status === "REQUESTED") {
+                        if (step.key === "submitted") isDone = true;
+                        if (step.key === "review") isActive = true;
+                      } else {
+                        // For REJECTED / CANCELLED
+                        if (step.key === "submitted") isDone = true;
+                      }
 
                       return (
                         <div key={step.key} className="flex flex-col items-center gap-3 relative z-10 flex-1">
@@ -449,8 +459,8 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
                             : selectedRedemption.status === "ACCEPTED"
                             ? "Selamat! Penukaran Anda telah selesai dan dikonfirmasi. Silakan datang ke meja layanan HC untuk pengambilan hadiah fisik Anda."
                             : selectedRedemption.status === "REJECTED"
-                            ? `Mohon maaf, klaim ditolak: ${selectedRedemption.rejectReason || "Dokumen tidak sesuai standar."}`
-                            : "Status permintaan Anda telah diperbarui dalam sistem kami."
+                          ? `Mohon maaf, klaim ditolak: ${selectedRedemption.rejectReason}`
+                          : "Status permintaan Anda telah diperbarui dalam sistem kami."
                           }"
                        </p>
                        <div className="flex items-center gap-3 mt-6">

@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 
 const STATUS_TO_STEP: Record<RewardRequestStatus, PipelineStep> = {
   REQUESTED: "review",
-  REVIEWED:  "accepted",
+  REVIEWED:  "review",
   ACCEPTED:  "accepted",
   REJECTED:  "submitted",
   CANCELLED: "submitted",
@@ -202,17 +202,17 @@ export default function RedemptionsClient({
                     key={req.id}
                     className="group border-b border-[var(--color-border-subtle)] transition-all duration-200 hover:bg-[var(--color-accent)]/[0.05] cursor-default"
                   >
-                    <TableCell className="py-4 px-6 text-xs text-[var(--color-text-secondary)] font-mono font-bold">
+                    <TableCell className="py-4 px-6 text-xs text-[var(--color-text-secondary)]">
                       {req.userNpk}
                     </TableCell>
-                    <TableCell className="py-4 px-6 text-sm font-medium text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">
+                    <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">
                       {req.userName}
                     </TableCell>
                     <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)]">
                       {req.rewardName}
                     </TableCell>
                     <TableCell className="py-4 px-6 text-right">
-                      <span className="text-sm font-mono font-bold text-[var(--color-text-primary)]">
+                      <span className="text-sm text-[var(--color-text-primary)]">
                         {req.tokensSpent.toLocaleString()}
                       </span>
                     </TableCell>
@@ -286,11 +286,21 @@ export default function RedemptionsClient({
                       { key: "review",    label: "Document Review", icon: Info },
                       { key: "accepted",  label: "Confirmation", icon: ShieldCheck }
                     ].map((step, idx) => {
-                      const currentStep = STATUS_TO_STEP[selectedRequest.status];
-                      const steps = ["submitted", "review", "accepted"];
-                      const currentIdx = steps.indexOf(currentStep);
-                      const isDone = currentIdx > idx || (currentStep === "accepted" && idx === 2);
-                      const isActive = currentStep === step.key && currentStep !== "accepted";
+                      let isDone = false;
+                      let isActive = false;
+                      
+                      if (selectedRequest.status === "ACCEPTED") {
+                        isDone = true;
+                      } else if (selectedRequest.status === "REVIEWED") {
+                        if (step.key === "submitted" || step.key === "review") isDone = true;
+                        if (step.key === "accepted") isActive = true;
+                      } else if (selectedRequest.status === "REQUESTED") {
+                        if (step.key === "submitted") isDone = true;
+                        if (step.key === "review") isActive = true;
+                      } else {
+                        // For REJECTED / CANCELLED
+                        if (step.key === "submitted") isDone = true;
+                      }
 
                       return (
                         <div key={step.key} className="flex flex-col items-center gap-3 relative z-10 flex-1">

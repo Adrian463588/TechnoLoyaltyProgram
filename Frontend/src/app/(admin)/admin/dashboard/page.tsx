@@ -40,6 +40,7 @@ export default async function AdminDashboardPage() {
     tokensSpent: r.item?.tokenCost ?? 0,
     isRepresented: r.isRepresented,
     powerOfAttorneyUrl: r.powerOfAttorneyUrl,
+    rejectReason: r.rejectReason,
   }));
 
   const requestedCount = requests.filter(r => r.status === "REQUESTED").length;

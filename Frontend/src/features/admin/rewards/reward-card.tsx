@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, PackageX, Eye, EyeOff, Edit, Trash2 } from "lucide-react";
+import { Box, PackageX, Eye, EyeOff, Edit, Trash2, Coins } from "lucide-react";
 import type { RewardCatalogItem } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -83,13 +83,11 @@ export function RewardCard({ reward, onEdit, onToggleStatus, onDelete }: RewardC
           <div className="flex items-start justify-between">
             <div className="flex flex-col">
               <span className="text-xs text-[var(--color-text-tertiary)] uppercase tracking-wider mb-2 font-bold">Cost</span>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-base font-extrabold text-[var(--color-accent)] leading-none">
+              <div className="flex items-center gap-1.5">
+                <span className="text-base font-extrabold text-black leading-none">
                   {reward.tokenCost.toLocaleString()}
                 </span>
-                <span className="text-base font-bold text-[var(--color-text-secondary)] leading-none">
-                  tokens
-                </span>
+                <Coins className="w-4 h-4 text-[var(--color-accent)]" />
               </div>
             </div>
             <div className="flex flex-col items-end">

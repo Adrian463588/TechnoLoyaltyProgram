@@ -296,6 +296,10 @@ export class RedemptionService {
       const updateData: Prisma.RedemptionRequestUpdateInput = { 
         status: newStatus 
       };
+
+      if (newStatus === "REJECTED") {
+        updateData.rejectionReason = note && note.trim() !== "" ? note : "Dokumen tidak sesuai standar atau data tidak valid.";
+      }
       
       if (currentStatus === "REQUESTED" && newStatus === "REVIEWED") {
         updateData.idCardVerified = true;
@@ -321,6 +325,27 @@ export class RedemptionService {
         },
       });
 
+      // ── Reward Stock Reduction ──
+      // Requirement 13.2: Decrease stock ONLY when status becomes ACCEPTED.
+      if (newStatus === "ACCEPTED") {
+        // Fetch fresh item with lock inside transaction to prevent race conditions
+        const item = await tx.rewardItem.findUnique({
+          where: { id: request.rewardItemId },
+        });
+
+        if (!item) throw new NotFoundError("RewardItem", request.rewardItemId);
+
+        if (item.stock !== null) {
+          if (item.stock <= 0) {
+            throw new ValidationError(`Reward item "${item.name}" is out of stock.`);
+          }
+          await tx.rewardItem.update({
+            where: { id: item.id },
+            data: { stock: { decrement: 1 } },
+          });
+        }
+      }
+
       // Audit — PRD §5.6 REDEMPTION_STATUS_CHANGED required
       await logAudit({
         action: "REDEMPTION_STATUS_CHANGED",
@@ -336,6 +361,11 @@ export class RedemptionService {
     });
 
     await cacheInvalidationService.invalidateAfterCommit({ type: "REDEMPTION_MUTATED", userId: request.mitraId });
+    
+    if (newStatus === "ACCEPTED") {
+      await cacheInvalidationService.invalidateAfterCommit({ type: "REWARD_STOCK_MUTATED" });
+    }
+
     if (["REJECTED", "CANCELLED"].includes(newStatus)) {
       await cacheInvalidationService.invalidateAfterCommit({ type: "TOKEN_MUTATED", userId: request.mitraId });
     }

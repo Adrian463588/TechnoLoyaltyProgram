@@ -228,41 +228,6 @@ export default async function AuditLogPage({
             </div>
           </div>
 
-        {/* Action Type Filters */}
-        <div className="bento-span-12 flex flex-wrap gap-2 animate-fade-up-in" style={{ animationDelay: "50ms" }}>
-          {[
-            { icon: <Info            className="w-3.5 h-3.5" />, label: "All",          color: "hover:bg-neutral-500/10 text-neutral-600 active:bg-neutral-500/20" },
-            { icon: <FileSpreadsheet className="w-3.5 h-3.5" />, label: "Upload",       color: "hover:bg-blue-500/10 text-blue-600 active:bg-blue-500/20" },
-            { icon: <CheckCircle     className="w-3.5 h-3.5" />, label: "Verification", color: "hover:bg-emerald-500/10 text-emerald-600 active:bg-emerald-500/20"   },
-            { icon: <ShieldAlert     className="w-3.5 h-3.5" />, label: "Rejection",    color: "hover:bg-red-500/10 text-red-600 active:bg-red-500/20" },
-            { icon: <Activity        className="w-3.5 h-3.5" />, label: "System",       color: "hover:bg-purple-500/10 text-purple-600 active:bg-purple-500/20" },
-          ].map(({ icon, label, color }) => {
-            const isActive = filter === label || (label === "All" && !filter);
-            const activeStyles = isActive 
-              ? "bg-[var(--color-surface-elevated)] border-[var(--color-accent)] text-[var(--color-accent)] ring-1 ring-[var(--color-accent)]/20 shadow-sm" 
-              : "bg-[var(--color-surface-base)] border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] opacity-80 hover:opacity-100 hover:shadow-sm";
-            
-            const href = label === "All" 
-              ? { pathname: "/admin/audit" as const } 
-              : { pathname: "/admin/audit" as const, query: { filter: label } };
-            
-            return (
-              <Link 
-                key={label} 
-                href={href as any} 
-                className={cn(
-                  "flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition-all duration-300 active:scale-95 cursor-pointer",
-                  color,
-                  activeStyles
-                )}
-              >
-                {icon}
-                <span>{label}</span>
-              </Link>
-            );
-          })}
-        </div>
-
         {/* Audit Table */}
         <div className="bento-span-12">
           <Suspense fallback={<AuditTableSkeleton />} key={filter ?? "all"}>

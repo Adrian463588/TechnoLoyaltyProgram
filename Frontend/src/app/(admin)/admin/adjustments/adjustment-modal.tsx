@@ -60,15 +60,7 @@ export default function AdjustmentModal({ user, isOpen, onClose, onSuccess }: Ad
 
       if (result.success) {
         toast.success(
-          `Adjustment recorded for ${user.name}: ${finalAmount > 0 ? "+" : ""}${finalAmount} tokens`,
-          {
-            style: {
-              background: "#10b981", // Solid green
-              color: "#fff",
-              border: "none",
-              borderRadius: "12px",
-            },
-          }
+          `Adjustment recorded for ${user.name}: ${finalAmount > 0 ? "+" : ""}${finalAmount} tokens`
         );
         
         if (onSuccess) {
@@ -78,14 +70,7 @@ export default function AdjustmentModal({ user, isOpen, onClose, onSuccess }: Ad
         reset();
         onClose();
       } else {
-        toast.error(result.error ?? "Adjustment failed. Please try again.", {
-          style: {
-            background: "#ef4444", // Solid red
-            color: "#fff",
-            border: "none",
-            borderRadius: "12px",
-          },
-        });
+        toast.error(result.error ?? "Adjustment failed. Please try again.");
       }
     });
   };

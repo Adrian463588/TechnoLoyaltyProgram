@@ -473,4 +473,37 @@
     );
     animation: skeleton-sweep 1.5s ease-in-out infinite;
   }
+
+  /* --- Global Toast Styles (Sonner) --- */
+  .cn-toast {
+    @apply !rounded-[16px] !px-5 !py-4 !border !shadow-lg !font-body !text-sm !transition-all !duration-300;
+  }
+
+  .cn-toast[data-type="success"] {
+    @apply !bg-emerald-50 !border-emerald-200 !text-emerald-800;
+  }
+  .cn-toast[data-type="success"] [data-icon] {
+    @apply !text-emerald-600;
+  }
+
+  .cn-toast[data-type="error"] {
+    @apply !bg-red-50 !border-red-200 !text-red-800;
+  }
+  .cn-toast[data-type="error"] [data-icon] {
+    @apply !text-red-600;
+  }
+
+  .cn-toast[data-type="warning"] {
+    @apply !bg-amber-50 !border-amber-200 !text-amber-800;
+  }
+  .cn-toast[data-type="warning"] [data-icon] {
+    @apply !text-amber-600;
+  }
+
+  .cn-toast[data-type="info"] {
+    @apply !bg-blue-50 !border-blue-200 !text-blue-800;
+  }
+  .cn-toast[data-type="info"] [data-icon] {
+    @apply !text-blue-600;
+  }
 }
