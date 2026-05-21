@@ -77,6 +77,15 @@ export const employeeApi = {
       next: { revalidate: 30 },
     } as RequestInit),
 
+  getTokenHistory: (token: string, params: { limit?: number; offset?: number } = {}) => {
+    const query = new URLSearchParams();
+    if (params.limit) query.append("limit", params.limit.toString());
+    if (params.offset) query.append("offset", params.offset.toString());
+    return apiFetch<TokenHistoryResponse>(`/api/employee/history?${query.toString()}`, {
+      headers: withAuth(token),
+    });
+  },
+
   changePassword: (token: string, payload: Record<string, string>) =>
     apiFetch<{ success: boolean }>("/api/employee/profile/change-password", {
       method: "POST",
@@ -310,6 +319,13 @@ export interface TokenLedgerEntryResponse {
   balanceAfter: number;
   reason: string | null;
   createdAt: string;
+}
+
+export interface TokenHistoryResponse {
+  entries: TokenLedgerEntryResponse[];
+  limit: number;
+  offset: number;
+  total: number;
 }
 
 export interface TokenSummaryResponse {

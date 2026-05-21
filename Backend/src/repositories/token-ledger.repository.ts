@@ -120,6 +120,15 @@ export class TokenLedgerRepository {
   }
 
   /**
+   * Gets total number of ledger entries for a user.
+   */
+  async countHistory(userId: string): Promise<number> {
+    return prisma.tokenLedger.count({
+      where: { userId },
+    });
+  }
+
+  /**
    * Gets token expiry summary grouped by earnedYear and expiresAt.
    *
    * Requirement 4.1, 4.2, 4.3, 4.4:

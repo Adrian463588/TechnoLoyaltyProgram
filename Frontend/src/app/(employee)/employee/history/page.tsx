@@ -1,13 +1,17 @@
 /**
- * /employee/history — Redemption History (Server Component)
- * Fetches real redemption data from /api/employee/redemptions.
+ * /employee/history — Token Ledger History (Server Component)
+ * Fetches real token transaction data from /api/employee/history.
  * Falls back gracefully on backend unavailability.
+ * 
+ * Styled to match Rewards Catalog and Admin Adjustment Table.
  */
 import { auth, getServerToken } from "@/lib/auth";
-import { employeeApi, type RedemptionResponse } from "@/lib/api-client";
+import { employeeApi, type TokenLedgerEntryResponse } from "@/lib/api-client";
+import { Breadcrumb } from "@/components/shared/breadcrumb";
+import { Pagination } from "@/components/shared/pagination";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Badge } from "@/components/ui/badge";
-import { RedemptionStatusChip } from "@/components/shared/status-badge";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -16,162 +20,248 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Coins, History, Info, Clock } from "lucide-react";
+import { Coins, History, Info, Clock, TrendingUp, ShoppingBag, Gift, Zap } from "lucide-react";
 
-export const metadata = { title: "Redemption History | Berijalan Loyalty" };
+export const metadata = { title: "Token History | Berijalan Loyalty" };
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
   });
 }
 
-export default async function RedemptionHistoryPage() {
+const getEventMetadata = (type: string) => {
+  switch (type) {
+    case "EARNED_SHIFT":
+      return { label: "Monthly Token Award", icon: TrendingUp, color: "text-success", bg: "bg-success/10", border: "border-success/20" };
+    case "EARNED_PROJECT":
+      return { label: "Project Completion Bonus", icon: Gift, color: "text-success", bg: "bg-success/10", border: "border-success/20" };
+    case "REDEEMED":
+      return { label: "Reward Redemption", icon: ShoppingBag, color: "text-error", bg: "bg-error/10", border: "border-error/20" };
+    case "MANUAL_ADJUSTMENT":
+      return { label: "Token Adjustment", icon: Coins, color: "text-info", bg: "bg-info/10", border: "border-info/20" };
+    case "DOWNGRADE_PENALTY":
+      return { label: "Tier Downgrade", icon: Clock, color: "text-error", bg: "bg-error/10", border: "border-error/20" };
+    case "RESET_PENALTY":
+      return { label: "Period Reset", icon: Clock, color: "text-error", bg: "bg-error/10", border: "border-error/20" };
+    case "EXPIRED":
+      return { label: "Token Expired", icon: Clock, color: "text-muted", bg: "bg-slate-100", border: "border-slate-200" };
+    default:
+      return { label: type.replace(/_/g, ' '), icon: Zap, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20" };
+  }
+};
+
+export default async function TokenHistoryPage(props: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await auth();
   const token = await getServerToken();
+  const searchParams = await props.searchParams;
 
-  let redemptions: RedemptionResponse[] = [];
+  const currentPage = Number(searchParams.page) || 1;
+  const itemsPerPage = 10;
+  const offset = (currentPage - 1) * itemsPerPage;
+
+  let entries: TokenLedgerEntryResponse[] = [];
+  let totalCount = 0;
+  
   try {
-    redemptions = await employeeApi.getMyRedemptions(token);
+    const response = await employeeApi.getTokenHistory(token, { 
+      limit: itemsPerPage, 
+      offset 
+    });
+    entries = response.entries;
+    totalCount = response.total;
   } catch (err) {
     console.warn(
-      "[history] failed to fetch redemptions:",
+      "[history] failed to fetch token history:",
       err instanceof Error ? err.message : err,
     );
   }
 
-  const counts = {
-    total: redemptions.length,
-    completed: redemptions.filter((r) => r.status === "COMPLETED").length,
-    pending: redemptions.filter((r) => r.status === "PENDING_VERIFICATION").length,
-    rejected: redemptions.filter((r) => r.status === "REJECTED").length,
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  const stats = {
+    earned: entries.filter(e => e.amount > 0).reduce((sum, e) => sum + e.amount, 0),
+    spent: Math.abs(entries.filter(e => e.amount < 0).reduce((sum, e) => sum + e.amount, 0)),
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto w-full space-y-6 p-6">
-      {/* Header Card */}
-      <div className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
-        <div>
-          <h1 className="text-card-heading text-2xl mb-1 flex items-center gap-3">
+    <div className="flex flex-col h-full">
+      <div className="px-4 md:px-6">
+        <Breadcrumb className="py-4" />
+      </div>
+
+      <div className="flex-1 p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-6 animate-fade-up-in">
+        
+        {/* Header Banner */}
+        <BentoCard className="p-6 flex flex-col justify-center">
+          <div className="flex items-center gap-3 mb-1">
             <History className="h-6 w-6 text-[--color-accent]" />
-            Redemption History
-          </h1>
-          <p className="text-[var(--color-text-secondary)]">
-            Track all your past and ongoing redemption requests.
+            <h1 className="text-card-heading text-2xl">Token History</h1>
+          </div>
+          <p className="text-[--color-text-secondary]">
+            Detailed record of all your token earnings and usage activity.
+          </p>
+        </BentoCard>
+
+        {/* Stats Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <BentoCard className="p-6 flex flex-col h-full bg-white animate-fade-up-in" style={{ animationDelay: '50ms' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                <Zap size={20} />
+              </div>
+              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider">Total Transactions</h3>
+            </div>
+            <div className="mt-auto pt-4 border-t border-border flex items-center justify-between">
+              <span className="text-sm font-semibold text-muted-foreground">Historical Entries</span>
+              <span className="text-xl font-bold text-foreground font-display">{totalCount}</span>
+            </div>
+          </BentoCard>
+
+          <BentoCard className="p-6 flex flex-col h-full bg-white animate-fade-up-in" style={{ animationDelay: '100ms' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-success/10 flex items-center justify-center text-success border border-success/20">
+                <TrendingUp size={20} />
+              </div>
+              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider">Historical Earnings</h3>
+            </div>
+            <div className="mt-auto pt-4 border-t border-border flex items-center justify-between">
+              <span className="text-sm font-semibold text-muted-foreground">Page Cumulative</span>
+              <div className="flex items-center gap-1.5 text-xl font-bold text-success font-display">
+                +{stats.earned.toLocaleString()}
+                <Coins className="h-4 w-4" />
+              </div>
+            </div>
+          </BentoCard>
+
+          <BentoCard className="p-6 flex flex-col h-full bg-white animate-fade-up-in" style={{ animationDelay: '150ms' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-error/10 flex items-center justify-center text-error border border-error/20">
+                <ShoppingBag size={20} />
+              </div>
+              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider">Historical Usage</h3>
+            </div>
+            <div className="mt-auto pt-4 border-t border-border flex items-center justify-between">
+              <span className="text-sm font-semibold text-muted-foreground">Page Cumulative</span>
+              <div className="flex items-center gap-1.5 text-xl font-bold text-error font-display">
+                -{stats.spent.toLocaleString()}
+                <Coins className="h-4 w-4" />
+              </div>
+            </div>
+          </BentoCard>
+        </div>
+
+        {/* History Table Card */}
+        <BentoCard className="p-0 overflow-hidden shadow-sm border-[var(--color-border-subtle)] animate-fade-up-in" style={{ animationDelay: "200ms" }}>
+          <div className="p-6 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/30 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-[var(--color-text-tertiary)]" />
+              <span className="text-sm font-semibold text-[var(--color-text-secondary)]">Ledger Activity</span>
+            </div>
+            <Badge variant="outline" className="rounded-md bg-[var(--color-surface-base)] px-3 py-1 font-mono text-[var(--color-text-secondary)]">
+              Page {currentPage} of {totalPages}
+            </Badge>
+          </div>
+
+          {entries.length === 0 ? (
+            <div className="p-20 flex flex-col items-center justify-center text-center gap-4 bg-white">
+              <div className="p-6 bg-slate-50 rounded-2xl text-slate-300">
+                <History className="w-12 h-12" aria-hidden="true" />
+              </div>
+              <div>
+                <h2 className="font-bold text-xl text-black">No activity recorded</h2>
+                <p className="text-sm text-muted mt-2 max-w-xs mx-auto">
+                  Once you start earning or redeeming tokens, your transaction history will appear here.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto hide-scrollbar bg-white">
+                <Table className="min-w-[900px]">
+                  <TableHeader className="bg-[var(--color-surface-elevated)]/50">
+                    <TableRow className="border-[var(--color-border-subtle)] hover:bg-transparent">
+                      <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Transaction Date</TableHead>
+                      <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Activity Type</TableHead>
+                      <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Reason / Note</TableHead>
+                      <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)] text-right">Amount</TableHead>
+                      <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)] text-right">Running Balance</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {entries.map((entry) => {
+                      const meta = getEventMetadata(entry.eventType);
+                      const Icon = meta.icon;
+                      const isAddition = entry.amount > 0;
+
+                      return (
+                        <TableRow
+                          key={entry.id}
+                          className="group border-b border-[var(--color-border-subtle)] transition-all duration-200 hover:bg-[var(--color-accent)]/[0.05] cursor-default"
+                        >
+                          <TableCell className="py-5 px-6 text-sm text-[var(--color-text-secondary)]">
+                            {formatDate(entry.createdAt)}
+                          </TableCell>
+                          <TableCell className="py-5 px-6">
+                            <div className="flex items-center gap-3">
+                              <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0 border", meta.bg, meta.color, meta.border)}>
+                                <Icon size={18} />
+                              </div>
+                              <span className="text-sm font-semibold text-[--color-text-secondary] group-hover:text-[--color-text-primary] transition-colors">
+                                {meta.label}
+                              </span>                            </div>
+                          </TableCell>
+                          <TableCell className="py-5 px-6">
+                            <p className="text-sm text-[var(--color-text-secondary)] italic max-w-[300px] truncate">
+                              {entry.reason || "—"}
+                            </p>
+                          </TableCell>
+                          <TableCell className="py-5 px-6 text-right">
+                            <span className={cn(
+                              "text-sm font-bold font-mono px-3 py-1 rounded-lg",
+                              isAddition ? "text-success bg-success/5" : "text-error bg-error/5"
+                            )}>
+                              {isAddition ? `+${entry.amount.toLocaleString()}` : entry.amount.toLocaleString()}
+                            </span>
+                          </TableCell>
+                          <TableCell className="py-5 px-6 text-right">
+                            <div className="text-sm font-bold text-[var(--color-text-primary)] font-mono">
+                              {entry.balanceAfter.toLocaleString()}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination Controls */}
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalResults={totalCount}
+              />
+            </>
+          )}
+        </BentoCard>
+
+        {/* Footer Info */}
+        <div className="flex items-start gap-3 text-xs text-[var(--color-text-secondary)] bg-[var(--color-surface-elevated)]/30 rounded-2xl p-5 border border-[var(--color-border-subtle)] animate-fade-up-in" style={{ animationDelay: '250ms' }}>
+          <div className="p-1.5 bg-blue-500/10 rounded-lg text-blue-500 shrink-0">
+            <Info size={14} aria-hidden="true" />
+          </div>
+          <p className="leading-relaxed">
+            Ledger records are finalized and cannot be modified once committed. 
+            If you believe there is a discrepancy in your token balance or activity, please contact the HC PM team with your transaction details.
           </p>
         </div>
-      </div>
-
-      {/* Summary Chips */}
-      <div className="flex flex-wrap gap-2 animate-fade-up-in" style={{ animationDelay: "50ms" }}>
-        {[
-          { label: "Total Requests", value: counts.total },
-          { label: "Completed", value: counts.completed },
-          { label: "Pending", value: counts.pending },
-          { label: "Rejected", value: counts.rejected },
-        ].map(({ label, value }) => (
-          <div key={label} className="flex items-center gap-2 bg-[var(--color-surface-elevated)]/30 px-4 py-2">
-            <span className="text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider">{label}:</span>
-            <span className="text-sm font-bold text-[var(--color-text-primary)]">{value}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* History Table Card */}
-      <BentoCard className="p-0 overflow-hidden shadow-sm border-[var(--color-border-subtle)] animate-fade-up-in" style={{ animationDelay: "100ms" }}>
-        <div className="p-5 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/30 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-[var(--color-text-tertiary)]" />
-            <span className="text-sm font-semibold text-[var(--color-text-secondary)]">My Redemptions</span>
-          </div>
-          <Badge variant="outline" className="font-mono bg-[var(--color-surface-base)] text-[var(--color-text-secondary)]">
-            {redemptions.length} Records
-          </Badge>
-        </div>
-
-        {redemptions.length === 0 ? (
-          <div className="p-16 flex flex-col items-center justify-center text-center gap-4">
-            <div className="p-4 bg-[var(--color-surface-elevated)] rounded-full text-[var(--color-text-tertiary)]">
-              <History className="w-8 h-8" aria-hidden="true" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-lg text-[var(--color-text-primary)]">No Redemption History</h2>
-              <p className="text-sm text-[var(--color-text-secondary)] mt-1 max-w-xs">
-                You haven&apos;t submitted any redemption requests yet. Start exploring the rewards catalog!
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="overflow-x-auto hide-scrollbar">
-            <Table data-testid="history-table" className="min-w-[900px]">
-              <TableHeader className="bg-[var(--color-surface-elevated)]/50">
-                <TableRow className="border-[var(--color-border-subtle)] hover:bg-transparent">
-                  <TableHead className="w-[120px] py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Request ID</TableHead>
-                  <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Reward Item</TableHead>
-                  <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)] text-right">Tokens</TableHead>
-                  <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Requested At</TableHead>
-                  <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {redemptions.map((req) => (
-                  <TableRow
-                    key={req.id}
-                    className="group border-b border-[var(--color-border-subtle)] transition-all duration-200 hover:bg-[var(--color-accent)]/[0.05] cursor-default"
-                  >
-                    <TableCell className="py-4 px-6 text-xs text-[var(--color-text-tertiary)] font-mono">
-                      #{req.id.slice(0, 8)}
-                    </TableCell>
-                    <TableCell className="py-4 px-6">
-                      <p className="text-sm font-medium text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">
-                        {req.item?.name ?? "—"}
-                      </p>
-                      {req.status === "REJECTED" && (
-                        <div className="flex items-start gap-1.5 mt-1.5 text-[11px] text-red-500 font-medium">
-                          <Info className="w-3 h-3 mt-0.5 shrink-0" aria-hidden="true" />
-                          <span>Contact HC PM for details.</span>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-4 px-6 text-right">
-                      <span className="flex items-center justify-end gap-1.5 text-sm font-mono font-bold text-red-500">
-                        -{(req.item?.tokenCost ?? 0).toLocaleString()}
-                        <Coins className="w-3.5 h-3.5" aria-hidden="true" />
-                      </span>
-                    </TableCell>
-                    <TableCell className="py-4 px-6 text-sm text-[var(--color-text-tertiary)]">
-                      {formatDate(req.createdAt)}
-                    </TableCell>
-                    <TableCell className="py-4 px-6">
-                      <RedemptionStatusChip
-                        status={req.status as import("@/types").RewardRequestStatus}
-                        className="shadow-sm"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </BentoCard>
-
-      {/* Info banner */}
-      <div
-        className="flex items-start gap-3 text-xs text-[var(--color-text-secondary)] bg-[var(--color-surface-elevated)]/30 rounded-2xl p-5 border border-[var(--color-border-subtle)] animate-fade-up-in"
-        style={{ animationDelay: "200ms" }}
-        role="note"
-      >
-        <div className="p-1.5 bg-blue-500/10 rounded-lg text-blue-500 shrink-0">
-          <Info className="w-4 h-4" aria-hidden="true" />
-        </div>
-        <p className="leading-relaxed">
-          Redemption requests are verified by the HC team before processing. 
-          Rejected requests will include a reason for your reference. 
-          If you have any questions, please contact your HC PM directly.
-        </p>
       </div>
     </div>
   );
