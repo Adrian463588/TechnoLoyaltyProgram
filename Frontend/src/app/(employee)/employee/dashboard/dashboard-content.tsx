@@ -95,12 +95,12 @@ export function DashboardContent({ data }: { data: DashboardData }) {
       {/* Welcome Banner Card */}
       <motion.div
         variants={itemVariants}
-        className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-start justify-between bg-linear-to-br from-[--color-surface] to-[--color-bg-subtle]"
+        className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-start justify-between"
       >
         <div>
           <motion.h1
             data-testid="employee-dashboard-heading"
-            className="text-2xl font-extrabold text-black mb-2 leading-none"
+            className="text-2xl font-extrabold text-[--color-text-secondary] mb-3 leading-none"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
@@ -113,7 +113,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            Active Earning Period: <span className="text-primary font-bold">{data.period}</span>
+            Active Earning Period: {data.period}
           </motion.p>
         </div>
         
@@ -121,7 +121,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
-          className="mt-4 md:mt-0 flex flex-col items-end text-right"
+          className="mt-4 md:mt-0"
         >
           <DashboardClock />
         </motion.div>
@@ -150,8 +150,8 @@ export function DashboardContent({ data }: { data: DashboardData }) {
           onMouseEnter={() => setHoveredCard("streak")}
           onMouseLeave={() => setHoveredCard(null)}
         >
-          <div className="pb-2">
-            <h3 className="text-label flex items-center gap-2 text-primary">
+          <div className="pb-0">
+            <h3 className="text-label flex items-center gap-2 mb-4 text-[--color-text-secondary]">
               <motion.div
                 animate={{ rotate: hoveredCard === "streak" ? [0, 10, -10, 0] : 0 }}
                 transition={{ duration: 0.5 }}
@@ -161,9 +161,9 @@ export function DashboardContent({ data }: { data: DashboardData }) {
               Earning Streak
             </h3>
           </div>
-          <div className="pt-0 mt-4">
+          <div className="pt-0">
             <motion.p
-              className="text-metric"
+              className="text-metric-hero text-[--color-text-primary]"
               animate={{ scale: hoveredCard === "streak" ? 1.05 : 1 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
@@ -194,8 +194,8 @@ export function DashboardContent({ data }: { data: DashboardData }) {
           onMouseEnter={() => setHoveredCard("redemption")}
           onMouseLeave={() => setHoveredCard(null)}
         >
-          <div className="pb-2">
-            <h3 className="text-label flex items-center gap-2 text-primary">
+          <div className="pb-0">
+            <h3 className="text-label flex items-center gap-2 mb-4 text-[--color-text-secondary]">
               <motion.div
                 animate={{ y: hoveredCard === "redemption" ? [0, -3, 0] : 0 }}
                 transition={{ duration: 0.5, repeat: Infinity }}
@@ -205,9 +205,9 @@ export function DashboardContent({ data }: { data: DashboardData }) {
               Redemption
             </h3>
           </div>
-          <div className="pt-0 mt-4">
+          <div className="pt-0">
             <motion.p
-              className="text-metric"
+              className="text-metric-hero text-[--color-text-primary]"
               animate={{ scale: hoveredCard === "redemption" ? 1.05 : 1 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
