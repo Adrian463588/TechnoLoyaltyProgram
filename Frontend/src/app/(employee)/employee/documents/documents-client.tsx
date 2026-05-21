@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -55,6 +57,7 @@ export function DocumentsClient({ initialDocuments, token }: { initialDocuments:
   const [documents, setDocuments] = useState<UserDocumentResponse[]>(initialDocuments);
   const [uploadingType, setUploadingingType] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<DocumentType | null>(null);
 
   const getDocByType = (type: string) => documents.find(d => d.type === type);
 
@@ -75,13 +78,15 @@ export function DocumentsClient({ initialDocuments, token }: { initialDocuments:
     }
   };
 
-  const handleDelete = async (docType: DocumentType) => {
-    if (!confirm(`Are you sure you want to remove your ${docType.label}?`)) return;
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
     
+    const docType = confirmDelete;
     try {
       await employeeApi.deleteDocument(token, docType.type);
       setDocuments(prev => prev.filter(d => d.type !== docType.type));
       toast.success(`${docType.label} removed`);
+      setConfirmDelete(null);
     } catch (err: unknown) {
       const error = err as Error;
       toast.error(error.message || "Failed to delete document");
@@ -102,7 +107,7 @@ export function DocumentsClient({ initialDocuments, token }: { initialDocuments:
               existingDoc={existingDoc}
               isUploading={isUploading}
               onUpload={(file) => handleUpload(docType.type, file)}
-              onDelete={() => handleDelete(docType)}
+              onDelete={() => setConfirmDelete(docType)}
               onView={(url) => setPreviewUrl(url)}
             />
           );
@@ -130,6 +135,39 @@ export function DocumentsClient({ initialDocuments, token }: { initialDocuments:
               />
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
+        <DialogContent className="rounded-2xl bg-white border border-neutral-200 shadow-2xl p-0 overflow-hidden max-w-sm">
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Trash2 size={32} />
+            </div>
+            <DialogHeader className="mb-0 p-0">
+              <DialogTitle className="text-xl font-bold text-neutral-900 text-center">Remove Document?</DialogTitle>
+              <DialogDescription className="text-neutral-500 text-sm leading-relaxed text-center mt-2">
+                Are you sure you want to remove your <span className="font-bold text-neutral-900">{confirmDelete?.label}</span>? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <DialogFooter className="bg-neutral-50 p-6 border-t border-neutral-100 flex flex-row gap-3 mt-0">
+            <Button 
+              variant="outline" 
+              onClick={() => setConfirmDelete(null)}
+              className="flex-1 rounded-xl border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDelete}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold shadow-md active:scale-95 transition-all"
+            >
+              Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
