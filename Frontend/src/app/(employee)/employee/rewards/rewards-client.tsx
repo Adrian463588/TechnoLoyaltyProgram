@@ -196,12 +196,12 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
                 <div className="pt-4 border-t border-border mt-auto flex items-center justify-between">
                   <div
                     className={cn(
-                      "flex items-center font-bold text-sm",
+                      "flex items-center font-extrabold text-lg",
                       canAfford ? "text-primary" : "text-red-500"
                     )}
                   >
                     {reward.tokenCost.toLocaleString()}
-                    <Coins className="w-3.5 h-3.5 ml-1" />
+                    <Coins className="w-[18px] h-[18px] ml-1.5" />
                   </div>
 
                   {canRedeem ? (
