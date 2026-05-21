@@ -14,8 +14,12 @@ import { leaderRoutes }   from "./api/leader.routes";
 import { errorHandler }   from "./middleware/error-handler";
 import { prisma }         from "./db/prisma";
 import { redisClient }    from "./utils/cache/redis-client";
+import path from "path";
 
 const app: Application = express();
+
+// ── Static Files ──────────────────────────────────────────────────────────
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // ── Global middleware ─────────────────────────────────────────────────────
 app.use(express.json({ limit: "10mb" }));

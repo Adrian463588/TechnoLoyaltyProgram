@@ -97,6 +97,7 @@ model User {
   shiftClaims                     ShiftClaim[]
   projectClaims                   ProjectClaim[]
   redemptions                     RedemptionRequest[]
+  documents                       UserDocument[]
   // Partner Status Confirmation back-relations
   partnerConfirmationsAsSubject   PartnerStatusConfirmation[] @relation("PartnerConfirmationSubject")
   partnerConfirmationsAsRequester PartnerStatusConfirmation[] @relation("PartnerConfirmationRequester")
@@ -289,4 +290,21 @@ model TokenConversionRule {
   updatedBy     String // actor ID who last changed this
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// ── User Documents ──
+model UserDocument {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String // "ID_CARD_MITRA", "KTP", "NPWP"
+  fileUrl   String // relative path
+  fileName  String // original filename
+  fileSize  Int // bytes
+  mimeType  String // image/png, etc
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, type])
 }
