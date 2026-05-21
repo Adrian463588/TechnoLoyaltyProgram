@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, TrendingUp, ChevronRight, ArrowUpRight, Clock, Gift } from "lucide-react";
+import { ShoppingBag, TrendingUp, ChevronRight, ArrowUpRight, Clock, Gift, Zap, Coins } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { TokenHeroSection } from "@/components/dashboard/token-hero-section";
 import { DashboardClock } from "@/components/dashboard/dashboard-clock";
@@ -10,11 +10,21 @@ import { Button } from "@/components/ui/button";
 import { BentoCard } from "@/components/ui/bento-card";
 import { cn } from "@/lib/utils";
 
+interface TokenLedgerEntry {
+  id: string;
+  eventType: string;
+  amount: number;
+  balanceAfter: number;
+  reason: string | null;
+  createdAt: string;
+}
+
 interface DashboardData {
   tokenBalance: number;
   tier: "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
   eligibilityStatus: { eligible: boolean; reason?: string };
   period: string;
+  recentTransactions?: TokenLedgerEntry[];
 }
 
 // Animation variants
@@ -35,11 +45,34 @@ const itemVariants: Variants = {
   },
 };
 
-const tokenHistoryData = [
-  { id: 1, title: "Monthly Token Award", date: "Oct 2024", division: "Opcent Division", amount: 120, icon: TrendingUp },
-  { id: 2, title: "Project Completion Bonus", date: "Sep 2024", division: "Techno Center", amount: 250, icon: Gift },
-  { id: 3, title: "Shift Incentive", date: "Sep 2024", division: "Tele Division", amount: 80, icon: Clock },
-];
+const getEventMetadata = (type: string) => {
+  switch (type) {
+    case "EARNED_SHIFT":
+      return { title: "Monthly Token Award", icon: TrendingUp };
+    case "EARNED_PROJECT":
+      return { title: "Project Completion Bonus", icon: Gift };
+    case "REDEEMED":
+      return { title: "Reward Redemption", icon: ShoppingBag };
+    case "MANUAL_ADJUSTMENT":
+      return { title: "Token Adjustment", icon: Coins };
+    case "DOWNGRADE_PENALTY":
+      return { title: "Tier Downgrade", icon: Clock };
+    case "RESET_PENALTY":
+      return { title: "Period Reset", icon: Clock };
+    case "EXPIRED":
+      return { title: "Token Expired", icon: Clock };
+    default:
+      return { title: "Token Transaction", icon: Zap };
+  }
+};
+
+const formatDate = (dateStr: string) => {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(dateStr));
+};
 
 const upcomingRewards = [
   { name: "Amazon Gift Card $50", progress: 75, tokensNeeded: 250 },
@@ -49,6 +82,8 @@ const upcomingRewards = [
 export function DashboardContent({ data }: { data: DashboardData }) {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const router = useRouter();
+
+  const transactions = data.recentTransactions || [];
 
   return (
     <motion.div
@@ -65,7 +100,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
         <div>
           <motion.h1
             data-testid="employee-dashboard-heading"
-            className="text-2xl font-extrabold text-[--color-text-secondary]-black mb-3 leading-none"
+            className="text-2xl font-extrabold text-black mb-2 leading-none"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
@@ -203,56 +238,74 @@ export function DashboardContent({ data }: { data: DashboardData }) {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-xs font-bold uppercase tracking-widest hover:bg-slate-50"
+              className="text-xs font-bold uppercase tracking-widest hover:bg-slate-50 flex items-center gap-1 whitespace-nowrap"
               onClick={() => router.push("/employee/history")}
             >
               View All
-              <ChevronRight className="ml-1 h-3 w-3" />
+              <ChevronRight className="h-3 w-3 shrink-0" />
             </Button>
           </div>
           <div>
             <div className="space-y-3">
               <AnimatePresence mode="popLayout">
-                {tokenHistoryData.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ scale: 1.01, backgroundColor: "var(--color-bg-subtle)" }}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50 cursor-pointer"
-                    data-testid={`employee-dashboard-activity-${item.id}`}
-                  >
-                    <div className="flex items-center gap-4">
+                {transactions.length > 0 ? (
+                  transactions.slice(0, 3).map((item, index) => {
+                    const metadata = getEventMetadata(item.eventType);
+                    const Icon = metadata.icon;
+                    const isAddition = item.amount > 0;
+                    
+                    return (
                       <motion.div
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                        className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center"
+                        key={item.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{ scale: 1.01, backgroundColor: "var(--color-bg-subtle)" }}
+                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50 cursor-pointer"
+                        data-testid={`employee-dashboard-activity-${item.id}`}
                       >
-                        <item.icon className="h-5 w-5 text-primary" />
+                        <div className="flex items-center gap-4">
+                          <motion.div
+                            whileHover={{ scale: 1.1, rotate: 5 }}
+                            className={cn(
+                              "h-10 w-10 rounded-full flex items-center justify-center transition-colors",
+                              isAddition 
+                                ? "bg-success/10 text-success" 
+                                : "bg-error/10 text-error"
+                            )}
+                          >
+                            <Icon className="h-5 w-5" />
+                          </motion.div>
+                          <div>
+                            <p className="text-sm font-bold text-foreground">
+                              {item.reason || metadata.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {formatDate(item.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.2 }}
+                        >
+                          <span className={cn(
+                            "text-sm font-bold", 
+                            isAddition ? "text-success" : "text-error"
+                          )}>
+                            {isAddition ? `+${item.amount}` : item.amount}
+                          </span>
+                        </motion.div>
                       </motion.div>
-                      <div>
-                        <p className="text-sm font-bold text-foreground">
-                          {item.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {item.date} • {item.division}
-                        </p>
-                      </div>
-                    </div>
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.2 }}
-                      className="flex items-center gap-1"
-                    >
-                      <span className="text-sm font-bold text-primary">
-                        +{item.amount}
-                      </span>
-                      <TrendingUp className="h-3 w-3 text-primary" />
-                    </motion.div>
-                  </motion.div>
-                ))}
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No transactions yet
+                  </div>
+                )}
               </AnimatePresence>
             </div>
           </div>
