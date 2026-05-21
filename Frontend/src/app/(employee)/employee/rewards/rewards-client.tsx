@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { RewardItem, MembershipTier } from "@/types";
 import { BentoCard } from "@/components/ui/bento-card";
@@ -76,9 +76,8 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
       const docs = await employeeApi.getDocuments(token);
       const uploadedTypes = new Set(docs.map(d => d.type));
       const missing = REQUIRED_DOCS
-        .filter(rd => !uploadedTypes.has(rd.type as any))
-        .map(rd => rd.label);
-      
+        .filter(rd => !uploadedTypes.has(rd.type as "ID_CARD_MITRA" | "KTP" | "NPWP"))
+        .map(rd => rd.label);      
       if (missing.length > 0) {
         setMissingDocs(missing);
         setShowIncompleteDocsModal(true);
@@ -86,7 +85,7 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
         setMissingDocs([]);
         setSelectedReward(reward);
       }
-    } catch (err) {
+    } catch {
       toast.error("Gagal memverifikasi kelengkapan dokumen.");
     } finally {
       setIsCheckingDocs(false);
@@ -514,7 +513,7 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
               <div className="space-y-2 mb-8">
                 <h3 className="text-2xl font-bold text-neutral-900">Permintaan Terkirim!</h3>
                 <p className="text-neutral-500 text-sm max-w-[300px] leading-relaxed mx-auto">
-                  Permintaan penukaran hadiah Anda telah dikirim ke tim HC untuk verifikasi. Anda dapat melacak statusnya di riwayat Anda.
+                  Permintaan penukaran hadiah Anda telah dikirim ke tim HC untuk verifikasi. Mohon menunggu konfirmasi dari pihak HC.
                 </p>
               </div>
 

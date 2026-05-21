@@ -1,23 +1,21 @@
 "use client";
 
-import { CheckCircle2, Circle, Package, ShoppingCart, Truck } from "lucide-react";
+import { CheckCircle2, Circle, FileSearch, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type PipelineStep = "submitted" | "verified" | "purchased" | "pickup" | "completed";
+export type PipelineStep = "submitted" | "review" | "accepted";
 
 const STEPS: {
   key: PipelineStep;
   label: string;
   icon: React.ElementType;
 }[] = [
-  { key: "submitted", label: "Submit",   icon: Circle },
-  { key: "verified",  label: "Verify",   icon: CheckCircle2 },
-  { key: "purchased", label: "Purchase", icon: ShoppingCart },
-  { key: "pickup",    label: "Pickup",   icon: Truck },
-  { key: "completed", label: "Done",     icon: Package },
+  { key: "submitted", label: "Request Sent",    icon: Circle },
+  { key: "review",    label: "Document Review", icon: FileSearch },
+  { key: "accepted",  label: "Confirmation",    icon: ShieldCheck },
 ];
 
-const STEP_ORDER: PipelineStep[] = ["submitted", "verified", "purchased", "pickup", "completed"];
+const STEP_ORDER: PipelineStep[] = ["submitted", "review", "accepted"];
 
 function stepIndex(step: PipelineStep): number {
   return STEP_ORDER.indexOf(step);

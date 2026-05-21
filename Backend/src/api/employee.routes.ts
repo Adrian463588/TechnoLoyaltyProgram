@@ -85,6 +85,7 @@ employeeRoutes.get("/token-summary", LoyaltyController.getTokenSummary as Reques
  */
 employeeRoutes.get( "/redemptions", RedemptionController.listMyRedemptions as RequestHandler);
 employeeRoutes.post("/redemptions", DocumentController.uploadMiddleware, RedemptionController.createRequest      as RequestHandler);
+employeeRoutes.post("/redemptions/:id/cancel", RedemptionController.cancelRequest as RequestHandler);
 
 // ── Reward Catalog (read-only for employees) ───────────────────────────────
 /**

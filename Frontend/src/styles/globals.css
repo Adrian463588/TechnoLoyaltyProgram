@@ -12,6 +12,9 @@
   --color-ink: var(--color-text-primary);
   --color-muted: var(--color-text-secondary);
   --color-border: var(--color-border);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-text-primary);
+  --color-muted-foreground: var(--color-text-secondary);
 
   --font-display: var(--font-display);
   --font-body: var(--font-body);

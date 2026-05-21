@@ -21,12 +21,16 @@ export default async function RedemptionsPage() {
   // Map backend DTO to the shape RedemptionsClient expects
   const mapped = requests.map((r) => ({
     id: r.id,
-    userId: "",
-    userName: r.item?.name ?? "—",
+    userId: r.mitra?.id ?? "",
+    userNpk: r.mitra?.npk ?? "—",
+    userName: r.mitra?.name ?? "—",
+    userDocuments: r.mitra?.documents ?? [],
     rewardId: r.item?.id ?? "",
     rewardName: r.item?.name ?? "—",
     tokensSpent: r.item?.tokenCost ?? 0,
     status: r.status as import("@/types").RewardRequestStatus,
+    isRepresented: (r as any).isRepresented ?? false,
+    powerOfAttorneyUrl: (r as any).powerOfAttorneyUrl ?? null,
     requestedAt: r.createdAt,
     updatedAt: r.createdAt,
   }));

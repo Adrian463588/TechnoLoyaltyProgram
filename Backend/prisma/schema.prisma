@@ -63,13 +63,10 @@ enum UploadStatus {
 }
 
 enum RedemptionStatus {
-  DRAFT
-  PENDING_VERIFICATION
-  VERIFIED
+  REQUESTED
+  REVIEWED
+  ACCEPTED
   REJECTED
-  PURCHASED
-  PICKUP_SCHEDULED
-  COMPLETED
   CANCELLED
 }
 
@@ -193,7 +190,7 @@ model RedemptionRequest {
   mitraId                 String
   rewardItemId            String
   tokenCost               Int // snapshot
-  status                  RedemptionStatus @default(DRAFT)
+  status                  RedemptionStatus @default(REQUESTED)
   submittedAt             DateTime         @default(now())
   verifiedBy              String? // actor ID
   verifiedAt              DateTime?
