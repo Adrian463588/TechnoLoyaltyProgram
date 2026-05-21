@@ -53,8 +53,12 @@ spec:
         # DevSecOps: Disable anonymous access
         - name: GF_AUTH_ANONYMOUS_ENABLED
           value: "false"
+        - name: GF_SERVER_DOMAIN
+          value: "grafana.34.101.180.46.nip.io"
         - name: GF_SERVER_ROOT_URL
           value: "http://grafana.34.101.180.46.nip.io"
+        - name: GF_SECURITY_COOKIE_SECURE
+          value: "false"
         volumeMounts:
         - name: datasources
           mountPath: /etc/grafana/provisioning/datasources
