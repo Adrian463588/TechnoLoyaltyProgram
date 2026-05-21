@@ -16,6 +16,7 @@ async function getDashboardData(token: string) {
       tier:              summary.user.membershipTier,
       eligibilityStatus: { eligible: summary.tokenSummary.isEligibleForReward },
       period:            "P2: Jun 16 → Dec 15",  // TODO: derive from backend once endpoint exposes period
+      recentTransactions: summary.recentTransactions,
     };
   } catch {
     return {

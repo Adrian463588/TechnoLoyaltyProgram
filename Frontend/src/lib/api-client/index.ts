@@ -300,6 +300,16 @@ export interface EmployeeDashboardResponse {
   };
   tokenSummary: TokenSummaryResponse;
   recentRedemptions: RedemptionResponse[];
+  recentTransactions: TokenLedgerEntryResponse[];
+}
+
+export interface TokenLedgerEntryResponse {
+  id: string;
+  eventType: string;
+  amount: number;
+  balanceAfter: number;
+  reason: string | null;
+  createdAt: string;
 }
 
 export interface TokenSummaryResponse {
