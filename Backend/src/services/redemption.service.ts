@@ -112,7 +112,7 @@ export class RedemptionService {
 
    * Section 13 - Redemption Guard.
    */
-  async submitRequest(userId: string, rewardItemId: string): Promise<RedemptionRequest> {
+  async submitRequest(userId: string, rewardItemId: string, options?: { isRepresented?: boolean, powerOfAttorneyUrl?: string }): Promise<RedemptionRequest> {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundError("User", userId);
 
@@ -133,6 +133,10 @@ export class RedemptionService {
       throw new ValidationError(eligibility.reasons.join(", "));
     }
 
+    if (options?.isRepresented && !options?.powerOfAttorneyUrl) {
+      throw new ValidationError("Power of Attorney document is required when using a representative.");
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create request
       const request = await tx.redemptionRequest.create({
@@ -141,6 +145,9 @@ export class RedemptionService {
           rewardItemId,
           tokenCost: item.tokenCost,
           status: "PENDING_VERIFICATION",
+          isRepresented: options?.isRepresented ?? false,
+          powerOfAttorneyUrl: options?.powerOfAttorneyUrl ?? null,
+          powerOfAttorneyRequired: options?.isRepresented ?? false,
         },
       });
 
@@ -151,7 +158,7 @@ export class RedemptionService {
           previousStatus: "DRAFT",
           newStatus: "PENDING_VERIFICATION",
           changedBy: userId,
-          note: "Initial submission",
+          note: options?.isRepresented ? "Initial submission (Representative pickup)" : "Initial submission",
         },
       });
 

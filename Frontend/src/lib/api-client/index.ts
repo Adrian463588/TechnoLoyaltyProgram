@@ -72,12 +72,24 @@ export const employeeApi = {
       headers: withAuth(token),
     }),
 
-  createRedemption: (token: string, rewardItemId: string) =>
-    apiFetch<RedemptionResponse>("/api/employee/redemptions", {
+  createRedemption: (token: string, rewardItemId: string, options?: { isRepresented?: boolean, file?: File }) => {
+    const formData = new FormData();
+    formData.append("rewardItemId", rewardItemId);
+    if (options?.isRepresented) {
+      formData.append("isRepresented", "true");
+    }
+    if (options?.file) {
+      formData.append("file", options.file);
+    }
+
+    return apiFetch<RedemptionResponse>("/api/employee/redemptions", {
       method: "POST",
-      headers: withAuth(token),
-      body: JSON.stringify({ rewardItemId }),
-    }),
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+  },
 
   /** HC-02 read-only: returns the active reward catalog for employees */
   getRewardCatalog: (token: string) =>

@@ -66,9 +66,15 @@ export const RedemptionController = {
         throw new ValidationError("Invalid input", z.treeifyError(parsed.error));
       }
 
+      const powerOfAttorneyUrl = req.file ? req.file.path.replace(/\\/g, "/") : undefined;
+
       const redemption = await redemptionService.submitRequest(
         user.id,
         parsed.data.rewardItemId,
+        {
+          isRepresented: parsed.data.isRepresented,
+          powerOfAttorneyUrl,
+        }
       );
       res.status(201).json(redemption);
     } catch (err) {

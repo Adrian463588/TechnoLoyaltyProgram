@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDropzone } from "react-dropzone";
 import { RewardItem, MembershipTier } from "@/types";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { SuccessAnimation } from "@/components/shared/success-animation";
 import { RedemptionPipeline } from "@/components/shared/redemption-pipeline";
 import { TooltipWrapper } from "@/components/shared/tooltip-wrapper";
 import { TierBadge } from "@/components/shared/status-badge";
-import { Coins, Lock, ShoppingBag, Loader2 } from "lucide-react";
+import { Coins, Lock, ShoppingBag, Loader2, FileText, Upload, Check, Trash2, AlertCircle, ArrowRight, X } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { employeeApi } from "@/lib/api-client";
 import { submitRedemptionRequest } from "@/features/redemptions/actions";
 
 interface RewardsClientProps {
@@ -27,6 +29,7 @@ interface RewardsClientProps {
   userTokens: number;
   isEligible: boolean;
   userTier: MembershipTier;
+  token: string;
 }
 
 const TIER_RANK: Record<MembershipTier, number> = {
@@ -36,30 +39,90 @@ const TIER_RANK: Record<MembershipTier, number> = {
   "DIAMOND": 3
 };
 
-export default function RewardsClient({ rewards, userTokens, isEligible, userTier }: RewardsClientProps) {
+const REQUIRED_DOCS = [
+  { type: "ID_CARD_MITRA", label: "ID Card Mitra" },
+  { type: "KTP", label: "KTP (Identity Card)" },
+  { type: "NPWP", label: "NPWP (Tax ID)" },
+];
+
+export default function RewardsClient({ rewards, userTokens, isEligible, userTier, token }: RewardsClientProps) {
   const [selectedReward, setSelectedReward] = useState<RewardItem | null>(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [success, setSuccess] = useState(false);
+  
+  // Document validation states
+  const [isCheckingDocs, setIsCheckingDocs] = useState(false);
+  const [missingDocs, setMissingDocs] = useState<string[]>([]);
+  const [showIncompleteDocsModal, setShowIncompleteDocsModal] = useState(false);
+
+  // Pickup representation states
+  const [isRepresented, setIsRepresented] = useState(false);
+  const [poaFile, setPoaFile] = useState<File | null>(null);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: (files) => setPoaFile(files[0] || null),
+    accept: {
+      'image/png': ['.png'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/heic': ['.heic'],
+    },
+    maxFiles: 1,
+    multiple: false
+  });
+
+  const handleInitiateRedeem = async (reward: RewardItem) => {
+    setIsCheckingDocs(true);
+    try {
+      const docs = await employeeApi.getDocuments(token);
+      const uploadedTypes = new Set(docs.map(d => d.type));
+      const missing = REQUIRED_DOCS
+        .filter(rd => !uploadedTypes.has(rd.type as any))
+        .map(rd => rd.label);
+      
+      if (missing.length > 0) {
+        setMissingDocs(missing);
+        setShowIncompleteDocsModal(true);
+      } else {
+        setMissingDocs([]);
+        setSelectedReward(reward);
+      }
+    } catch (err) {
+      toast.error("Gagal memverifikasi kelengkapan dokumen.");
+    } finally {
+      setIsCheckingDocs(false);
+    }
+  };
 
   const handleRedeem = async () => {
     if (!selectedReward) return;
+    
+    if (isRepresented && !poaFile) {
+      toast.error("Silakan unggah Surat Kuasa terlebih dahulu.");
+      return;
+    }
+
     setIsRedeeming(true);
     
     try {
-      const result = await submitRedemptionRequest({ rewardItemId: selectedReward.id });
+      const result = await submitRedemptionRequest({ 
+        rewardItemId: selectedReward.id,
+        isRepresented,
+        file: poaFile || undefined
+      });
       
       if (result.success) {
         setSuccess(true);
-        toast.success("Reward request submitted successfully!", {
+        toast.success("Permintaan hadiah berhasil dikirim!", {
           style: { background: "#10b981", color: "#fff", border: "none", borderRadius: "12px" }
         });
       } else {
-        toast.error(result.error ?? "Failed to submit request", {
+        toast.error(result.error ?? "Gagal mengirim permintaan", {
           style: { background: "#ef4444", color: "#fff", border: "none", borderRadius: "12px" }
         });
       }
-    } catch (err: any) {
-      toast.error("An unexpected error occurred. Please try again.", {
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || "Terjadi kesalahan tak terduga. Silakan coba lagi.", {
         style: { background: "#ef4444", color: "#fff", border: "none", borderRadius: "12px" }
       });
     } finally {
@@ -70,6 +133,9 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
   const closeDialog = () => {
     if (!isRedeeming) {
       setSelectedReward(null);
+      setIsRepresented(false);
+      setPoaFile(null);
+      setMissingDocs([]);
       setTimeout(() => setSuccess(false), 300);
     }
   };
@@ -98,6 +164,16 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
   return (
     <div className="space-y-6 animate-fade-up-in">
       
+      {/* Global Loader for Doc Checking */}
+      {isCheckingDocs && (
+        <div className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-sm flex items-center justify-center">
+          <BentoCard className="p-8 flex flex-col items-center gap-4 bg-white/90 shadow-2xl scale-110">
+            <Loader2 className="h-10 w-10 text-primary animate-spin" />
+            <p className="text-sm font-bold text-slate-700 uppercase tracking-widest">Memvalidasi dokumen...</p>
+          </BentoCard>
+        </div>
+      )}
+
       {/* Header & Token Summary */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
         <BentoCard className="md:col-span-8 p-6 flex flex-col justify-center">
@@ -207,7 +283,7 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
                   {canRedeem ? (
                     <Button
                       size="sm"
-                      onClick={() => setSelectedReward(reward)}
+                      onClick={() => handleInitiateRedeem(reward)}
                       data-testid={`redeem-btn-${reward.id}`}
                       className="transition-all hover:scale-105 active:scale-95 px-4"
                     >
@@ -240,12 +316,54 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
         })}
       </div>
 
-      {/* Redemption Dialog */}
+      {/* 1. Incomplete Documents Modal */}
+      <Dialog open={showIncompleteDocsModal} onOpenChange={setShowIncompleteDocsModal}>
+        <DialogContent className="rounded-2xl bg-white border border-neutral-200 shadow-2xl p-0 overflow-hidden max-w-sm">
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-red-100">
+              <AlertCircle size={32} />
+            </div>
+            <DialogHeader className="mb-0 p-0 text-center">
+              <DialogTitle className="text-xl font-extrabold text-neutral-900 text-center">Data Belum Lengkap</DialogTitle>
+              <DialogDescription className="text-neutral-500 text-sm leading-relaxed text-center mt-2">
+                Maaf, Anda belum bisa melakukan penukaran. Mohon lengkapi dokumen identitas berikut di menu <span className="font-bold text-neutral-700">My Documents</span>:
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="mt-6 space-y-2">
+              {missingDocs.map(doc => (
+                <div key={doc} className="py-2.5 px-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-2 text-xs font-bold text-slate-700">
+                  <X size={14} className="text-red-500" />
+                  {doc}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <DialogFooter className="bg-neutral-50 p-6 border-t border-neutral-100 flex flex-col gap-2 mt-0">
+            <Link href="/employee/documents" className="w-full">
+              <Button className="w-full py-6 rounded-xl font-bold gap-2">
+                Lengkapi Sekarang
+                <ArrowRight size={16} />
+              </Button>
+            </Link>
+            <Button 
+              variant="ghost" 
+              onClick={() => setShowIncompleteDocsModal(false)}
+              className="w-full rounded-xl text-neutral-500 font-bold hover:bg-neutral-100 transition-colors"
+            >
+              Nanti Saja
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 2. Confirm Redemption Dialog */}
       <Dialog open={!!selectedReward} onOpenChange={closeDialog}>
         <DialogContent className="rounded-2xl bg-white border border-neutral-200 shadow-2xl p-0 overflow-hidden max-w-lg">
           {!success ? (
             <>
-              <div className="p-8">
+              <div className="p-8 max-h-[85vh] overflow-y-auto hide-scrollbar">
                 <DialogHeader className="mb-6">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="p-2.5 bg-[var(--color-accent)]/10 rounded-xl text-[var(--color-accent)]">
@@ -254,37 +372,110 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
                     <DialogTitle className="text-xl font-bold text-neutral-900 text-left">Confirm Redemption</DialogTitle>
                   </div>
                   <DialogDescription className="text-neutral-600 text-sm leading-relaxed text-left">
-                    You are about to redeem your tokens for this reward. This request will be sent to the HC team for verification.
+                    Anda akan menukarkan token Anda dengan hadiah ini. Permintaan ini akan dikirim ke tim HC untuk verifikasi.
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="p-5 bg-neutral-50 border border-neutral-100 rounded-2xl space-y-4">
-                  <div>
-                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Item Selected</p>
-                    <h4 className="font-bold text-neutral-900 text-base">{selectedReward?.name}</h4>
+                <div className="space-y-6">
+                  {/* Item Summary */}
+                  <div className="p-5 bg-neutral-50 border border-neutral-100 rounded-2xl space-y-4">
+                    <div>
+                      <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Item Selected</p>
+                      <h4 className="font-bold text-neutral-900 text-base">{selectedReward?.name}</h4>
+                    </div>
+                    
+                    <div className="space-y-2 pt-4 border-t border-neutral-200/60">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-neutral-500">Saldo Saat Ini</span>
+                        <span className="font-mono font-medium text-neutral-900">
+                          {userTokens.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-neutral-500">Biaya Penukaran</span>
+                        <span className="font-mono font-bold flex items-center text-red-600">
+                          −{selectedReward?.tokenCost.toLocaleString()}
+                          <Coins className="w-3.5 h-3.5 ml-1.5" />
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm pt-2 border-t border-dashed border-neutral-300 mt-2">
+                        <span className="font-semibold text-neutral-700">Saldo Akhir</span>
+                        <span className="font-mono font-bold flex items-center text-[var(--color-accent)] text-base">
+                          {(userTokens - (selectedReward?.tokenCost ?? 0)).toLocaleString()}
+                          <Coins className="w-3.5 h-3.5 ml-1.5" />
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="space-y-2 pt-4 border-t border-neutral-200/60">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-neutral-500">Your Current Balance</span>
-                      <span className="font-mono font-medium text-neutral-900">
-                        {userTokens.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-neutral-500">Redemption Cost</span>
-                      <span className="font-mono font-bold flex items-center text-red-600">
-                        −{selectedReward?.tokenCost.toLocaleString()}
-                        <Coins className="w-3.5 h-3.5 ml-1.5" />
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm pt-2 border-t border-dashed border-neutral-300 mt-2">
-                      <span className="font-semibold text-neutral-700">Balance After</span>
-                      <span className="font-mono font-bold flex items-center text-[var(--color-accent)] text-base">
-                        {(userTokens - (selectedReward?.tokenCost ?? 0)).toLocaleString()}
-                        <Coins className="w-3.5 h-3.5 ml-1.5" />
-                      </span>
-                    </div>
+
+                  {/* Representative Checkbox */}
+                  <div className="space-y-4">
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <div className="relative flex items-center justify-center mt-0.5">
+                        <input
+                          type="checkbox"
+                          checked={isRepresented}
+                          onChange={(e) => {
+                            setIsRepresented(e.target.checked);
+                            if (!e.target.checked) setPoaFile(null);
+                          }}
+                          className="peer h-5 w-5 appearance-none rounded-lg border-2 border-slate-200 checked:border-primary checked:bg-primary transition-all cursor-pointer"
+                        />
+                        <Check size={14} className="absolute text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-slate-800 group-hover:text-primary transition-colors">
+                          Diterima oleh wakil (Diwakilkan)
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          Pilih jika Anda tidak dapat mengambil hadiah sendiri.
+                        </span>
+                      </div>
+                    </label>
+
+                    {/* POA Upload Area */}
+                    {isRepresented && (
+                      <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                        {poaFile ? (
+                          <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 flex items-center justify-between group">
+                            <div className="flex items-center gap-3 truncate">
+                              <div className="h-10 w-10 rounded-lg bg-white flex items-center justify-center border border-primary/10 shrink-0 shadow-sm">
+                                <FileText size={20} className="text-primary" />
+                              </div>
+                              <div className="flex flex-col truncate">
+                                <span className="text-xs font-bold text-slate-800 truncate">{poaFile.name}</span>
+                                <span className="text-[10px] text-primary/60 font-medium">Siap diunggah</span>
+                              </div>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-red-500 hover:bg-red-50"
+                              onClick={() => setPoaFile(null)}
+                            >
+                              <Trash2 size={14} />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div 
+                            {...getRootProps()}
+                            className={cn(
+                              "border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer",
+                              isDragActive ? "border-primary bg-primary/5 scale-[1.01]" : "border-slate-200 hover:border-primary/40 hover:bg-slate-50"
+                            )}
+                          >
+                            <input {...getInputProps()} />
+                            <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                              <Upload size={20} className="text-slate-400" />
+                            </div>
+                            <p className="text-sm font-bold text-slate-700 mb-1">Unggah Surat Kuasa</p>
+                            <p className="text-[10px] text-muted-foreground leading-relaxed">
+                              PNG, JPG, HEIC dengan tanda tangan & materai (Max 5MB)
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -296,21 +487,21 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
                   disabled={isRedeeming}
                   className="flex-1 rounded-xl border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
                 >
-                  Cancel
+                  Batal
                 </Button>
                 <Button
                   onClick={handleRedeem}
-                  disabled={isRedeeming}
+                  disabled={isRedeeming || (isRepresented && !poaFile)}
                   data-testid="confirm-redeem-btn"
                   className="flex-1 btn-primary rounded-xl font-semibold shadow-md active:scale-95 ml-3"
                 >
                   {isRedeeming ? (
                     <span className="flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Processing…
+                      Memproses…
                     </span>
                   ) : (
-                    "Confirm Request"
+                    "Konfirmasi"
                   )}
                 </Button>
               </DialogFooter>
@@ -321,9 +512,9 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
                 <SuccessAnimation size={64} />
               </div>
               <div className="space-y-2 mb-8">
-                <h3 className="text-2xl font-bold text-neutral-900">Request Submitted!</h3>
+                <h3 className="text-2xl font-bold text-neutral-900">Permintaan Terkirim!</h3>
                 <p className="text-neutral-500 text-sm max-w-[300px] leading-relaxed mx-auto">
-                  Your redemption request has been sent to HC team for verification. You can track its status in your history.
+                  Permintaan penukaran hadiah Anda telah dikirim ke tim HC untuk verifikasi. Anda dapat melacak statusnya di riwayat Anda.
                 </p>
               </div>
 
@@ -337,7 +528,7 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
                 className="w-full btn-primary rounded-xl font-semibold py-6 text-base" 
                 data-testid="done-btn"
               >
-                Great, thanks!
+                Bagus, terima kasih!
               </Button>
             </div>
           )}

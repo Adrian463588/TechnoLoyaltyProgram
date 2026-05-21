@@ -53,6 +53,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 
 export const redeemRequestSchema = z.object({
   rewardItemId: z.string().uuid("Invalid reward item ID"),
+  isRepresented: z.preprocess((val) => val === 'true' || val === true, z.boolean()).optional(),
 });
 
 export const updateStatusSchema = z.object({

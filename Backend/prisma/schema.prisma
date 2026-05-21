@@ -204,6 +204,8 @@ model RedemptionRequest {
   idCardVerified          Boolean          @default(false)
   ktpVerified             Boolean          @default(false)
   npwpVerified            Boolean          @default(false)
+  isRepresented           Boolean          @default(false)
+  powerOfAttorneyUrl      String? // relative path to uploaded file
   powerOfAttorneyRequired Boolean          @default(false)
   powerOfAttorneyVerified Boolean?
   createdAt               DateTime         @default(now())
