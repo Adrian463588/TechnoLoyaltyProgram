@@ -43,6 +43,7 @@ export class RedemptionService {
             name: true, 
             email: true, 
             npk: true,
+            division: true,
             documents: true
           } 
         },

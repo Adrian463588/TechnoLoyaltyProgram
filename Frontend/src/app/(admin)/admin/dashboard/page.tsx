@@ -1,11 +1,57 @@
 import React from "react";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
-import { FileUp, Users, ShoppingBag, Zap, ChevronRight, UserCheck } from "lucide-react";
+import { FileUp, Users, ShoppingBag, Coins, ChevronRight, UserCheck, Zap } from "lucide-react";
 import { RedemptionQueueTable } from "@/features/admin/redemption-queue-table";
 import { DashboardClock } from "@/components/dashboard/dashboard-clock";
+import { auth, getServerToken } from "@/lib/auth";
+import { adminApi } from "@/lib/api-client";
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  await auth();
+  const token = await getServerToken();
+
+  let requests: Awaited<ReturnType<typeof adminApi.listRedemptions>> = [];
+  let users: Awaited<ReturnType<typeof adminApi.listUsers>> = [];
+
+  try {
+    [requests, users] = await Promise.all([
+      adminApi.listRedemptions(token),
+      adminApi.listUsers(token),
+    ]);
+  } catch (error) {
+    console.warn("Failed to load dashboard data:", error);
+  }
+
+  // Map to the shape expected by the UI component
+  const mapped = requests.map((r) => ({
+    id: r.id,
+    mitraName: r.mitra?.name ?? "—",
+    division: r.mitra?.division ?? "—",
+    rewardName: r.item?.name ?? "—",
+    tokenCost: r.item?.tokenCost ?? 0,
+    status: r.status as any,
+    submittedAt: r.createdAt,
+    // Add extra fields needed by the drawer
+    userId: r.mitra?.id ?? "",
+    userNpk: r.mitra?.npk ?? "—",
+    userDocuments: r.mitra?.documents ?? [],
+    rewardId: r.item?.id ?? "",
+    tokensSpent: r.item?.tokenCost ?? 0,
+    isRepresented: r.isRepresented,
+    powerOfAttorneyUrl: r.powerOfAttorneyUrl,
+  }));
+
+  const requestedCount = requests.filter(r => r.status === "REQUESTED").length;
+  const activePartnersCount = users.filter(u => u.partnerStatus === "ACTIVE").length;
+  const totalTokensIssued = users.reduce((sum, u) => sum + (u.tokens ?? 0), 0);
+
+  // Format tokens (e.g., 14200 -> 14.2k)
+  const formatTokens = (val: number) => {
+    if (val >= 1000) return (val / 1000).toFixed(1) + 'k';
+    return val.toString();
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <div className="glass-nav px-6">
@@ -37,9 +83,9 @@ export default function AdminDashboardPage() {
           <div className="bento-span-12 md:bento-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-2">
             <h3 className="text-label flex items-center gap-2 mb-4">
               <ShoppingBag className="h-[14px] w-[14px] text-[--color-warning]" />
-              Pending Redeem
+              Requested Redeem
             </h3>
-            <p className="text-metric-hero text-[--color-warning]">12</p>
+            <p className="text-metric-hero text-[--color-warning]">{requestedCount}</p>
           </div>
 
           <div className="bento-span-12 md:bento-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-3">
@@ -47,15 +93,15 @@ export default function AdminDashboardPage() {
               <Users className="h-[14px] w-[14px] text-[--color-info]" />
               Active Partners
             </h3>
-            <p className="text-metric-hero text-[--color-info]">248</p>
+            <p className="text-metric-hero text-[--color-info]">{activePartnersCount}</p>
           </div>
 
           <div className="bento-span-12 md:bento-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-4">
             <h3 className="text-label flex items-center gap-2 mb-4">
-              <Zap className="h-[14px] w-[14px] text-[--color-accent]" />
+              <Coins className="h-[14px] w-[14px] text-[--color-accent]" />
               Tokens Issued
             </h3>
-            <p className="text-metric-hero text-[--color-accent]">14.2k</p>
+            <p className="text-metric-hero text-[--color-accent]">{formatTokens(totalTokensIssued)}</p>
           </div>
 
           {/* Action Center */}
@@ -127,8 +173,17 @@ export default function AdminDashboardPage() {
           
           {/* Redemption Queue Table */}
           <div className="bento-span-12 bento-card p-6 animate-fade-up-in stagger-5 min-h-[300px]">
-            <h3 className="text-card-heading mb-6">Redemption Queue</h3>
-            <RedemptionQueueTable />
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-card-title text-[--color-text-secondary]">Redemption Queue</h3>
+              <Link
+                href="/admin/redemptions"
+                className="text-xs font-bold uppercase tracking-widest text-[--color-text-tertiary] hover:text-[--color-text-primary] hover:bg-slate-50 px-2 py-1 rounded-md flex items-center gap-1 transition-all"
+              >
+                View All
+                <ChevronRight className="h-3 w-3" />
+              </Link>
+            </div>
+            <RedemptionQueueTable initialRequests={mapped} />
           </div>
 
         </div>

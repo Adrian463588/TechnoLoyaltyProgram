@@ -31,6 +31,7 @@ export const RedemptionController = {
             name: r.mitra.name,
             email: r.mitra.email,
             npk: r.mitra.npk,
+            division: r.mitra.division,
             documents: r.mitra.documents.map(d => ({
               id: d.id,
               type: d.type,

@@ -413,6 +413,7 @@ export interface RedemptionResponse {
     name: string;
     email: string;
     npk: string;
+    division?: string;
     documents?: Array<{
       id: string;
       type: "ID_CARD_MITRA" | "KTP" | "NPWP";
