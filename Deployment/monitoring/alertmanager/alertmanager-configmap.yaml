@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 3h
+      receiver: 'discord-webhook'
+    receivers:
+    - name: 'discord-webhook'
+      discord_configs:
+      - webhook_url: 'https://discord.com/api/webhooks/1503984048643772597/nKPvQEDZBVLF8EvnLUwS20Ng8o5rj2FEUa0ng4bYakDZ52ceMeleNmheAmmHv5i8mHuL'
+        title: '{{ template "discord.title" . }}'
+        message: '{{ template "discord.message" . }}'
+  discord.tmpl: |
+    {{ define "discord.title" }}
+      [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }}
+    {{ end }}
+    {{ define "discord.message" }}
+      {{ range .Alerts }}
+        **Alert:** {{ .Annotations.summary }}
+        **Description:** {{ .Annotations.description }}
+        **Details:**
+        {{ range .Labels.SortedPairs }} - {{ .Name }}: {{ .Value }}
+        {{ end }}
+      {{ end }}
+    {{ end }}

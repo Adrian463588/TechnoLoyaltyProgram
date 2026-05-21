@@ -48,6 +48,8 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /etc/prometheus
+        - name: rules
+          mountPath: /etc/prometheus/rules
         - name: storage
           mountPath: /prometheus
         livenessProbe:
@@ -66,6 +68,9 @@ spec:
       - name: config
         configMap:
           name: prometheus-config
+      - name: rules
+        configMap:
+          name: prometheus-rules
       - name: storage
         emptyDir: {}
 ---

@@ -18,3 +18,10 @@ spec:
     kind: ResourceQuota
   - group: ''
     kind: LimitRange
+  roles:
+  - name: developer
+    description: Read-only access for developers
+    policies:
+    - p, proj:loyalty-program:developer, applications, get, loyalty-program/*, allow
+    groups:
+    - developers-group
