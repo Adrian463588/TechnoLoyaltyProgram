@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Menu, LogOut, User, Bell, ChevronDown } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
@@ -13,11 +13,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { data: session } = useSession();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const role = (session?.user?.role as string) || "MITRA";
   const router = useRouter();
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: "/login" });
+  };
 
   return (
     <LazyMotion features={domAnimation}>
@@ -113,7 +127,7 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
                       {session?.user?.name || "Account"}
                     </span>
                     <span className="text-[10px] text-muted-foreground font-mono tracking-tighter">
-                      {(session?.user as any)?.npk || "NPK-XXXX"} • {role}
+                      {(session?.user as { npk?: string })?.npk || "NPK-XXXX"} • {role}
                     </span>
                   </div>
                 </DropdownMenuLabel>
@@ -133,7 +147,7 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
                 <DropdownMenuSeparator className="my-2 bg-border" />
 
                 <DropdownMenuItem
-                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  onClick={() => setShowLogoutConfirm(true)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition-colors"
                 >
                   <m.div
@@ -142,13 +156,46 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
                   >
                     <LogOut size={16} />
                   </m.div>
-                  <span className="font-medium">Log out</span>
+                  <span className="font-medium">Sign out</span>
                 </DropdownMenuItem>
               </m.div>
             </AnimatePresence>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <DialogContent className="rounded-2xl bg-white border border-neutral-200 shadow-2xl p-0 overflow-hidden max-w-sm">
+          <div className="p-8 text-center">
+            <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <LogOut size={32} />
+            </div>
+            <DialogHeader className="mb-0 p-0">
+              <DialogTitle className="text-xl font-bold text-neutral-900 text-center">Confirm Sign Out</DialogTitle>
+              <DialogDescription className="text-neutral-500 text-sm leading-relaxed text-center mt-2">
+                Are you sure you want to sign out of your account? You will need to log in again to access the portal.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <DialogFooter className="bg-neutral-50 p-6 border-t border-neutral-100 flex flex-row gap-3 mt-0">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowLogoutConfirm(false)}
+              className="flex-1 rounded-xl border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleLogout}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold shadow-md active:scale-95 transition-all"
+            >
+              Sign Out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </m.header>
     </LazyMotion>
   );
