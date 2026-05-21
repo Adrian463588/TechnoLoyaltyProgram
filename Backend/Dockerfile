@@ -3,14 +3,16 @@ FROM node:20-alpine AS deps
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+COPY prisma ./prisma
+RUN pnpm install --frozen-lockfile --prod && npx prisma generate
 
 # ---- Stage 2: Build ----
 FROM node:20-alpine AS builder
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY prisma ./prisma
+RUN pnpm install --frozen-lockfile && npx prisma generate
 COPY . .
 RUN pnpm build
 
@@ -35,4 +37,4 @@ ENV PORT=3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD wget -qO- http://localhost:3000/health || exit 1
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/app.js"]

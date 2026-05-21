@@ -17,7 +17,7 @@ spec:
       # DevSecOps: securityContext for the Pod
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
+        runAsUser: 1001
       containers:
       - name: loyalty-backend
         image: asia-southeast2-docker.pkg.dev/project-654b743a-b24b-45ad-85e/loyalty-program-repo/backend:latest
