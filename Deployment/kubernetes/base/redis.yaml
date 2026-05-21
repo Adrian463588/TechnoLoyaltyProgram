@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loyalty-redis
+  namespace: loyalty-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loyalty-redis
+  template:
+    metadata:
+      labels:
+        app: loyalty-redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+          name: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loyalty-redis
+  namespace: loyalty-prod
+spec:
+  ports:
+  - port: 6379
+    targetPort: 6379
+  selector:
+    app: loyalty-redis
