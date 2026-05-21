@@ -42,6 +42,7 @@ export default async function RewardsPage() {
           userTokens={userTokens}
           isEligible={isEligible}
           userTier={userTier}
+          token={token}
         />
       </div>
     </div>
