@@ -4,19 +4,31 @@ import RedemptionsClient from "./redemptions-client";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { CheckSquare } from "lucide-react";
 
-export default async function RedemptionsPage() {
+export default async function RedemptionsPage(props: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await auth();
   const token = await getServerToken();
+  const searchParams = await props.searchParams;
 
-  let requests: Awaited<ReturnType<typeof adminApi.listRedemptions>> = [];
+  const currentPage = Number(searchParams.page) || 1;
+  const itemsPerPage = 10;
+  const offset = (currentPage - 1) * itemsPerPage;
+
+  let requests: import("@/lib/api-client").RedemptionResponse[] = [];
+  let totalCount = 0;
   try {
-    requests = await adminApi.listRedemptions(token);
+    const res = await adminApi.listRedemptions(token, { limit: itemsPerPage, offset });
+    requests = res.requests;
+    totalCount = res.total;
   } catch (error) {
     console.warn(
       "Failed to load redemptions:",
       error instanceof Error ? error.message : "Unknown error",
     );
   }
+
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   // Map backend DTO to the shape RedemptionsClient expects
   const mapped = requests.map((r) => ({
@@ -31,6 +43,7 @@ export default async function RedemptionsPage() {
     status: r.status as import("@/types").RewardRequestStatus,
     isRepresented: (r as any).isRepresented ?? false,
     powerOfAttorneyUrl: (r as any).powerOfAttorneyUrl ?? null,
+    rejectReason: r.rejectReason ?? null,
     requestedAt: r.createdAt,
     updatedAt: r.createdAt,
   }));
@@ -57,7 +70,13 @@ export default async function RedemptionsPage() {
           </div>
 
           <div className="bento-span-12">
-            <RedemptionsClient initialRequests={mapped} sessionToken={token} />
+            <RedemptionsClient 
+              initialRequests={mapped} 
+              sessionToken={token} 
+              totalCount={totalCount}
+              currentPage={currentPage}
+              totalPages={totalPages}
+            />
           </div>
         </div>
       </main>

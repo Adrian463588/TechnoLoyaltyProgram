@@ -60,7 +60,7 @@ export const RewardCatalogController = {
       if (!parsed.success) {
         throw new ValidationError("Invalid reward data", z.treeifyError(parsed.error));
       }
-      const item = await rewardCatalogService.create(parsed.data, user.id);
+      const item = await rewardCatalogService.create(parsed.data as any, user.id);
       res.status(201).json(item);
     } catch (err) {
       next(err);
@@ -77,7 +77,7 @@ export const RewardCatalogController = {
       const parsed = updateRewardSchema.safeParse(req.body);
       if (!parsed.success) throw new ValidationError("Invalid reward data", z.treeifyError(parsed.error));
 
-      const item = await rewardCatalogService.update(idResult.data, parsed.data, user.id);
+      const item = await rewardCatalogService.update(idResult.data, parsed.data as any, user.id);
       res.json(item);
     } catch (err) {
       next(err);

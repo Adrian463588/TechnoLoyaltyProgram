@@ -17,9 +17,13 @@ import { NotFoundError } from "@/errors/not-found-error";
 export const RedemptionController = {
 
   // GET /api/admin/redemptions — list all for HC
-  listAll: (async (_req, res, next) => {
+  listAll: (async (req, res, next) => {
     try {
-      const requests = await redemptionService.listAll();
+      const limit = Number(req.query["limit"]) || 100;
+      const offset = Number(req.query["offset"]) || 0;
+      const status = req.query["status"] as any;
+
+      const { requests, total } = await redemptionService.listAll({ status, limit, offset });
       const mapped = requests.map((r) => {
         // Use type-safe property access from prisma include results
         return {
@@ -48,7 +52,12 @@ export const RedemptionController = {
           rejectReason: r.rejectionReason,
         };
       });
-      res.json(mapped);
+      res.json({
+        total,
+        limit,
+        offset,
+        requests: mapped
+      });
     } catch (err) {
       next(err);
     }
@@ -126,7 +135,7 @@ export const RedemptionController = {
         {
           isRepresented: parsed.data.isRepresented,
           powerOfAttorneyUrl,
-        }
+        } as any
       );
       res.status(201).json(redemption);
     } catch (err) {

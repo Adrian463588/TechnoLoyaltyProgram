@@ -26,6 +26,7 @@ import { AutosaveIndicator } from "@/components/shared/autosave-indicator";
 import { PipelineStep } from "@/components/shared/redemption-pipeline";
 import { CheckSquare, Info, ExternalLink, X, Loader2, FileText, Check, User, ShoppingBag, Coins, ShieldCheck, AlertCircle, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Pagination } from "@/components/shared/pagination";
 
 const STATUS_TO_STEP: Record<RewardRequestStatus, PipelineStep> = {
   REQUESTED: "review",
@@ -35,17 +36,25 @@ const STATUS_TO_STEP: Record<RewardRequestStatus, PipelineStep> = {
   CANCELLED: "submitted",
 };
 
-export default function RedemptionsClient({
-  initialRequests,
-  sessionToken,
-}: {
+interface RedemptionsClientProps {
   initialRequests: (RewardRequest & { 
     userDocuments: Array<{ id: string, type: string, fileUrl: string }>;
     isRepresented?: boolean;
     powerOfAttorneyUrl?: string | null;
   })[];
   sessionToken: string;
-}) {
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
+}
+
+export default function RedemptionsClient({
+  initialRequests,
+  sessionToken,
+  totalCount,
+  currentPage,
+  totalPages,
+}: RedemptionsClientProps) {
   const [requests, setRequests] = useState(initialRequests);
   const [filter, setFilter] = useState<"All" | "REQUESTED">("All");
   const [selectedRequest, setSelectedRequest] = useState<typeof initialRequests[0] | null>(null);
@@ -237,6 +246,12 @@ export default function RedemptionsClient({
             </TableBody>
           </Table>
         </div>
+
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalResults={totalCount}
+        />
       </BentoCard>
 
       {/* Tracker & Management Modal — WIDE FLOW REDESIGN */}
@@ -356,12 +371,16 @@ export default function RedemptionsClient({
                     </div>
                  </div>
 
-                 {selectedRequest.rejectReason ? (
+                 {selectedRequest.status === "REJECTED" || selectedRequest.status === "CANCELLED" ? (
                    <div className="sm:col-span-4 p-5 bg-red-50/50 border border-red-100 rounded-3xl flex gap-3 items-center">
                      <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
                      <div className="truncate">
-                       <p className="text-[10px] font-black text-red-900 uppercase tracking-wider">Rejection Reason</p>
-                       <p className="text-xs text-red-700 font-medium truncate">{selectedRequest.rejectReason}</p>
+                       <p className="text-[10px] font-black text-red-900 uppercase tracking-wider">
+                         {selectedRequest.status === "REJECTED" ? "Rejection Reason" : "Cancellation Note"}
+                       </p>
+                       <p className="text-xs text-red-700 font-medium truncate">
+                         {selectedRequest.rejectReason || "No details provided."}
+                       </p>
                      </div>
                    </div>
                  ) : (
@@ -370,7 +389,9 @@ export default function RedemptionsClient({
                      <div>
                        <p className="text-[10px] font-black text-blue-900 uppercase tracking-wider">HC Instruction</p>
                        <p className="text-xs text-blue-700 font-medium">
-                          {selectedRequest.status === "REQUESTED" ? "Review documents below." : "Verify reward handover."}
+                          {selectedRequest.status === "REQUESTED" ? "Review documents below." : 
+                           selectedRequest.status === "REVIEWED" ? "Verify reward handover." : 
+                           "Claim has been processed."}
                        </p>
                      </div>
                    </div>

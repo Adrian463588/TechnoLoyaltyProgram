@@ -151,10 +151,14 @@ export const employeeApi = {
 // ── Admin API ──────────────────────────────────────────────────────────────
 
 export const adminApi = {
-  listRedemptions: (token: string) =>
-    apiFetch<RedemptionResponse[]>("/api/admin/redemptions", {
+  listRedemptions: (token: string, params: { limit?: number; offset?: number } = {}) => {
+    const query = new URLSearchParams();
+    if (params.limit) query.append("limit", params.limit.toString());
+    if (params.offset) query.append("offset", params.offset.toString());
+    return apiFetch<AdminRedemptionResponse>(`/api/admin/redemptions?${query.toString()}`, {
       headers: withAuth(token),
-    }),
+    });
+  },
 
   updateRedemptionStatus: (
     token: string,
@@ -192,15 +196,24 @@ export const adminApi = {
       headers: withAuth(token),
     }),
 
-  getAuditLogs: (token: string) =>
-    apiFetch<AuditLogResponse[]>("/api/admin/audit", {
+  getAuditLogs: (token: string, params: { limit?: number; offset?: number } = {}) => {
+    const query = new URLSearchParams();
+    if (params.limit) query.append("limit", params.limit.toString());
+    if (params.offset) query.append("offset", params.offset.toString());
+    return apiFetch<AdminAuditLogResponse>(`/api/admin/audit?${query.toString()}`, {
       headers: withAuth(token),
-    }),
+    });
+  },
 
-  listUsers: (token: string) =>
-    apiFetch<UserResponse[]>("/api/admin/users?includeInactive=true", {
+  listUsers: (token: string, params: { limit?: number; offset?: number } = {}) => {
+    const query = new URLSearchParams();
+    query.append("includeInactive", "true");
+    if (params.limit) query.append("limit", params.limit.toString());
+    if (params.offset) query.append("offset", params.offset.toString());
+    return apiFetch<AdminUserListResponse>(`/api/admin/users?${query.toString()}`, {
       headers: withAuth(token),
-    }),
+    });
+  },
 
   /** HC-01: Update user status (ACTIVE/INACTIVE/RESIGNED) */
   updateUserStatus: (token: string, userId: string, status: "ACTIVE" | "INACTIVE" | "RESIGNED") =>
@@ -290,13 +303,17 @@ export const adminApi = {
     }),
 
   /** HC-06: List all partner confirmation requests */
-  listPartnerConfirmations: (token: string) =>
-    apiFetch<PartnerConfirmationResponse[]>(
-      "/api/admin/partner-confirmations",
+  listPartnerConfirmations: (token: string, params: { limit?: number; offset?: number } = {}) => {
+    const query = new URLSearchParams();
+    if (params.limit) query.append("limit", params.limit.toString());
+    if (params.offset) query.append("offset", params.offset.toString());
+    return apiFetch<AdminPartnerConfirmationResponse>(
+      `/api/admin/partner-confirmations?${query.toString()}`,
       {
         headers: withAuth(token),
       },
-    ),
+    );
+  },
 
   /** HC-06: Cancel a pending partner confirmation */
   cancelPartnerConfirmation: (token: string, id: string) =>
@@ -307,6 +324,21 @@ export const adminApi = {
         headers: withAuth(token),
       },
     ),
+
+  /** HC: Get global system settings (Earning periods, etc.) */
+  getSystemSettings: (token: string) =>
+    apiFetch<SystemSettingsResponse>("/api/admin/system-settings", {
+      headers: withAuth(token),
+      cache: "no-store",
+    } as RequestInit),
+
+  /** HC: Update global system settings */
+  updateSystemSettings: (token: string, payload: Partial<Omit<SystemSettingsResponse, "id" | "updatedAt">>) =>
+    apiFetch<{ success: boolean; settings: SystemSettingsResponse }>("/api/admin/system-settings", {
+      method: "PATCH",
+      headers: withAuth(token),
+      body: JSON.stringify(payload),
+    }),
 };
 
 // ── Leader API ─────────────────────────────────────────────────────────────
@@ -509,6 +541,48 @@ export interface PartnerConfirmationResponse {
   confirmedStatus: "ACTIVE" | "RESIGNED" | null;
   note: string | null;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminRedemptionResponse {
+  requests: RedemptionResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminAuditLogResponse {
+  logs: AuditLogResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminUserListResponse {
+  users: UserResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminPartnerConfirmationResponse {
+  items: PartnerConfirmationResponse[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface SystemSettingsResponse {
+  id: string;
+  p1Start: string;
+  p1End: string;
+  p2Start: string;
+  p2End: string;
+  claimP1Start: string;
+  claimP1End: string;
+  claimP2Start: string;
+  claimP2End: string;
+  rewardPickupLocation: string;
   updatedAt: string;
 }
 

@@ -16,6 +16,7 @@ import { ManualAdjustmentController }        from "@/controllers/manual-adjustme
 import { RewardCatalogController }           from "@/controllers/reward-catalog.controller";
 import { PartnerStatusConfirmationController } from "@/controllers/partner-status-confirmation.controller";
 import { TokenRuleController }               from "@/controllers/token-rule.controller";
+import { SystemSettingController }           from "@/controllers/system-setting.controller";
 import {
   AdminFoundationController,
   uploadProcessMiddleware,
@@ -35,6 +36,10 @@ adminRoutes.post(
   uploadProcessMiddleware,
   AdminFoundationController.processUpload as RequestHandler,
 );
+
+// ── System Settings (Earning Periods, etc.) ──────────────────────────────────
+adminRoutes.get(  "/system-settings",                    SystemSettingController.getSettings       as RequestHandler);
+adminRoutes.patch("/system-settings",                    SystemSettingController.updateSettings    as RequestHandler);
 
 // ── Redemptions ─────────────────────────────────────────────────────────────
 /**

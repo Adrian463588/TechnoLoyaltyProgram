@@ -11,17 +11,112 @@ export default async function AdminDashboardPage() {
   await auth();
   const token = await getServerToken();
 
-  let requests: Awaited<ReturnType<typeof adminApi.listRedemptions>> = [];
-  let users: Awaited<ReturnType<typeof adminApi.listUsers>> = [];
+  let redemptionRes: import("@/lib/api-client").AdminRedemptionResponse | null = null;
+  let userRes: import("@/lib/api-client").AdminUserListResponse | null = null;
+  let settings: import("@/lib/api-client").SystemSettingsResponse | null = null;
 
   try {
-    [requests, users] = await Promise.all([
-      adminApi.listRedemptions(token),
-      adminApi.listUsers(token),
+    const results = await Promise.allSettled([
+      adminApi.listRedemptions(token, { limit: 100 }), // Large enough for dashboard summary
+      adminApi.listUsers(token, { limit: 1000 }),     // Need all for kpi calculation
+      adminApi.getSystemSettings(token),
     ]);
+
+    if (results[0].status === "fulfilled") redemptionRes = results[0].value;
+    if (results[1].status === "fulfilled") userRes = results[1].value;
+    if (results[2].status === "fulfilled") settings = results[2].value;
   } catch (error) {
     console.warn("Failed to load dashboard data:", error);
   }
+
+  // ── Dynamic Earning Period Logic ──────────────────────────────────────────
+  const now = new Date();
+  const currentMonthDay = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  
+  let activePeriodLabel = "Unknown";
+  let activePeriodDates = "";
+  let activeClaimLabel = "Unknown";
+  let activeClaimDates = "";
+
+  if (settings) {
+    const { p1Start, p1End, p2Start, p2End, claimP1Start, claimP1End, claimP2Start, claimP2End } = settings;
+    
+    // Helper to format MM-DD to MMM DD
+    const formatDateStr = (mmdd: string) => {
+      const [m, d] = mmdd.split("-");
+      const date = new Date(2000, parseInt(m) - 1, parseInt(d));
+      return date.toLocaleString('en-GB', { month: 'short', day: 'numeric' });
+    };
+
+    const p1RangeStr = `${formatDateStr(p1Start)} → ${formatDateStr(p1End)}`;
+    const p2RangeStr = `${formatDateStr(p2Start)} → ${formatDateStr(p2End)}`;
+    const claimP1RangeStr = `${formatDateStr(claimP1Start)} → ${formatDateStr(claimP1End)}`;
+    const claimP2RangeStr = `${formatDateStr(claimP2Start)} → ${formatDateStr(claimP2End)}`;
+
+    // Logic for P1 (Usually same year)
+    if (p1Start <= p1End) {
+      if (currentMonthDay >= p1Start && currentMonthDay <= p1End) {
+        activePeriodLabel = "P1";
+        activePeriodDates = p1RangeStr;
+      }
+    } else {
+      if (currentMonthDay >= p1Start || currentMonthDay <= p1End) {
+        activePeriodLabel = "P1";
+        activePeriodDates = p1RangeStr;
+      }
+    }
+
+    // Logic for P2
+    if (activePeriodLabel === "Unknown") {
+      if (p2Start <= p2End) {
+        if (currentMonthDay >= p2Start && currentMonthDay <= p2End) {
+          activePeriodLabel = "P2";
+          activePeriodDates = p2RangeStr;
+        }
+      } else {
+        if (currentMonthDay >= p2Start || currentMonthDay <= p2End) {
+          activePeriodLabel = "P2";
+          activePeriodDates = p2RangeStr;
+        }
+      }
+    }
+
+    // Check Claim P1
+    if (claimP1Start <= claimP1End) {
+      if (currentMonthDay >= claimP1Start && currentMonthDay <= claimP1End) {
+        activeClaimLabel = "P1";
+        activeClaimDates = claimP1RangeStr;
+      }
+    } else {
+      if (currentMonthDay >= claimP1Start || currentMonthDay <= claimP1End) {
+        activeClaimLabel = "P1";
+        activeClaimDates = claimP1RangeStr;
+      }
+    }
+
+    // Check Claim P2 if P1 not active
+    if (activeClaimLabel === "Unknown") {
+      if (claimP2Start <= claimP2End) {
+        if (currentMonthDay >= claimP2Start && currentMonthDay <= claimP2End) {
+          activeClaimLabel = "P2";
+          activeClaimDates = claimP2RangeStr;
+        }
+      } else {
+        if (currentMonthDay >= claimP2Start || currentMonthDay <= claimP2End) {
+          activeClaimLabel = "P2";
+          activeClaimDates = claimP2RangeStr;
+        }
+      }
+    }
+
+    if (activeClaimLabel === "Unknown") {
+      activeClaimLabel = "P1";
+      activeClaimDates = claimP1RangeStr;
+    }
+  }
+
+  const requests = redemptionRes?.requests ?? [];
+  const users = userRes?.users ?? [];
 
   // Map to the shape expected by the UI component
   const mapped = requests.map((r) => ({
@@ -63,9 +158,16 @@ export default async function AdminDashboardPage() {
         <div className="bento-grid">
           {/* Active Period Banner */}
           <div className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-start justify-between animate-fade-up-in">
-            <div>
-              <h1 className="text-2xl font-extrabold text-[--color-text-secondary] mb-3 leading-none">HC Admin Dashboard</h1>
-              <p className="text-sm text-[--color-text-secondary] leading-none">Active Earning Period: P2 (Jun 16 → Dec 15)</p>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-extrabold text-[--color-text-secondary] mb-1 leading-none">HC Admin Dashboard</h1>
+              <div className="flex flex-col gap-1">
+                <p className="text-sm text-[--color-text-secondary]">
+                  Active Earning Period: <span className="font-bold text-[--color-text-primary]">{activePeriodLabel} ({activePeriodDates})</span>
+                </p>
+                <p className="text-sm text-[--color-text-tertiary]">
+                  Active Claim Period: <span className="font-bold text-[--color-text-secondary]">{activeClaimLabel} ({activeClaimDates})</span>
+                </p>
+              </div>
             </div>
             <div className="mt-4 md:mt-0">
               <DashboardClock />

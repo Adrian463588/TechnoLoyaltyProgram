@@ -104,6 +104,7 @@ export const DocumentController = {
     try {
       const { user } = req as any;
       const { type } = req.params;
+      if (!type) throw new ValidationError("Document type is required");
       await DocumentService.deleteDocument(user.id, type);
       res.status(204).send();
     } catch (err) {

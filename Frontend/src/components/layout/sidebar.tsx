@@ -30,6 +30,7 @@ import {
   Menu,
   UserCheck,
   FileText,
+  CalendarClock,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -47,6 +48,7 @@ const navItems = {
     { href: "/admin/reward-catalog", label: "Reward Catalog", icon: Gift },
     { href: "/admin/adjustments", label: "Token Adjustments", icon: Zap },
     { href: "/admin/mitra-validation", label: "Mitra Validation", icon: UserCheck },
+    { href: "/admin/earning-period", label: "Earning Period", icon: CalendarClock },
     { href: "/admin/audit", label: "Audit Log", icon: History },
   ],
   TEAM_LEADER: [

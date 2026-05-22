@@ -307,3 +307,21 @@ model UserDocument {
 
   @@unique([userId, type])
 }
+
+// ── Global System Settings ──
+// Stores recurring configurations like P1/P2 dates, redemption windows, and pickup locations.
+// Dates are stored as "MM-DD" string to repeat annually.
+model SystemSetting {
+  id                  String   @id @default("GLOBAL_CONFIG")
+  p1Start             String   @default("06-16")
+  p1End               String   @default("12-15")
+  p2Start             String   @default("12-16")
+  p2End               String   @default("06-15")
+  claimP1Start        String   @default("01-01")
+  claimP1End          String   @default("01-31")
+  claimP2Start        String   @default("07-01")
+  claimP2End          String   @default("07-31")
+  rewardPickupLocation String   @default("HC Office - Main Building")
+  updatedBy           String?
+  updatedAt           DateTime @updatedAt
+}

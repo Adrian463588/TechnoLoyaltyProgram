@@ -4,9 +4,27 @@ import { getServerToken } from "@/lib/auth";
 import AdjustmentsClient from "./adjustments-client";
 import { Zap } from "lucide-react";
 
-export default async function AdjustmentsPage() {
+export default async function AdjustmentsPage(props: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const token = await getServerToken();
-  const users = await adminApi.listUsers(token).catch(() => []);
+  const searchParams = await props.searchParams;
+
+  const currentPage = Number(searchParams.page) || 1;
+  const itemsPerPage = 10;
+  const offset = (currentPage - 1) * itemsPerPage;
+
+  let users: import("@/lib/api-client").UserResponse[] = [];
+  let totalCount = 0;
+  try {
+    const res = await adminApi.listUsers(token, { limit: itemsPerPage, offset });
+    users = res.users;
+    totalCount = res.total;
+  } catch (error) {
+    console.warn("Failed to load users for adjustments:", error);
+  }
+
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -30,7 +48,12 @@ export default async function AdjustmentsPage() {
           </div>
 
           <div className="bento-span-12">
-            <AdjustmentsClient users={users} />
+            <AdjustmentsClient 
+              users={users} 
+              totalCount={totalCount}
+              currentPage={currentPage}
+              totalPages={totalPages}
+            />
           </div>
         </div>
       </main>

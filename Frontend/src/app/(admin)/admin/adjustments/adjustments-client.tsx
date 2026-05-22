@@ -8,8 +8,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Edit2, Search, Coins } from "lucide-react";
 import AdjustmentModal from "./adjustment-modal";
 import { cn } from "@/lib/utils";
+import { Pagination } from "@/components/shared/pagination";
 
-export default function AdjustmentsClient({ users: initialUsers }: { users: UserResponse[] }) {
+export default function AdjustmentsClient({ 
+  users: initialUsers,
+  totalCount,
+  currentPage,
+  totalPages,
+}: { 
+  users: UserResponse[];
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
+}) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
   const [users, setUsers] = useState<UserResponse[]>(initialUsers);
@@ -133,6 +144,12 @@ export default function AdjustmentsClient({ users: initialUsers }: { users: User
           </TableBody>
         </Table>
       </div>
+
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalResults={totalCount}
+      />
 
       {selectedUser && (
         <AdjustmentModal
