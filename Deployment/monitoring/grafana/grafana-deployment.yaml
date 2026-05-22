@@ -54,15 +54,15 @@ spec:
         - name: GF_AUTH_ANONYMOUS_ENABLED
           value: "false"
         - name: GF_SERVER_DOMAIN
-          value: "grafana.34.101.180.46.nip.io"
+          value: "grafana.34.50.82.124.nip.io"
         - name: GF_SERVER_ROOT_URL
-          value: "http://grafana.34.101.180.46.nip.io"
+          value: "http://grafana.34.50.82.124.nip.io"
         - name: GF_SECURITY_COOKIE_SECURE
           value: "false"
         volumeMounts:
         - name: datasources
           mountPath: /etc/grafana/provisioning/datasources
-        - name: dashboards-provider
+        - name: dashboard-provider
           mountPath: /etc/grafana/provisioning/dashboards
         - name: dashboards
           mountPath: /var/lib/grafana/dashboards
@@ -76,12 +76,13 @@ spec:
       - name: datasources
         configMap:
           name: grafana-datasources
-      - name: dashboards-provider
+      - name: dashboard-provider
         configMap:
           name: grafana-dashboard-provider
       - name: dashboards
         configMap:
           name: grafana-dashboards
+          optional: true
 ---
 apiVersion: v1
 kind: Service
@@ -95,3 +96,4 @@ spec:
   - port: 80
     targetPort: 3000
   type: ClusterIP
+
