@@ -9,7 +9,8 @@ import {
   Loader2, 
   Trash2, 
   Eye, 
-  Image as ImageIcon 
+  Image as ImageIcon,
+  X 
 } from "lucide-react";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogClose,
 } from "@/components/ui/dialog";
 
 interface DocumentType {
@@ -116,12 +118,18 @@ export function DocumentsClient({ initialDocuments, token }: { initialDocuments:
 
       {/* Preview Dialog */}
       <Dialog open={!!previewUrl} onOpenChange={() => setPreviewUrl(null)}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/5 border-none shadow-2xl">
+        <DialogContent 
+          className="max-w-4xl p-0 overflow-hidden bg-white border-none shadow-2xl"
+          showCloseButton={false}
+        >
           <DialogHeader className="p-4 bg-white border-b flex flex-row items-center justify-between">
-            <DialogTitle className="text-sm font-bold flex items-center gap-2">
+            <DialogTitle className="text-sm font-bold flex items-center gap-2 leading-none">
               <Eye size={16} className="text-primary" />
               Document Preview
             </DialogTitle>
+            <DialogClose className="text-slate-400 hover:text-slate-600 transition-all outline-none flex items-center justify-center cursor-pointer">
+              <X size={20} />
+            </DialogClose>
           </DialogHeader>
           <div className="p-4 flex items-center justify-center min-h-[400px]">
             {previewUrl && (
