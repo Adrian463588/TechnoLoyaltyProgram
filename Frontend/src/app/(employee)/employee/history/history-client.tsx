@@ -172,7 +172,7 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
                           "group border-b border-[var(--color-border-subtle)] transition-all duration-200 hover:bg-[var(--color-accent)]/[0.05]"
                         )}
                       >
-                        <TableCell className="py-5 px-6 text-sm text-[var(--color-text-secondary)]">
+                        <TableCell className="py-5 px-6 text-sm font-normal text-[var(--color-text-secondary)]">
                           {formatDate(entry.createdAt)}
                         </TableCell>
                         <TableCell className="py-5 px-6">
@@ -180,23 +180,23 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
                             <div className={cn("h-9 w-9 rounded-xl flex items-center justify-center shrink-0 border", meta.bg, meta.color, meta.border)}>
                               <Icon size={18} />
                             </div>
-                            <span className="text-sm font-semibold text-[--color-text-secondary] group-hover:text-[--color-text-primary] transition-colors">
+                            <span className="text-sm font-normal text-[--color-text-secondary] group-hover:text-[--color-text-primary] transition-colors">
                               {meta.label}
                             </span>
                           </div>
                         </TableCell>
                         <TableCell className="py-5 px-6">
                           {redemption ? (
-                            <span className="text-sm font-medium text-[var(--color-text-secondary)]">
+                            <span className="text-sm font-normal text-[var(--color-text-secondary)]">
                               {redemption.item?.name}
                             </span>
                           ) : (
-                            <span className="text-xs text-slate-300 font-medium italic">General Transaction</span>
+                            <span className="text-xs text-slate-300 font-normal italic">General Transaction</span>
                           )}
                         </TableCell>
                         <TableCell className="py-5 px-6 text-right">
                           <span className={cn(
-                            "text-sm font-bold font-mono px-3 py-1 rounded-lg",
+                            "text-sm font-normal px-3 py-1 rounded-lg",
                             isAddition ? "text-success bg-success/5" : "text-error bg-error/5"
                           )}>
                             {isAddition ? `+${entry.amount.toLocaleString()}` : entry.amount.toLocaleString()}

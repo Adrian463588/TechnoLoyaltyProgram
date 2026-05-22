@@ -8,6 +8,7 @@ import { TokenCardSkeleton } from "@/components/shared/skeleton-card";
 import { AnimatedTokenCount } from "./animated-token-count";
 import { Coins, Info, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface TokenHeroSectionProps {
   tokenBalance: number;
@@ -28,75 +29,48 @@ export function TokenHeroSection({
     return <TokenCardSkeleton />;
   }
 
+  // Tier-based accent colors for text
+  const tierAccents = {
+    SAPHIRE: { text: "text-blue-600" },
+    EMERALD: { text: "text-emerald-600" },
+    RUBY:    { text: "text-red-600" },
+    DIAMOND: { text: "text-purple-600" },
+  }[tier.toUpperCase()] || { text: "text-slate-600" };
+
   return (
     <>
-      <motion.div
-        className="bento-card flex flex-col justify-between p-6 w-full h-full relative overflow-hidden"
-        whileHover={{ scale: 1.02 }}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-      >
-        {/* Animated background gradient */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0"
-          whileHover={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        />
+      <div className="bento-card flex flex-col justify-between p-6 w-full h-full relative overflow-hidden">
+        {/* Ghost Grid Texture */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+             style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
         <div className="flex items-center justify-between mb-4 relative z-10">
-          <h3 className="text-label flex items-center gap-2 text-primary">
-            <motion.div
-              animate={{ y: [0, -2, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Coins className="h-[14px] w-[14px]" />
-            </motion.div>
+          <h3 className="text-label flex items-center gap-2 text-[--color-text-secondary]">
+            <Coins className={cn("h-[14px] w-[14px]", tierAccents.text)} />
             Total Tokens
           </h3>
+          
           <div className="flex items-center gap-3">
-            <TierBadge tier={tier} />
-            <motion.button
-              whileHover="hover"
-              whileTap={{ scale: 0.9 }}
-              className="p-1.5 rounded-full hover:bg-slate-100 transition-colors relative group"
+            <button
+              className="p-1.5 rounded-full hover:bg-slate-100 transition-colors relative"
               onClick={() => setShowInfo(true)}
             >
-              <Info className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              <motion.span
-                className="absolute inset-0 rounded-full border border-primary/30"
-                variants={{
-                  initial: { scale: 1.5, opacity: 0 },
-                  hover: { scale: 1, opacity: 1, transition: { duration: 0.3 } }
-                }}
-                initial="initial"
-              />
-            </motion.button>
+              <Info className="h-4 w-4 text-slate-400 hover:text-primary transition-colors" />
+            </button>
           </div>
         </div>
 
-        <div className="mb-6 relative z-10">
-          <p className="text-metric" data-testid="token-counter">
+        <div className="flex-1 flex flex-col justify-center relative z-10">
+          <div className="text-5xl font-extrabold text-[--color-text-primary] font-display tracking-tight" data-testid="token-counter">
             <AnimatedTokenCount value={tokenBalance} />
-          </p>
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="flex items-center gap-1 mt-1"
-          >
-            <Sparkles className="h-3 w-3 text-primary" />
-            <span className="text-xs text-primary font-bold">
-              +{Math.floor(tokenBalance * 0.02)} this month
-            </span>
-          </motion.div>
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Available to spend
+            </p>
+          </div>
         </div>
-
-        <div className="border-t border-border pt-4 mt-auto relative z-10">
-          <EligibilityChip
-            eligible={eligibilityStatus.eligible}
-            reason={eligibilityStatus.reason}
-          />
-        </div>
-      </motion.div>
+      </div>
 
       {/* Info Dialog */}
       <DialogPrimitive.Root open={showInfo} onOpenChange={setShowInfo}>

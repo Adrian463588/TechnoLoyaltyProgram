@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, TrendingUp, ChevronRight, ArrowUpRight, Clock, Gift, Zap, Coins } from "lucide-react";
+import { ShoppingBag, TrendingUp, ChevronRight, ArrowUpRight, Clock, Gift, Zap, Coins, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { TokenHeroSection } from "@/components/dashboard/token-hero-section";
 import { DashboardClock } from "@/components/dashboard/dashboard-clock";
@@ -128,7 +128,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
       </motion.div>
 
       {/* Token Balance Card */}
-      <motion.div variants={itemVariants} className="bento-span-12 md:bento-span-4">
+      <motion.div variants={itemVariants} className="bento-span-12 md:bento-span-6">
         <div
           onMouseEnter={() => setHoveredCard("tokens")}
           onMouseLeave={() => setHoveredCard(null)}
@@ -142,96 +142,65 @@ export function DashboardContent({ data }: { data: DashboardData }) {
         </div>
       </motion.div>
 
-      {/* Earning Streak Card */}
-      <motion.div variants={itemVariants} className="bento-span-12 md:bento-span-4">
-        <BentoCard
-          interactive
-          className={cn("h-full p-6", hoveredCard === "streak" && "border-primary shadow-md")}
-          onMouseEnter={() => setHoveredCard("streak")}
-          onMouseLeave={() => setHoveredCard(null)}
-        >
-          <div className="pb-0">
-            <h3 className="text-label flex items-center gap-2 mb-4 text-[--color-text-secondary]">
-              <motion.div
-                animate={{ rotate: hoveredCard === "streak" ? [0, 10, -10, 0] : 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <TrendingUp className="h-[14px] w-[14px]" />
-              </motion.div>
-              Earning Streak
-            </h3>
-          </div>
-          <div className="pt-0">
-            <motion.p
-              className="text-metric-hero text-[--color-text-primary]"
-              animate={{ scale: hoveredCard === "streak" ? 1.05 : 1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              5 Mos
-            </motion.p>
-            <div className="mt-6 space-y-2">
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden" data-testid="employee-dashboard-tier-progress">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
-                  initial={{ width: "60%" }}
-                  animate={{ width: hoveredCard === "streak" ? "75%" : "60%" }}
-                  transition={{ duration: 0.3 }}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Keep going to maintain <span className="text-primary font-bold">{data.tier.charAt(0) + data.tier.slice(1).toLowerCase()}!</span>
-              </p>
-            </div>
-          </div>
-        </BentoCard>
-      </motion.div>
+      {/* Your Tier Card - Dynamic Gemstone Style */}
+      <motion.div variants={itemVariants} className="bento-span-12 md:bento-span-6">
+        {(() => {
+          const tier = data.tier.toUpperCase();
+          const config = {
+            SAPHIRE: { bg: "bg-blue-50/50", border: "border-blue-100", text: "text-blue-700", accent: "bg-blue-600", light: "bg-blue-100" },
+            EMERALD: { bg: "bg-emerald-50/50", border: "border-emerald-100", text: "text-emerald-700", accent: "bg-emerald-600", light: "bg-emerald-100" },
+            RUBY:    { bg: "bg-red-50/50", border: "border-red-100", text: "text-red-700", accent: "bg-red-600", light: "bg-red-100" },
+            DIAMOND: { bg: "bg-purple-50/50", border: "border-purple-100", text: "text-purple-700", accent: "bg-purple-600", light: "bg-purple-100" },
+          }[tier] || { bg: "bg-slate-50", border: "border-slate-100", text: "text-slate-700", accent: "bg-slate-600", light: "bg-slate-100" };
 
-      {/* Redemption Card */}
-      <motion.div variants={itemVariants} className="bento-span-12 md:bento-span-4">
-        <BentoCard
-          interactive
-          className={cn("h-full p-6", hoveredCard === "redemption" && "border-primary shadow-md")}
-          onMouseEnter={() => setHoveredCard("redemption")}
-          onMouseLeave={() => setHoveredCard(null)}
-        >
-          <div className="pb-0">
-            <h3 className="text-label flex items-center gap-2 mb-4 text-[--color-text-secondary]">
-              <motion.div
-                animate={{ y: hoveredCard === "redemption" ? [0, -3, 0] : 0 }}
-                transition={{ duration: 0.5, repeat: Infinity }}
-              >
-                <ShoppingBag className="h-[14px] w-[14px]" />
-              </motion.div>
-              Redemption
-            </h3>
-          </div>
-          <div className="pt-0">
-            <motion.p
-              className="text-metric-hero text-[--color-text-primary]"
-              animate={{ scale: hoveredCard === "redemption" ? 1.05 : 1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              Ready
-            </motion.p>
-            <div className="mt-6">
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                  className="w-full"
-                  size="sm"
-                  onClick={() => router.push("/employee/rewards")}
-                  data-testid="employee-dashboard-redeem-button"
-                >
-                  Browse Catalog
-                  <ArrowUpRight className="ml-1 h-3 w-3" />
-                </Button>
-              </motion.div>
+          return (
+            <div className={cn("bento-card h-full p-6 relative overflow-hidden", config.bg, config.border)}>
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="pb-0">
+                  <h3 className={cn("text-[10px] font-black tracking-[0.2em] uppercase mb-4 opacity-60", config.text)}>
+                    YOUR TIER IS
+                  </h3>
+                </div>
+                
+                <div className="flex items-center gap-4 mb-6">
+                  <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner", config.light)}>
+                    <ShieldCheck className={cn("h-8 w-8", config.text)} />
+                  </div>
+                  <p className={cn("text-4xl font-black tracking-tighter uppercase", config.text)}>
+                    {data.tier}
+                  </p>
+                </div>
+
+                <div className="mt-auto pt-6 border-t border-black/5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={cn("text-[10px] font-bold uppercase tracking-wider opacity-70", config.text)}>Retention Status</span>
+                    <span className={cn("text-[10px] font-black uppercase", config.text)}>Secured</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-black/5 rounded-full overflow-hidden">
+                    <motion.div
+                      className={cn("h-full rounded-full", config.accent)}
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 1, delay: 0.5 }}
+                    />
+                  </div>
+                  <p className={cn("text-[10px] mt-2 font-medium opacity-60", config.text)}>
+                    Your {data.tier.toLowerCase()} benefits are active for the next period.
+                  </p>
+                </div>
+              </div>
+
+              {/* Decorative Background Icon */}
+              <div className="absolute -bottom-6 -right-6 opacity-[0.03] pointer-events-none">
+                <ShieldCheck size={160} />
+              </div>
             </div>
-          </div>
-        </BentoCard>
+          );
+        })()}
       </motion.div>
 
       {/* Token History */}
-      <motion.div variants={itemVariants} className="bento-span-8">
+      <motion.div variants={itemVariants} className="bento-span-12">
         <BentoCard className="h-full p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-card-title">Token History</h3>
@@ -249,7 +218,7 @@ export function DashboardContent({ data }: { data: DashboardData }) {
             <div className="space-y-3">
               <AnimatePresence mode="popLayout">
                 {transactions.length > 0 ? (
-                  transactions.slice(0, 3).map((item, index) => {
+                  transactions.slice(0, 5).map((item, index) => {
                     const metadata = getEventMetadata(item.eventType);
                     const Icon = metadata.icon;
                     const isAddition = item.amount > 0;
@@ -308,69 +277,6 @@ export function DashboardContent({ data }: { data: DashboardData }) {
                 )}
               </AnimatePresence>
             </div>
-          </div>
-        </BentoCard>
-      </motion.div>
-
-      {/* Upcoming Rewards */}
-      <motion.div variants={itemVariants} className="bento-span-4">
-        <BentoCard className="h-full p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-card-title">Upcoming Rewards</h3>
-            <motion.button
-              whileHover={{ scale: 1.1, rotate: 90 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-1 rounded-full hover:bg-slate-100 transition-colors"
-            >
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </motion.button>
-          </div>
-          <div>
-            <div className="space-y-4">
-              {upcomingRewards.map((reward, index) => (
-                <motion.div
-                  key={reward.name}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
-                  whileHover={{ scale: 1.02 }}
-                  className="p-3 rounded-xl bg-slate-50 cursor-pointer"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-bold text-foreground">
-                      {reward.name}
-                    </span>
-                    <span className="text-xs text-muted-foreground font-semibold">
-                      {reward.tokensNeeded} tokens
-                    </span>
-                  </div>
-                  <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${reward.progress}%` }}
-                      transition={{ duration: 1, delay: 0.8 + index * 0.2 }}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2 font-medium">
-                    {reward.progress}% complete
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Progress Summary */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-              className="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/10"
-            >
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground font-medium">Next reward in</span>
-                <span className="font-bold text-primary">250 tokens</span>
-              </div>
-            </motion.div>
           </div>
         </BentoCard>
       </motion.div>
