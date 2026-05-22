@@ -3,6 +3,8 @@ import multer, { type FileFilterCallback } from "multer";
 import * as XLSX from "xlsx";
 import { prisma } from "@/db/prisma";
 import { ValidationError } from "@/errors";
+import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
+import { logAudit } from "@/services/audit.service";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -78,15 +80,25 @@ function validateRows(rows: UploadRow[]): Array<{
 export const uploadProcessMiddleware = upload.single("file");
 
 export const AdminFoundationController = {
-  listAuditLogs: (async (_req, res, next) => {
+  listAuditLogs: (async (req, res, next) => {
     try {
-      const logs = await prisma.auditLog.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 100,
-      });
+      const limit = Number(req.query["limit"]) || 100;
+      const offset = Number(req.query["offset"]) || 0;
 
-      res.json(
-        logs.map((log) => ({
+      const [logs, total] = await Promise.all([
+        prisma.auditLog.findMany({
+          orderBy: { createdAt: "desc" },
+          take: limit,
+          skip: offset,
+        }),
+        prisma.auditLog.count()
+      ]);
+
+      res.json({
+        total,
+        limit,
+        offset,
+        logs: logs.map((log) => ({
           id: log.id,
           action: log.action,
           actorId: log.actorId,
@@ -96,8 +108,8 @@ export const AdminFoundationController = {
           targetType: log.targetEntityType,
           details: log.newValue ?? log.previousValue ?? {},
           createdAt: log.createdAt.toISOString(),
-        })),
-      );
+        }))
+      });
     } catch (err) {
       next(err);
     }
@@ -105,6 +117,87 @@ export const AdminFoundationController = {
 
   listUploads: ((_req, res) => {
     res.json([]);
+  }) satisfies RequestHandler,
+
+  listUsers: (async (req, res, next) => {
+    try {
+      const limit = Number(req.query["limit"]) || 100;
+      const offset = Number(req.query["offset"]) || 0;
+
+      const where: import("@prisma/client").Prisma.UserWhereInput = { role: "MITRA" };
+
+      const [users, total] = await Promise.all([
+        prisma.user.findMany({
+          where,
+          select: {
+            id: true,
+            name: true,
+            npk: true,
+            email: true,
+            division: true,
+            role: true,
+            membershipTier: true,
+            partnerStatus: true
+          },
+          orderBy: { name: "asc" },
+          take: limit,
+          skip: offset,
+        }),
+        prisma.user.count({ where })
+      ]);
+
+      const usersWithTokens = await Promise.all(
+        users.map(async (user) => ({
+          ...user,
+          tokens: await tokenLedgerRepository.getBalance(user.id)
+        }))
+      );
+
+      res.json({
+        total,
+        limit,
+        offset,
+        users: usersWithTokens
+      });
+    } catch (err) {
+      next(err);
+    }
+  }) satisfies RequestHandler,
+
+  updateUserStatus: (async (req, res, next) => {
+    try {
+      const { userId, status } = req.body;
+      const { user: actor } = req;
+
+      if (!userId || !status) {
+        throw new ValidationError("userId and status are required");
+      }
+
+      if (!["ACTIVE", "INACTIVE", "RESIGNED"].includes(status)) {
+        throw new ValidationError("Status must be one of ACTIVE, INACTIVE, or RESIGNED");
+      }
+
+      const existing = await prisma.user.findUnique({ where: { id: userId } });
+      if (!existing) throw new Error("User not found");
+
+      const updated = await prisma.user.update({
+        where: { id: userId },
+        data: { partnerStatus: status },
+      });
+
+      await logAudit({
+        action: "PARTNER_STATUS_UPDATED",
+        actorId: actor.id,
+        targetType: "User",
+        targetId: userId,
+        previousValue: { name: existing.name, status: existing.partnerStatus },
+        newValue: { status: updated.partnerStatus },
+      });
+
+      res.json({ success: true, user: updated });
+    } catch (err) {
+      next(err);
+    }
   }) satisfies RequestHandler,
 
   processUpload: ((req, res, next) => {

@@ -15,24 +15,31 @@ import { redeemRequestSchema, updateStatusSchema, redemptionVerificationSchema }
 /**
  * Mitra: Submit a new redemption request.
  */
-export async function submitRedemptionRequest(formData: { rewardItemId: string }) {
+export async function submitRedemptionRequest(data: { rewardItemId: string, isRepresented?: boolean, file?: File }) {
   const session = await auth();
   if (!session?.user || session.user.role !== "MITRA") {
     return { success: false, error: "Unauthorized" };
   }
 
-  // Validate input
-  const parsed = redeemRequestSchema.safeParse(formData);
+  // Validate input (zod preprocess handles 'true' string from FormData if needed)
+  const parsed = redeemRequestSchema.safeParse({
+    rewardItemId: data.rewardItemId,
+    isRepresented: data.isRepresented
+  });
+
   if (!parsed.success) {
     return { success: false, error: "Invalid reward item" };
   }
 
   try {
     const token = await getServerToken();
-    await employeeApi.createRedemption(token, parsed.data.rewardItemId);
+    await employeeApi.createRedemption(token, parsed.data.rewardItemId, {
+      isRepresented: parsed.data.isRepresented,
+      file: data.file
+    });
     
     revalidatePath("/employee/dashboard");
-    revalidatePath("/employee/redemptions");
+    revalidatePath("/employee/history");
     
     return { success: true };
   } catch (err) {

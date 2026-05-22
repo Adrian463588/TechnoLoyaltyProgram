@@ -2,6 +2,8 @@ export type Role = "Mitra" | "TeamLeader" | "HCPM";
 
 export type Division = "Optel" | "Techno";
 
+export type MembershipTier = "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
+
 export type TierStatus = "Bronze" | "Silver" | "Gold" | "Platinum";
 
 export interface User {
@@ -31,21 +33,21 @@ export interface RewardItem {
   category: "Voucher" | "Merchandise" | "Experience" | "TimeOff";
   imageUrl?: string;
   isAvailable: boolean;
+  stock: number | null;
+  minTier: "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
 }
 
 export type RewardRequestStatus = 
-  | "DRAFT"
-  | "PENDING_VERIFICATION" 
-  | "VERIFIED" 
+  | "REQUESTED"
+  | "REVIEWED" 
+  | "ACCEPTED" 
   | "REJECTED" 
-  | "PURCHASED" 
-  | "PICKUP_SCHEDULED" 
-  | "COMPLETED" 
   | "CANCELLED";
 
 export interface RewardRequest {
   id: string;
   userId: string;
+  userNpk?: string;
   userName?: string;
   rewardId: string;
   rewardName: string;

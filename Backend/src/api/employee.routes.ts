@@ -13,6 +13,7 @@ import { LoyaltyController }        from "@/controllers/loyalty.controller";
 import { RewardCatalogController }  from "@/controllers/reward-catalog.controller";
 import { NotificationsController }  from "@/controllers/notifications.controller";
 import { ProfileController }        from "@/controllers/profile.controller";
+import { DocumentController }       from "@/controllers/document.controller";
 
 export const employeeRoutes = Router();
 
@@ -83,7 +84,8 @@ employeeRoutes.get("/token-summary", LoyaltyController.getTokenSummary as Reques
  *         description: Redemption request created
  */
 employeeRoutes.get( "/redemptions", RedemptionController.listMyRedemptions as RequestHandler);
-employeeRoutes.post("/redemptions", RedemptionController.createRequest      as RequestHandler);
+employeeRoutes.post("/redemptions", DocumentController.uploadMiddleware, RedemptionController.createRequest      as RequestHandler);
+employeeRoutes.post("/redemptions/:id/cancel", RedemptionController.cancelRequest as RequestHandler);
 
 // ── Reward Catalog (read-only for employees) ───────────────────────────────
 /**
@@ -101,6 +103,11 @@ employeeRoutes.get( "/rewards",     RewardCatalogController.listActive       as 
 
 // ── Token Ledger History ───────────────────────────────────────────────────
 employeeRoutes.get("/history",      LoyaltyController.getTokenHistory        as RequestHandler);
+
+// ── Documents ─────────────────────────────────────────────────────────────
+employeeRoutes.get(  "/documents",        DocumentController.listDocuments   as RequestHandler);
+employeeRoutes.post( "/documents/upload", DocumentController.uploadMiddleware, DocumentController.uploadDocument as RequestHandler);
+employeeRoutes.delete("/documents/:type",   DocumentController.deleteDocument as RequestHandler);
 
 // ── Notifications (stub) ───────────────────────────────────────────────────
 employeeRoutes.get("/notifications", NotificationsController.list             as RequestHandler);

@@ -125,14 +125,17 @@ async function getEmployeeDashboard(userId: string): Promise<EmployeeDashboardDa
 
     const tokenSummary = await getTokenSummary(userId);
 
-    const recentRedemptions = await prisma.redemptionRequest.findMany({
-      where: { mitraId: userId },
-      orderBy: { submittedAt: "desc" },
-      take: 5,
-      include: {
-        rewardItem: { select: { id: true, name: true, tokenCost: true, imageUrl: true } },
-      },
-    });
+    const [recentRedemptions, recentTransactions] = await Promise.all([
+      prisma.redemptionRequest.findMany({
+        where: { mitraId: userId },
+        orderBy: { submittedAt: "desc" },
+        take: 5,
+        include: {
+          rewardItem: { select: { id: true, name: true, tokenCost: true, imageUrl: true } },
+        },
+      }),
+      tokenLedgerRepository.getHistory(userId, 10, 0),
+    ]);
 
     return {
       user: {
@@ -155,6 +158,14 @@ async function getEmployeeDashboard(userId: string): Promise<EmployeeDashboardDa
         submittedAt: r.submittedAt.toISOString(),
         updatedAt: r.updatedAt.toISOString(),
         rejectionReason: r.rejectionReason,
+      })),
+      recentTransactions: recentTransactions.map((t) => ({
+        id: t.id,
+        eventType: t.eventType,
+        amount: t.amount,
+        balanceAfter: t.balanceAfter,
+        reason: t.reason,
+        createdAt: t.createdAt.toISOString(),
       })),
     };
   });

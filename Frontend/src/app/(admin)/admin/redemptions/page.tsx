@@ -1,14 +1,26 @@
 import { auth, getServerToken } from "@/lib/auth";
 import { adminApi } from "@/lib/api-client";
 import RedemptionsClient from "./redemptions-client";
+import { Breadcrumb } from "@/components/shared/breadcrumb";
+import { CheckSquare } from "lucide-react";
 
-export default async function RedemptionsPage() {
+export default async function RedemptionsPage(props: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await auth();
   const token = await getServerToken();
+  const searchParams = await props.searchParams;
 
-  let requests: Awaited<ReturnType<typeof adminApi.listRedemptions>> = [];
+  const currentPage = Number(searchParams.page) || 1;
+  const itemsPerPage = 10;
+  const offset = (currentPage - 1) * itemsPerPage;
+
+  let requests: import("@/lib/api-client").RedemptionResponse[] = [];
+  let totalCount = 0;
   try {
-    requests = await adminApi.listRedemptions(token);
+    const res = await adminApi.listRedemptions(token, { limit: itemsPerPage, offset });
+    requests = res.requests;
+    totalCount = res.total;
   } catch (error) {
     console.warn(
       "Failed to load redemptions:",
@@ -16,33 +28,58 @@ export default async function RedemptionsPage() {
     );
   }
 
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+
   // Map backend DTO to the shape RedemptionsClient expects
   const mapped = requests.map((r) => ({
     id: r.id,
-    userId: "",
-    userName: r.item?.name ?? "—",
+    userId: r.mitra?.id ?? "",
+    userNpk: r.mitra?.npk ?? "—",
+    userName: r.mitra?.name ?? "—",
+    userDocuments: r.mitra?.documents ?? [],
     rewardId: r.item?.id ?? "",
     rewardName: r.item?.name ?? "—",
     tokensSpent: r.item?.tokenCost ?? 0,
     status: r.status as import("@/types").RewardRequestStatus,
+    isRepresented: (r as any).isRepresented ?? false,
+    powerOfAttorneyUrl: (r as any).powerOfAttorneyUrl ?? null,
+    rejectReason: r.rejectReason ?? null,
     requestedAt: r.createdAt,
     updatedAt: r.createdAt,
   }));
 
   return (
-    <div className="max-w-7xl mx-auto w-full space-y-6 p-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Redemption Management
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Review, verify, and process employee reward requests.
-          </p>
-        </div>
+    <div className="flex flex-col min-h-screen">
+      <div className="glass-nav px-6">
+        <Breadcrumb className="py-4" />
       </div>
 
-      <RedemptionsClient initialRequests={mapped} sessionToken={token} />
+      <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto space-y-6">
+        <div className="bento-grid">
+          {/* Header Card */}
+          <div className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
+            <div>
+              <h1 className="text-card-heading text-2xl mb-1 flex items-center gap-3">
+                <CheckSquare className="h-6 w-6 text-[--color-accent]" />
+                Redemption Management
+              </h1>
+              <p className="text-[var(--color-text-secondary)]">
+                Review, verify, and process employee reward requests.
+              </p>
+            </div>
+          </div>
+
+          <div className="bento-span-12">
+            <RedemptionsClient 
+              initialRequests={mapped} 
+              sessionToken={token} 
+              totalCount={totalCount}
+              currentPage={currentPage}
+              totalPages={totalPages}
+            />
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

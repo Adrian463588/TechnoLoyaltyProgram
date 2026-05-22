@@ -72,9 +72,20 @@ export interface RewardRequest {
   rejectionReason?: string | null;
 }
 
+// ── Token Ledger Entry ───────────────────────────────────────
+export interface TokenLedgerEntry {
+  id: string;
+  eventType: string; // EARNED_SHIFT, REDEEMED, etc.
+  amount: number;
+  balanceAfter: number;
+  reason: string | null;
+  createdAt: string;
+}
+
 // ── Employee Dashboard (full) ─────────────────────────────────
 export interface EmployeeDashboardData {
   user: User;
   tokenSummary: TokenSummary;
   recentRedemptions: RewardRequest[];
+  recentTransactions: TokenLedgerEntry[];
 }

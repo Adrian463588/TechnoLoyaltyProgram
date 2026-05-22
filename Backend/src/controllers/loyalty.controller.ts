@@ -42,8 +42,13 @@ export const LoyaltyController = {
       const limit  = Math.min(Number(req.query["limit"]  ?? 50), 100);
       const offset = Number(req.query["offset"] ?? 0);
       const repo   = new TokenLedgerRepository();
-      const entries = await repo.getHistory(user.id, limit, offset);
-      res.json({ entries, limit, offset, total: entries.length });
+      
+      const [entries, total] = await Promise.all([
+        repo.getHistory(user.id, limit, offset),
+        repo.countHistory(user.id)
+      ]);
+
+      res.json({ entries, limit, offset, total });
     } catch (err) {
       next(err);
     }

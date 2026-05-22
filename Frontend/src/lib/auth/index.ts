@@ -19,8 +19,11 @@ export async function getServerToken(): Promise<string> {
   const secret = process.env["NEXTAUTH_SECRET"];
 
   if (!session?.user || !secret) {
+    console.error("[getServerToken] Missing session.user or secret", { hasUser: !!session?.user, hasSecret: !!secret });
     return "";
   }
+
+  console.log("[getServerToken] session.user is:", JSON.stringify(session.user));
 
   const payload = base64Url(JSON.stringify({
     id: session.user.id,

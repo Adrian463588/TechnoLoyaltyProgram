@@ -1,155 +1,132 @@
 /**
- * /employee/history — Redemption History (Server Component)
- * Fetches real redemption data from /api/employee/redemptions.
+ * /employee/history — Token Ledger History (Server Component)
+ * Fetches real token transaction data from /api/employee/history.
  * Falls back gracefully on backend unavailability.
+ * 
+ * Styled to match Rewards Catalog and Admin Adjustment Table.
  */
 import { auth, getServerToken } from "@/lib/auth";
-import { employeeApi, type RedemptionResponse } from "@/lib/api-client";
+import { employeeApi, type TokenLedgerEntryResponse, type RedemptionResponse } from "@/lib/api-client";
+import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { BentoCard } from "@/components/ui/bento-card";
-import { RedemptionStatusChip } from "@/components/shared/status-badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Coins, History, Info } from "lucide-react";
+import { HistoryClient } from "./history-client";
+import { History, TrendingUp, ShoppingBag, Zap, Coins } from "lucide-react";
 
-export const metadata = { title: "Redemption History | Berijalan Loyalty" };
+export const metadata = { title: "Token History | Berijalan Loyalty" };
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-export default async function RedemptionHistoryPage() {
+export default async function TokenHistoryPage(props: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await auth();
   const token = await getServerToken();
+  const searchParams = await props.searchParams;
 
+  const currentPage = Number(searchParams.page) || 1;
+  const itemsPerPage = 10;
+  const offset = (currentPage - 1) * itemsPerPage;
+
+  let entries: TokenLedgerEntryResponse[] = [];
   let redemptions: RedemptionResponse[] = [];
+  let totalCount = 0;
+
   try {
-    redemptions = await employeeApi.getMyRedemptions(token);
+    const [historyRes, redemptionsRes] = await Promise.all([
+      employeeApi.getTokenHistory(token, { limit: itemsPerPage, offset }),
+      employeeApi.getMyRedemptions(token)
+    ]);
+
+    entries = historyRes.entries;
+    totalCount = historyRes.total;
+    redemptions = redemptionsRes;
   } catch (err) {
     console.warn(
-      "[history] failed to fetch redemptions:",
+      "[history] failed to fetch data:",
       err instanceof Error ? err.message : err,
     );
   }
 
-  const counts = {
-    total: redemptions.length,
-    completed: redemptions.filter((r) => r.status === "COMPLETED").length,
-    pending: redemptions.filter((r) => r.status === "PENDING_VERIFICATION").length,
-    rejected: redemptions.filter((r) => r.status === "REJECTED").length,
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  const stats = {
+    earned: entries.filter(e => e.amount > 0).reduce((sum, e) => sum + e.amount, 0),
+    spent: Math.abs(entries.filter(e => e.amount < 0).reduce((sum, e) => sum + e.amount, 0)),
   };
 
   return (
-    <div className="max-w-5xl mx-auto w-full space-y-6 p-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Redemption History
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Track all your past and ongoing redemption requests.
-        </p>
+    <div className="flex flex-col h-full">
+      <div className="px-4 md:px-6">
+        <Breadcrumb className="py-4" />
       </div>
 
-      {/* Summary Chips */}
-      <div className="flex flex-wrap gap-3" role="status" aria-label="Redemption summary">
-        {[
-          { label: "Total Requests", value: counts.total },
-          { label: "Completed", value: counts.completed },
-          { label: "Pending", value: counts.pending },
-          { label: "Rejected", value: counts.rejected },
-        ].map(({ label, value }) => (
-          <div key={label} className="flex items-center gap-2 rounded-full border border-border bg-muted/30 px-4 py-1.5">
-            <span className="text-xs text-muted-foreground">{label}:</span>
-            <span className="text-sm font-bold text-foreground">{value}</span>
-          </div>
-        ))}
-      </div>
+      <div className="flex-1 p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-6 animate-fade-up-in">
 
-      {/* History Table */}
-      {redemptions.length === 0 ? (
-        <BentoCard className="p-16 flex flex-col items-center justify-center text-center gap-4">
-          <div className="p-4 bg-muted rounded-full">
-            <History className="w-8 h-8 text-muted-foreground" aria-hidden="true" />
+        {/* Header Banner */}
+        <BentoCard className="p-6 flex flex-col justify-center">
+          <div className="flex items-center gap-3 mb-1">
+            <History className="h-6 w-6 text-[--color-accent]" />
+            <h1 className="text-card-heading text-2xl">Token History</h1>
           </div>
-          <div>
-            <h2 className="font-semibold text-lg">No Redemption History</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              You haven&apos;t submitted any redemption requests yet.
-            </p>
-          </div>
+          <p className="text-[--color-text-secondary]">
+            Detailed record of all your token earnings and usage activity.
+          </p>
         </BentoCard>
-      ) : (
-        <BentoCard className="overflow-hidden p-0">
-          <Table data-testid="history-table">
-            <TableHeader className="bg-muted/50">
-              <TableRow>
-                <TableHead className="w-[130px]">Request ID</TableHead>
-                <TableHead>Reward</TableHead>
-                <TableHead>Tokens</TableHead>
-                <TableHead>Requested</TableHead>
-                <TableHead>Last Updated</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {redemptions.map((req) => (
-                <TableRow key={req.id} data-testid="history-row">
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {req.id.slice(0, 8)}…
-                  </TableCell>
-                  <TableCell>
-                    <p className="font-medium text-foreground">{req.item?.name ?? "—"}</p>
-                    {req.status === "REJECTED" && (
-                      <div className="flex items-start gap-1 mt-1 text-xs text-destructive">
-                        <Info className="w-3 h-3 mt-0.5 shrink-0" aria-hidden="true" />
-                        <span>Rejected — contact HC PM for details.</span>
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span className="flex items-center gap-1 font-semibold text-destructive">
-                      <Coins className="w-3 h-3" aria-hidden="true" />
-                      {(req.item?.tokenCost ?? 0).toLocaleString()}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(req.createdAt)}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(req.createdAt)}
-                  </TableCell>
-                  <TableCell>
-                    <RedemptionStatusChip
-                      status={req.status as import("@/types").RewardRequestStatus}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </BentoCard>
-      )}
 
-      {/* Info banner */}
-      <div
-        className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border border-border"
-        role="note"
-      >
-        <Info className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
-        <span>
-          Redemption requests are verified by HC PM before processing. Rejected requests
-          will include a reason. Contact your HC PM for questions.
-        </span>
+        {/* Stats Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <BentoCard className="p-6 flex flex-col h-full bg-white animate-fade-up-in" style={{ animationDelay: '50ms' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                <Zap size={20} />
+              </div>
+              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider">Total Transactions</h3>
+            </div>
+            <div className="mt-auto pt-4 border-t border-border flex items-center justify-between">
+              <span className="text-sm font-semibold text-muted-foreground">Historical Entries</span>
+              <span className="text-xl font-bold text-foreground font-display">{totalCount}</span>
+            </div>
+          </BentoCard>
+
+          <BentoCard className="p-6 flex flex-col h-full bg-white animate-fade-up-in" style={{ animationDelay: '100ms' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-success/10 flex items-center justify-center text-success border border-success/20">
+                <TrendingUp size={20} />
+              </div>
+              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider">Historical Earnings</h3>
+            </div>
+            <div className="mt-auto pt-4 border-t border-border flex items-center justify-between">
+              <span className="text-sm font-semibold text-muted-foreground">Page Cumulative</span>
+              <div className="flex items-center gap-1.5 text-xl font-bold text-success font-display">
+                +{stats.earned.toLocaleString()}
+                <Coins className="h-4 w-4" />
+              </div>
+            </div>
+          </BentoCard>
+
+          <BentoCard className="p-6 flex flex-col h-full bg-white animate-fade-up-in" style={{ animationDelay: '150ms' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-error/10 flex items-center justify-center text-error border border-error/20">
+                <ShoppingBag size={20} />
+              </div>
+              <h3 className="font-bold text-foreground text-sm uppercase tracking-wider">Historical Usage</h3>
+            </div>
+            <div className="mt-auto pt-4 border-t border-border flex items-center justify-between">
+              <span className="text-sm font-semibold text-muted-foreground">Page Cumulative</span>
+              <div className="flex items-center gap-1.5 text-xl font-bold text-error font-display">
+                -{stats.spent.toLocaleString()}
+                <Coins className="h-4 w-4" />
+              </div>
+            </div>
+          </BentoCard>
+        </div>
+
+        <HistoryClient 
+          entries={entries}
+          totalCount={totalCount}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          redemptions={redemptions}
+          sessionToken={token}
+        />
       </div>
     </div>
   );

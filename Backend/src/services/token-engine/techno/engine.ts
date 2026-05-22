@@ -1,10 +1,17 @@
 import { HealthBenefit, MemberTierType } from "@prisma/client";
 import { TokenEngine, TierCalculationResult, PeriodInfo } from "../types";
 import { LOYALTY_POLICIES } from "../../../policies/loyalty.policy";
+import { TokenRuleService } from "@/services/token-rule.service";
 
 export class TechnoTokenEngine implements TokenEngine {
   calculateTokens(projects: number): number {
+    // Synchronous fallback — use hardcoded default
     return projects * LOYALTY_POLICIES.CONVERSION.TECHNO_PROJECT;
+  }
+
+  async calculateTokensAsync(projects: number): Promise<number> {
+    const rate = await TokenRuleService.getConversionRate("TECHNO");
+    return projects * rate;
   }
 
   calculateTier(cumulativeProjects: number): TierCalculationResult {
