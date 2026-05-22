@@ -214,14 +214,14 @@ export default function RedemptionsClient({
                     <TableCell className="py-4 px-6 text-xs text-[var(--color-text-secondary)]">
                       {req.userNpk}
                     </TableCell>
-                    <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">
+                    <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] transition-colors">
                       {req.userName}
                     </TableCell>
                     <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)]">
                       {req.rewardName}
                     </TableCell>
                     <TableCell className="py-4 px-6 text-right">
-                      <span className="text-sm text-[var(--color-text-primary)]">
+                      <span className="text-sm text-[var(--color-text-secondary)]">
                         {req.tokensSpent.toLocaleString()}
                       </span>
                     </TableCell>
