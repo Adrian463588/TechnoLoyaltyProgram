@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Menu, LogOut, User, Bell, ChevronDown } from "lucide-react";
+import { Menu, LogOut, User, ChevronDown } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { LazyMotion, domAnimation, m, AnimatePresence } from "framer-motion";
 import {
@@ -55,29 +55,6 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Notifications Bell with badge animation */}
-        <m.button
-          whileHover={{ scale: 1.05, rotate: 5 }}
-          whileTap={{ scale: 0.95 }}
-          className="relative p-2.5 text-muted-foreground hover:text-foreground rounded-xl hover:bg-slate-100 transition-colors"
-          onClick={() => window.location.assign("/notifications")}
-          aria-label="View notifications"
-        >
-          <Bell size={20} />
-          {/* Notification badge with pulse */}
-          <m.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute top-1.5 right-1.5 h-2 w-2 bg-primary rounded-full"
-          >
-            <m.span
-              className="absolute inset-0 h-full w-full rounded-full bg-primary"
-              animate={{ scale: [1, 1.5, 1], opacity: [1, 0, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </m.span>
-        </m.button>
-
         {/* User Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger className="focus:outline-none">
