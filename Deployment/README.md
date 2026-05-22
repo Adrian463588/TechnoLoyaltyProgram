@@ -18,7 +18,7 @@ This guide details the complete deployment architecture, tools used, configurati
 - **Frontend**: Next.js (App Router) + NextAuth.js v5
 - **Ingress Controller**: NGINX Ingress Controller
 - **TLS / SSL**: Cert-Manager (Let's Encrypt Prod)
-- **DNS Pattern**: `nip.io` wildcard DNS (e.g., `loyaltyprogramberijalan.34.101.180.46.nip.io`)
+- **DNS Pattern**: `nip.io` wildcard DNS (e.g., `loyaltyprogramberijalan.34.50.82.124.nip.io`)
 
 ---
 
@@ -78,16 +78,16 @@ kubectl create secret generic loyalty-backend-secrets -n loyalty-prod \
   --from-literal=DATABASE_URL="postgresql://loyalty_admin:loyalty_secure_password_2024@loyalty-postgres:5432/loyalty_db?schema=public" \
   --from-literal=REDIS_URL="redis://loyalty-redis:6379" \
   --from-literal=JWT_SECRET="YOUR_SECURE_JWT_SECRET" \
-  --from-literal=FRONTEND_ORIGIN="https://loyaltyprogramberijalan.34.101.180.46.nip.io"
+  --from-literal=FRONTEND_ORIGIN="https://loyaltyprogramberijalan.34.50.82.124.nip.io"
 ```
 
 **Membuat Frontend Secrets:**
 ```bash
 kubectl create secret generic loyalty-frontend-secrets -n loyalty-prod \
   --from-literal=NEXTAUTH_SECRET="YOUR_NEXTAUTH_32_CHAR_SECRET_KEY" \
-  --from-literal=NEXTAUTH_URL="https://loyaltyprogramberijalan.34.101.180.46.nip.io" \
-  --from-literal=BACKEND_URL="https://loyaltyprogramberijalan.34.101.180.46.nip.io" \
-  --from-literal=NEXT_PUBLIC_BACKEND_URL="https://loyaltyprogramberijalan.34.101.180.46.nip.io" \
+  --from-literal=NEXTAUTH_URL="https://loyaltyprogramberijalan.34.50.82.124.nip.io" \
+  --from-literal=BACKEND_URL="https://loyaltyprogramberijalan.34.50.82.124.nip.io" \
+  --from-literal=NEXT_PUBLIC_BACKEND_URL="https://loyaltyprogramberijalan.34.50.82.124.nip.io" \
   --from-literal=AUTH_TRUST_HOST="true"
 ```
 
@@ -131,8 +131,27 @@ kubectl apply -f Deployment/terraform/environments/prod/loyalty-ingress-tls.yaml
    ```bash
    kubectl get certificate -n loyalty-prod
    ```
-3. Buka *browser* pada domain `https://loyaltyprogramberijalan.34.101.180.46.nip.io`.
+3. Buka *browser* pada domain `https://loyaltyprogramberijalan.34.50.82.124.nip.io`.
 4. Coba *login* menggunakan NPK: `12345` dan Password: `password123`.
 
 ---
 *Dokumen ini dibuat dan dikelola untuk memastikan implementasi best-practice di lingkungan cloud yang dapat direplikasi kapan saja.*
+
+---
+
+## 4. Troubleshooting & Known Issues
+
+### A. NextAuth Login Selalu "Invalid Credentials" di Production
+**Gejala:** Saat mencoba login di Frontend, UI selalu menampilkan *Invalid credentials* padahal NPK dan password sudah benar. Log pada Pod Frontend memunculkan error `UntrustedHost` atau gagal melakukan *fetch* ke backend.
+
+**Penyebab & Solusi:**
+1. **Error `UntrustedHost` (NextAuth v5):**
+   - **Penyebab:** NextAuth versi terbaru akan memblokir request otentikasi yang di-*forward* dari *host* Ingress jika tidak secara eksplisit diizinkan.
+   - **Solusi:** Pastikan variabel lingkungan `AUTH_TRUST_HOST="true"` sudah ditambahkan di dalam Kubernetes Secret `loyalty-frontend-secrets`.
+2. **Error Fetch `.../api/api/auth/login` (Double Path):**
+   - **Penyebab:** Kesalahan pada penulisan URL backend. Jika `BACKEND_URL` atau `NEXT_PUBLIC_BACKEND_URL` memiliki akhiran `/api` (contoh: `https://loyaltyprogramberijalan.../api`), maka fungsi otentikasi internal NextAuth akan menggabungkannya dengan `/api/auth/login`, sehingga memicu rute yang salah (Double API route).
+   - **Solusi:** Hapus akhiran `/api`. URL yang benar di dalam *secrets* harus berupa domain murni (contoh: `https://loyaltyprogramberijalan...nip.io`).
+   
+> **Prosedur Fix:**
+> Lakukan update rahasia (Secret) via perintah `kubectl patch` atau apply ulang YAML rahasia, kemudian jalankan restart pod:
+> `kubectl rollout restart deployment loyalty-frontend -n loyalty-prod`

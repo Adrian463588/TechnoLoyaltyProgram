@@ -5,25 +5,63 @@ metadata:
   namespace: loyalty-prod
   annotations:
     kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    # DevSecOps: Security headers
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      add_header X-Frame-Options "SAMEORIGIN" always;
-      add_header X-Content-Type-Options "nosniff" always;
-      add_header X-XSS-Protection "1; mode=block" always;
-      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-      add_header Permissions-Policy "geolocation=(), microphone=()" always;
+    nginx.ingress.kubernetes.io/limit-connections: "20"
+    nginx.ingress.kubernetes.io/limit-rps: "10"
 spec:
   tls:
   - hosts:
-    - loyalty.example.com
-    secretName: loyalty-tls
+    - loyaltyprogramberijalan.34.50.82.124.nip.io
+    secretName: loyalty-tls-secret
   rules:
-  - host: loyalty.example.com
+  - host: loyaltyprogramberijalan.34.50.82.124.nip.io
     http:
       paths:
-      - path: /api
+      - path: /api/employee
+        pathType: Prefix
+        backend:
+          service:
+            name: loyalty-backend
+            port:
+              number: 80
+      - path: /api/admin
+        pathType: Prefix
+        backend:
+          service:
+            name: loyalty-backend
+            port:
+              number: 80
+      - path: /api/leader
+        pathType: Prefix
+        backend:
+          service:
+            name: loyalty-backend
+            port:
+              number: 80
+      - path: /api/auth/login
+        pathType: Prefix
+        backend:
+          service:
+            name: loyalty-backend
+            port:
+              number: 80
+      - path: /api/auth/verify
+        pathType: Prefix
+        backend:
+          service:
+            name: loyalty-backend
+            port:
+              number: 80
+      - path: /health
+        pathType: Prefix
+        backend:
+          service:
+            name: loyalty-backend
+            port:
+              number: 80
+      - path: /api-docs
         pathType: Prefix
         backend:
           service:

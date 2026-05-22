@@ -4,10 +4,17 @@ metadata:
   name: jenkins-ingress
   namespace: tools
   annotations:
-    kubernetes.io/ingress.class: nginx
+    # Timeout diperpanjang karena Jenkins build bisa lama
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "90"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "90"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "90"
+    # Upload artifact size
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
 spec:
+  # ingressClassName menggantikan annotation kubernetes.io/ingress.class yang deprecated
+  ingressClassName: nginx
   rules:
-    - host: jenkins.34.101.180.46.nip.io
+    - host: jenkins.34.50.82.124.nip.io
       http:
         paths:
           - path: /
@@ -17,3 +24,5 @@ spec:
                 name: jenkins
                 port:
                   number: 80
+
+

@@ -13,10 +13,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - loyaltyprogramberijalan.34.101.180.46.nip.io
+    - loyaltyprogramberijalan.34.50.82.124.nip.io
     secretName: loyalty-tls-secret
   rules:
-  - host: loyaltyprogramberijalan.34.101.180.46.nip.io
+  - host: loyaltyprogramberijalan.34.50.82.124.nip.io
     http:
       paths:
       - path: /api/employee
@@ -75,3 +75,4 @@ spec:
             name: loyalty-frontend
             port:
               number: 80
+
