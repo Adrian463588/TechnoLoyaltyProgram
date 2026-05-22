@@ -99,12 +99,12 @@ export default function AdjustmentModal({ user, isOpen, onClose, onSuccess }: Ad
           <form id="adjustment-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             
             {/* Action Toggle */}
-            <div className="flex p-1 bg-neutral-100 rounded-xl">
+            <div className="flex p-1 bg-neutral-100 rounded-full">
               <button
                 type="button"
                 onClick={() => setValue("actionType", "add")}
                 className={cn(
-                  "flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all",
+                  "flex-1 py-2.5 text-sm font-semibold rounded-full transition-all",
                   actionType === "add" ? "bg-white shadow-sm text-green-600" : "text-neutral-500 hover:text-neutral-700"
                 )}
               >
@@ -114,7 +114,7 @@ export default function AdjustmentModal({ user, isOpen, onClose, onSuccess }: Ad
                 type="button"
                 onClick={() => setValue("actionType", "deduct")}
                 className={cn(
-                  "flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all",
+                  "flex-1 py-2.5 text-sm font-semibold rounded-full transition-all",
                   actionType === "deduct" ? "bg-white shadow-sm text-red-600" : "text-neutral-500 hover:text-neutral-700"
                 )}
               >
@@ -133,7 +133,7 @@ export default function AdjustmentModal({ user, isOpen, onClose, onSuccess }: Ad
                 {...register("amount", { valueAsNumber: true })}
                 disabled={isPending}
                 placeholder="e.g., 500"
-                className={`w-full bg-white border rounded-xl px-4 py-2.5 text-neutral-900 focus:outline-none focus:ring-2 transition-all font-mono shadow-sm ${
+                className={`w-full bg-white border rounded-xl px-4 py-2.5 text-neutral-900 focus:outline-none focus:ring-2 transition-all shadow-sm ${
                   errors.amount ? "border-red-500 focus:ring-red-500/50" : "border-neutral-300 focus:ring-[var(--color-accent)]/50 focus:border-[var(--color-accent)]"
                 }`}
               />
