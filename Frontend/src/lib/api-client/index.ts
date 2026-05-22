@@ -96,7 +96,7 @@ export const employeeApi = {
   getRewardCatalog: (token: string) =>
     apiFetch<RewardCatalogItem[]>("/api/employee/rewards", {
       headers: withAuth(token),
-      next: { revalidate: 30 },
+      cache: "no-store",
     } as RequestInit),
 
   cancelRedemption: (token: string, id: string) =>
