@@ -2,7 +2,6 @@ import { BentoCard } from "@/components/ui/bento-card";
 import { Badge } from "@/components/ui/badge";
 import { adminApi } from "@/lib/api-client";
 import { getServerToken } from "@/lib/auth";
-import Link from "next/link";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import {
   Table,
@@ -22,10 +21,10 @@ import {
   ShieldAlert,
   User,
   History,
-  Zap,
 } from "lucide-react";
 import { Suspense } from "react";
 import { cn } from "@/lib/utils";
+import { Pagination } from "@/components/shared/pagination";
 
 function getActionIcon(action: string) {
   if (action.includes("Upload"))        return <FileSpreadsheet className="w-3.5 h-3.5" />;
@@ -74,18 +73,25 @@ function formatDetails(details: unknown): string {
   return String(details);
 }
 
-async function AuditTable({ filter }: { filter?: string }) {
+async function AuditTable({ 
+  currentPage, 
+  itemsPerPage, 
+  offset 
+}: { 
+  currentPage: number; 
+  itemsPerPage: number; 
+  offset: number; 
+}) {
   const token = await getServerToken();
-  let logs = await adminApi.getAuditLogs(token).catch(() => []);
+  let logs: import("@/lib/api-client").AuditLogResponse[] = [];
+  let totalCount = 0;
 
-  if (filter) {
-    logs = logs.filter((log) => {
-      if (filter === "Upload") return log.action.includes("Upload");
-      if (filter === "Verification") return log.action.includes("Verified");
-      if (filter === "Rejection") return log.action.includes("Rejected");
-      if (filter === "System") return !log.action.includes("Upload") && !log.action.includes("Verified") && !log.action.includes("Rejected");
-      return true;
-    });
+  try {
+    const res = await adminApi.getAuditLogs(token, { limit: itemsPerPage, offset });
+    logs = res.logs;
+    totalCount = res.total;
+  } catch (error) {
+    console.warn("Failed to load audit logs:", error);
   }
 
   if (logs.length === 0) {
@@ -94,11 +100,13 @@ async function AuditTable({ filter }: { filter?: string }) {
         <Activity className="h-12 w-12 text-[var(--color-text-tertiary)] mx-auto mb-4 opacity-20" />
         <h3 className="text-lg font-medium text-[var(--color-text-primary)]">No audit events found</h3>
         <p className="text-sm text-[var(--color-text-secondary)] mt-1 max-w-xs mx-auto">
-          {filter ? `No events match the "${filter}" filter.` : "Admin actions and system events will appear here."}
+          Admin actions and system events will appear here.
         </p>
       </BentoCard>
     );
   }
+
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   return (
     <BentoCard className="overflow-hidden p-0 shadow-sm border-[var(--color-border-subtle)] animate-fade-up-in" style={{ animationDelay: "100ms" }}>
@@ -108,7 +116,7 @@ async function AuditTable({ filter }: { filter?: string }) {
           <span className="text-sm font-semibold text-[var(--color-text-primary)]">Audit Events</span>
         </div>
         <Badge variant="outline" className="font-mono bg-[var(--color-surface-base)] text-[var(--color-text-secondary)]">
-          {logs.length} Entries
+          {totalCount} Entries
         </Badge>
       </div>
 
@@ -173,6 +181,12 @@ async function AuditTable({ filter }: { filter?: string }) {
           </TableBody>
         </Table>
       </div>
+
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalResults={totalCount}
+      />
     </BentoCard>
   );
 }
@@ -205,7 +219,9 @@ export default async function AuditLogPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const resolvedParams = await searchParams;
-  const filter = typeof resolvedParams.filter === "string" ? resolvedParams.filter : undefined;
+  const currentPage = Number(resolvedParams.page) || 1;
+  const itemsPerPage = 10;
+  const offset = (currentPage - 1) * itemsPerPage;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -230,8 +246,12 @@ export default async function AuditLogPage({
 
         {/* Audit Table */}
         <div className="bento-span-12">
-          <Suspense fallback={<AuditTableSkeleton />} key={filter ?? "all"}>
-            <AuditTable filter={filter} />
+          <Suspense fallback={<AuditTableSkeleton />} key={currentPage}>
+            <AuditTable 
+              currentPage={currentPage} 
+              itemsPerPage={itemsPerPage} 
+              offset={offset} 
+            />
           </Suspense>
         </div>
 
@@ -241,7 +261,7 @@ export default async function AuditLogPage({
           <span className="leading-relaxed">
             Audit logs are append-only and cannot be modified. Every admin action,
             system event, and status change is captured here for compliance and traceability.
-            Showing last 100 events recorded in the system ledger.
+            Pagination ensures performance as the record volume grows.
           </span>
         </div>
       </div>

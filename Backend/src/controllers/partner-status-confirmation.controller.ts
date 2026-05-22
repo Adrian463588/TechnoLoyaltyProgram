@@ -67,9 +67,16 @@ export const PartnerStatusConfirmationController = {
       const { user } = req;
       const statusResult = listStatusSchema.safeParse(req.query["status"]);
       const status = statusResult.success ? statusResult.data : undefined;
+      const limit = Number(req.query["limit"]) || 100;
+      const offset = Number(req.query["offset"]) || 0;
 
-      const items = await partnerStatusConfirmationService.listForHC(user.id, status);
-      res.json(items);
+      const { items, total } = await partnerStatusConfirmationService.listForHC(user.id, { status, limit, offset } as any);
+      res.json({
+        total,
+        limit,
+        offset,
+        items
+      });
     } catch (err) {
       next(err);
     }

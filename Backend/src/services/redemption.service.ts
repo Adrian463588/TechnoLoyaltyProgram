@@ -31,26 +31,36 @@ const VALID_TRANSITIONS: Record<RedemptionStatus, RedemptionStatus[]> = {
 
 export class RedemptionService {
   /**
-   * HC Admin: List all redemption requests with filtering.
+   * HC Admin: List all redemption requests with filtering and pagination.
    */
-  async listAll(status?: RedemptionStatus) {
-    return prisma.redemptionRequest.findMany({
-      where: status ? { status } : {},
-      include: {
-        mitra: { 
-          select: { 
-            id: true, 
-            name: true, 
-            email: true, 
-            npk: true,
-            division: true,
-            documents: true
-          } 
+  async listAll(params: { status?: RedemptionStatus; limit?: number; offset?: number } = {}) {
+    const { status, limit = 100, offset = 0 } = params;
+    const where = status ? { status } : {};
+
+    const [requests, total] = await Promise.all([
+      prisma.redemptionRequest.findMany({
+        where,
+        include: {
+          mitra: { 
+            select: { 
+              id: true, 
+              name: true, 
+              email: true, 
+              npk: true,
+              division: true,
+              documents: true
+            } 
+          },
+          rewardItem: { select: { id: true, name: true, tokenCost: true } },
         },
-        rewardItem: { select: { id: true, name: true, tokenCost: true } },
-      },
-      orderBy: { submittedAt: "desc" },
-    });
+        orderBy: { submittedAt: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.redemptionRequest.count({ where })
+    ]);
+
+    return { requests, total };
   }
 
   /**
@@ -78,7 +88,7 @@ export class RedemptionService {
   /**
    * Mitra: List own redemption requests.
    */
-  async listByMitra(userId: string): Promise<RedemptionRequest[]> {
+  async listByMitra(userId: string): Promise<any[]> {
     return prisma.redemptionRequest.findMany({
       where: { mitraId: userId },
       include: {

@@ -9,9 +9,27 @@ export const metadata: Metadata = {
   title: "Mitra Status Validation | HC Admin",
 };
 
-export default async function MitraValidationPage() {
+export default async function MitraValidationPage(props: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const token = await getServerToken();
-  const users = await adminApi.listUsers(token).catch(() => []);
+  const searchParams = await props.searchParams;
+
+  const currentPage = Number(searchParams.page) || 1;
+  const itemsPerPage = 10;
+  const offset = (currentPage - 1) * itemsPerPage;
+
+  let users: import("@/lib/api-client").UserResponse[] = [];
+  let totalCount = 0;
+  try {
+    const res = await adminApi.listUsers(token, { limit: itemsPerPage, offset });
+    users = res.users;
+    totalCount = res.total;
+  } catch (error) {
+    console.warn("Failed to load users for validation:", error);
+  }
+
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -35,7 +53,13 @@ export default async function MitraValidationPage() {
           </div>
 
           <div className="bento-span-12">
-            <MitraValidationClient users={users} sessionToken={token} />
+            <MitraValidationClient 
+              users={users} 
+              sessionToken={token} 
+              totalCount={totalCount}
+              currentPage={currentPage}
+              totalPages={totalPages}
+            />
           </div>
         </div>
       </main>

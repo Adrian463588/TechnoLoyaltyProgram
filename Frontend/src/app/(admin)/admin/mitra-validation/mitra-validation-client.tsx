@@ -9,13 +9,20 @@ import { Search, Edit2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import StatusModal from "./status-modal";
 import { EmployeeStatusBadge } from "@/components/shared/status-badge";
+import { Pagination } from "@/components/shared/pagination";
 
 export default function MitraValidationClient({ 
   users: initialUsers,
-  sessionToken 
+  sessionToken,
+  totalCount,
+  currentPage,
+  totalPages,
 }: { 
   users: UserResponse[];
   sessionToken: string;
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState<UserResponse[]>(initialUsers);
@@ -128,6 +135,12 @@ export default function MitraValidationClient({
             </TableBody>
           </Table>
         </div>
+
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalResults={totalCount}
+        />
       </BentoCard>
 
       {selectedUser && (
