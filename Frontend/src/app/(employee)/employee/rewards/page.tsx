@@ -27,9 +27,9 @@ export default async function RewardsPage() {
     category: "Voucher" as const,
     imageUrl: r.imageUrl,
     isAvailable: r.isActive,
+    stock: r.stock,
     minTier: r.minTier,
   }));
-
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 md:px-6">

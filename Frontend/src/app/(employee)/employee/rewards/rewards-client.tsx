@@ -9,7 +9,7 @@ import { SuccessAnimation } from "@/components/shared/success-animation";
 import { RedemptionPipeline } from "@/components/shared/redemption-pipeline";
 import { TooltipWrapper } from "@/components/shared/tooltip-wrapper";
 import { TierBadge } from "@/components/shared/status-badge";
-import { Coins, Lock, ShoppingBag, Loader2, FileText, Upload, Check, Trash2, AlertCircle, ArrowRight, X } from "lucide-react";
+import { Coins, Lock, ShoppingBag, Loader2, FileText, Upload, Check, Trash2, AlertCircle, ArrowRight, X, Package } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import {
@@ -200,14 +200,15 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
         {rewards.map((reward, i) => {
           const canAfford = userTokens >= reward.tokenCost;
           const isAvailable = reward.isAvailable;
+          const isOutOfStock = reward.stock !== null && reward.stock <= 0;
           const tierMet = TIER_RANK[userTier] >= TIER_RANK[reward.minTier];
-          const canRedeem = canAfford && isAvailable && tierMet;
+          const canRedeem = canAfford && isAvailable && tierMet && !isOutOfStock;
 
           return (
             <BentoCard
               key={reward.id}
               className={cn(
-                "flex flex-col h-full animate-fade-up-in transform-gpu will-change-transform p-0 overflow-hidden",
+                "flex flex-col h-full animate-fade-up-in transform-gpu will-change-transform p-0 overflow-hidden group",
                 !canRedeem && "bg-neutral-50/50"
               )}
               style={{ animationDelay: `${i * 40}ms` } as React.CSSProperties}
@@ -234,18 +235,43 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
                   <TierBadge tier={reward.minTier} className="text-[10px] py-1 px-3 h-auto opacity-100" />
                 </div>
 
-                {!isAvailable && (
-                  <div className="absolute top-2 right-2">
-                    <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider bg-red-600 text-white border border-red-700">
+                {/* Stock indicator badge */}
+                <div className="absolute top-2 right-2 flex flex-col items-end gap-2 z-10">
+                  {reward.stock === null ? (
+                    <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-white/90 backdrop-blur-sm text-emerald-600 border border-emerald-100 shadow-sm">
+                      <Check size={10} strokeWidth={3} />
+                      Ready Stock
+                    </span>
+                  ) : isOutOfStock ? (
+                    <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-red-600 text-white border border-red-700 shadow-sm">
                       Out of Stock
+                    </span>
+                  ) : reward.stock <= 5 ? (
+                    <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200 shadow-sm animate-pulse">
+                      <AlertCircle size={10} />
+                      Only {reward.stock} left!
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-white/90 backdrop-blur-sm text-slate-600 border border-slate-200 shadow-sm">
+                      <Package size={10} />
+                      {reward.stock} in stock
+                    </span>
+                  )}
+                </div>
+
+                {/* Status Overlays */}
+                {!isAvailable && !isOutOfStock && (
+                  <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-20">
+                    <span className="inline-flex items-center rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] bg-slate-900 text-white shadow-xl">
+                      Unavailable
                     </span>
                   </div>
                 )}
-                {!tierMet && isAvailable && (
-                  <div className="absolute top-2 right-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 text-orange-700 text-[10px] font-black uppercase tracking-widest border border-orange-200 px-3 py-1.5">
-                      <Lock className="w-3 h-3" />
-                      TIER LOCKED
+                {!tierMet && isAvailable && !isOutOfStock && (
+                  <div className="absolute inset-0 bg-orange-900/5 backdrop-blur-[0.5px] flex items-center justify-center z-20">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 text-orange-700 text-[10px] font-black uppercase tracking-widest border border-orange-200 px-4 py-1.5 shadow-lg">
+                      <Lock className="w-3.5 h-3.5" />
+                      Tier Locked
                     </span>
                   </div>
                 )}
@@ -511,19 +537,13 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
                 </p>
               </div>
 
-              {/* Pipeline */}
-              <div className="w-full max-w-xs p-6 bg-neutral-50 rounded-2xl border border-neutral-100 mb-8">
-                <RedemptionPipeline currentStep="submitted" />
-              </div>
-
-              <Button 
-                onClick={closeDialog} 
-                className="w-full btn-primary rounded-xl font-semibold py-6 text-base" 
+              <Button
+                onClick={closeDialog}
+                className="w-full btn-primary rounded-xl font-semibold py-6 text-base"
                 data-testid="done-btn"
               >
-                Bagus, terima kasih!
-              </Button>
-            </div>
+                Okay
+              </Button>            </div>
           )}
         </DialogContent>
       </Dialog>

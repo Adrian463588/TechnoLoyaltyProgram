@@ -33,6 +33,7 @@ export interface RewardItem {
   category: "Voucher" | "Merchandise" | "Experience" | "TimeOff";
   imageUrl?: string;
   isAvailable: boolean;
+  stock: number | null;
   minTier: "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
 }
 
