@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
@@ -75,14 +76,16 @@ export default function LoginPage() {
   return (
     <div className="space-y-6">
       {/* Brand header */}
-      <div className="text-center space-y-3">
+      <div className="text-center space-y-4">
         <div className="flex justify-center">
-          <div
-            className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30"
-            aria-hidden="true"
-          >
-            <Trophy className="h-8 w-8 text-primary-foreground" aria-hidden="true" />
-          </div>
+          <Image
+            src="/LoyaltyProgram_Icon.png"
+            alt="Loyalty Program Icon"
+            width={120}
+            height={120}
+            priority
+            className="object-contain"
+          />
         </div>
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
