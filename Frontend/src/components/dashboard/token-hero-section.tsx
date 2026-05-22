@@ -6,9 +6,10 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { TierBadge, MembershipTier, EligibilityChip } from "@/components/shared/status-badge";
 import { TokenCardSkeleton } from "@/components/shared/skeleton-card";
 import { AnimatedTokenCount } from "./animated-token-count";
-import { Coins, Info, Sparkles, X } from "lucide-react";
+import { Coins, Info, Sparkles, X, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface TokenHeroSectionProps {
   tokenBalance: number;
@@ -39,35 +40,44 @@ export function TokenHeroSection({
 
   return (
     <>
-      <div className="bento-card flex flex-col justify-between p-6 w-full h-full relative overflow-hidden">
-        {/* Ghost Grid Texture */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-             style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-
-        <div className="flex items-center justify-between mb-4 relative z-10">
-          <h3 className="text-label flex items-center gap-2 text-[--color-text-secondary]">
-            <Coins className={cn("h-[14px] w-[14px]", tierAccents.text)} />
-            Total Tokens
-          </h3>
-          
-          <div className="flex items-center gap-3">
-            <button
-              className="p-1.5 rounded-full hover:bg-slate-100 transition-colors relative"
-              onClick={() => setShowInfo(true)}
-            >
-              <Info className="h-4 w-4 text-slate-400 hover:text-primary transition-colors" />
-            </button>
-          </div>
+      <div className="bento-card flex flex-col p-6 w-full h-full bg-gradient-to-br from-[--color-surface-elevated] to-[--color-surface-base] relative overflow-hidden group min-h-[220px]">
+        {/* Decorative Background Icon - Maximized */}
+        <div className="absolute -bottom-10 -right-10 opacity-[0.04] group-hover:scale-110 group-hover:opacity-[0.07] transition-all duration-1000 pointer-events-none">
+          <Coins size={240} />
         </div>
 
-        <div className="flex-1 flex flex-col justify-center relative z-10">
-          <div className="text-5xl font-extrabold text-[--color-text-primary] font-display tracking-tight" data-testid="token-counter">
-            <AnimatedTokenCount value={tokenBalance} />
+        <div className="relative z-10 flex flex-col h-full">
+          <div>
+            <h3 className="text-[10px] font-black tracking-[0.2em] uppercase mb-4 opacity-60 text-[--color-text-secondary]">
+              Your Total Balance
+            </h3>
           </div>
-          <div className="flex items-center gap-2 mt-2">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              Available to spend
-            </p>
+          
+          <div className="flex-1 flex flex-col justify-center mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-6">
+              <div className="text-8xl font-black text-[--color-accent] font-display tracking-tighter leading-none" data-testid="token-counter">
+                <AnimatedTokenCount value={tokenBalance} />
+              </div>
+              <span className="text-xl font-bold text-[--color-text-secondary] opacity-70 tracking-tight">
+                tokens available
+              </span>
+            </div>
+          </div>
+
+          {/* CTA Link - No divider */}
+          <div className="mt-auto pt-4">
+            <Link 
+              href="/employee/rewards" 
+              className="group/link inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-[--color-text-secondary] hover:text-[--color-accent] transition-colors"
+            >
+              Redeem Reward Now
+              <motion.span
+                animate={{ x: [0, 4, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <ChevronRight className="h-3 w-3" />
+              </motion.span>
+            </Link>
           </div>
         </div>
       </div>
