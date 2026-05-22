@@ -106,14 +106,14 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
     const { month, day } = parseDate(settings[field] as string);
     return (
       <div className="space-y-3">
-        <Label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-tertiary)] flex items-center gap-2">
+        <Label className="text-[10px] uppercase tracking-widest text-[var(--color-text-tertiary)] flex items-center gap-2">
           <Icon className="w-3 h-3" />
           {label}
         </Label>
         <div className="flex gap-2">
           <div className="flex-1">
             <Select value={month} onValueChange={(val) => handleDateChange(field, 'month', val)}>
-              <SelectTrigger className="h-11 w-full bg-[var(--color-surface-base)] border-[var(--color-border-subtle)] rounded-xl font-bold">
+              <SelectTrigger className="h-11 w-full bg-[var(--color-surface-base)] border-[var(--color-border-subtle)] rounded-xl">
                 <SelectValue placeholder="Month">
                   {MONTHS.find(m => m.value === month)?.label}
                 </SelectValue>
@@ -127,7 +127,7 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
           </div>
           <div className="w-[84px]">
             <Select value={day} onValueChange={(val) => handleDateChange(field, 'day', val)}>
-              <SelectTrigger className="h-11 w-full bg-[var(--color-surface-base)] border-[var(--color-border-subtle)] rounded-xl font-bold">
+              <SelectTrigger className="h-11 w-full bg-[var(--color-surface-base)] border-[var(--color-border-subtle)] rounded-xl">
                 <SelectValue placeholder="Day" />
               </SelectTrigger>
               <SelectContent>
@@ -152,15 +152,14 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
               <Calendar size={20} />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[var(--color-text-primary)]">System Cycles & Logistics</h2>
-              <p className="text-[10px] text-[var(--color-text-tertiary)] uppercase tracking-wider font-bold">Annual recurring configurations</p>
+              <h2 className="text-sm font-bold text-[var(--color-text-secondary)] uppercase tracking-wider">System Cycles & Logistics</h2>
             </div>
           </div>
 
           <div className="p-8 space-y-12">
             {/* 1. PERIOD ONE (P1) */}
             <div className="space-y-4">
-              <h3 className="font-black text-xs uppercase tracking-[0.2em] text-[var(--color-text-secondary)] border-l-4 border-slate-900 pl-3">
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-text-secondary)] border-l-4 border-slate-900 pl-3">
                 EARNING PERIOD ONE (P1)
               </h3>
               <div className="flex flex-col sm:flex-row items-start gap-6 p-6 rounded-[24px] bg-[var(--color-surface-elevated)]/50 border border-[var(--color-border-subtle)]">
@@ -178,7 +177,7 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
 
             {/* 2. PERIOD TWO (P2) */}
             <div className="space-y-4">
-              <h3 className="font-black text-xs uppercase tracking-[0.2em] text-[var(--color-text-secondary)] border-l-4 border-primary pl-3">
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-text-secondary)] border-l-4 border-primary pl-3">
                 EARNING PERIOD TWO (P2)
               </h3>
               <div className="flex flex-col sm:flex-row items-start gap-6 p-6 rounded-[24px] bg-[var(--color-surface-elevated)]/50 border border-[var(--color-border-subtle)]">
@@ -196,7 +195,7 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
 
             {/* 3. CLAIM PERIOD P1 */}
             <div className="space-y-4">
-              <h3 className="font-black text-xs uppercase tracking-[0.2em] text-[var(--color-text-secondary)] border-l-4 border-emerald-500 pl-3">
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-text-secondary)] border-l-4 border-emerald-500 pl-3">
                 CLAIM PERIOD ONE (P1)
               </h3>
               <div className="flex flex-col sm:flex-row items-start gap-6 p-6 rounded-[24px] bg-[var(--color-surface-elevated)]/50 border border-[var(--color-border-subtle)]">
@@ -214,7 +213,7 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
 
             {/* 4. CLAIM PERIOD P2 */}
             <div className="space-y-4">
-              <h3 className="font-black text-xs uppercase tracking-[0.2em] text-[var(--color-text-secondary)] border-l-4 border-emerald-600 pl-3">
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-text-secondary)] border-l-4 border-emerald-600 pl-3">
                 CLAIM PERIOD TWO (P2)
               </h3>
               <div className="flex flex-col sm:flex-row items-start gap-6 p-6 rounded-[24px] bg-[var(--color-surface-elevated)]/50 border border-[var(--color-border-subtle)]">
@@ -232,12 +231,12 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
 
             {/* 5. COLLECTION POINT */}
             <div className="space-y-4">
-              <h3 className="font-black text-xs uppercase tracking-[0.2em] text-[var(--color-text-secondary)] border-l-4 border-indigo-500 pl-3">
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-text-secondary)] border-l-4 border-indigo-500 pl-3">
                 COLLECTION POINT
               </h3>
               <div className="p-6 rounded-[24px] bg-[var(--color-surface-elevated)]/50 border border-[var(--color-border-subtle)]">
                 <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-tertiary)] flex items-center gap-2">
+                  <Label className="text-[10px] uppercase tracking-widest text-[var(--color-text-tertiary)] flex items-center gap-2">
                     <MapPin className="w-3 h-3" />
                     Pickup Location Name
                   </Label>
@@ -245,9 +244,9 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
                     value={settings.rewardPickupLocation}
                     onChange={(e) => setSettings(prev => ({ ...prev, rewardPickupLocation: e.target.value }))}
                     placeholder="e.g. HC Office - Main Lobby"
-                    className="h-11 rounded-xl bg-[var(--color-surface-base)] border-[var(--color-border-subtle)] font-bold text-sm focus:border-primary transition-all max-w-2xl"
+                    className="h-11 rounded-xl bg-[var(--color-surface-base)] border-[var(--color-border-subtle)] text-sm focus:border-primary transition-all max-w-2xl"
                   />
-                  <p className="text-[10px] text-[var(--color-text-tertiary)] leading-relaxed font-medium pl-1">
+                  <p className="text-[10px] text-[var(--color-text-tertiary)] leading-relaxed pl-1">
                     This location will be displayed to employees upon successful reward redemption.
                   </p>
                 </div>
@@ -265,8 +264,8 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
               <AlertCircle size={32} />
             </div>
             <div className="space-y-1">
-              <p className="text-slate-500 font-black tracking-tight text-base">Global Configuration</p>
-              <p className="text-slate-400 text-xs font-bold leading-relaxed max-w-lg">
+              <p className="text-slate-500 tracking-tight text-base">Global Configuration</p>
+              <p className="text-slate-400 text-xs leading-relaxed max-w-lg">
                 Changes will persist annually. Ensure all dates and logistics align with the latest company loyalty policy before committing updates.
               </p>
             </div>
@@ -275,7 +274,7 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
           <Button 
             onClick={onSave}
             disabled={isSaving}
-            className="w-full sm:w-auto h-14 px-10 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black text-sm transition-all active:scale-95 shadow-xl shadow-primary/30 flex items-center gap-3"
+            className="w-full sm:w-auto h-14 px-10 bg-primary hover:bg-primary/90 text-white rounded-2xl text-sm transition-all active:scale-95 shadow-xl shadow-primary/30 flex items-center gap-3"
           >
             {isSaving ? (
               <Loader2 className="w-5 h-5 animate-spin" />
