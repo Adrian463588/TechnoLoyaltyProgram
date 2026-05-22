@@ -25,6 +25,7 @@ interface DashboardData {
   eligibilityStatus: { eligible: boolean; reason?: string };
   period: string;
   recentTransactions?: TokenLedgerEntry[];
+  settings: import("@/lib/api-client").SystemSettingsResponse | null;
 }
 
 // Animation variants
@@ -74,16 +75,94 @@ const formatDate = (dateStr: string) => {
   }).format(new Date(dateStr));
 };
 
-const upcomingRewards = [
-  { name: "Amazon Gift Card $50", progress: 75, tokensNeeded: 250 },
-  { name: "Travel Voucher", progress: 45, tokensNeeded: 550 },
-];
-
 export function DashboardContent({ data }: { data: DashboardData }) {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const router = useRouter();
 
   const transactions = data.recentTransactions || [];
+
+  // ── Dynamic Period Logic (Mirrored from Admin) ──────────────────────────
+  const now = new Date();
+  const currentMonthDay = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  
+  let activePeriodLabel = "Unknown";
+  let activePeriodDates = "";
+  let activeClaimLabel = "Unknown";
+  let activeClaimDates = "";
+
+  if (data.settings) {
+    const { p1Start, p1End, p2Start, p2End, claimP1Start, claimP1End, claimP2Start, claimP2End } = data.settings;
+    
+    const formatDateStr = (mmdd: string) => {
+      const [m, d] = mmdd.split("-");
+      const date = new Date(2000, parseInt(m) - 1, parseInt(d));
+      return date.toLocaleString('en-GB', { month: 'short', day: 'numeric' });
+    };
+
+    const p1RangeStr = `${formatDateStr(p1Start)} → ${formatDateStr(p1End)}`;
+    const p2RangeStr = `${formatDateStr(p2Start)} → ${formatDateStr(p2End)}`;
+    const claimP1RangeStr = `${formatDateStr(claimP1Start)} → ${formatDateStr(claimP1End)}`;
+    const claimP2RangeStr = `${formatDateStr(claimP2Start)} → ${formatDateStr(claimP2End)}`;
+
+    // Earning Period Logic
+    if (p1Start <= p1End) {
+      if (currentMonthDay >= p1Start && currentMonthDay <= p1End) {
+        activePeriodLabel = "P1";
+        activePeriodDates = p1RangeStr;
+      }
+    } else {
+      if (currentMonthDay >= p1Start || currentMonthDay <= p1End) {
+        activePeriodLabel = "P1";
+        activePeriodDates = p1RangeStr;
+      }
+    }
+
+    if (activePeriodLabel === "Unknown") {
+      if (p2Start <= p2End) {
+        if (currentMonthDay >= p2Start && currentMonthDay <= p2End) {
+          activePeriodLabel = "P2";
+          activePeriodDates = p2RangeStr;
+        }
+      } else {
+        if (currentMonthDay >= p2Start || currentMonthDay <= p2End) {
+          activePeriodLabel = "P2";
+          activePeriodDates = p2RangeStr;
+        }
+      }
+    }
+
+    // Claim Period Logic
+    if (claimP1Start <= claimP1End) {
+      if (currentMonthDay >= claimP1Start && currentMonthDay <= claimP1End) {
+        activeClaimLabel = "P1";
+        activeClaimDates = claimP1RangeStr;
+      }
+    } else {
+      if (currentMonthDay >= claimP1Start || currentMonthDay <= claimP1End) {
+        activeClaimLabel = "P1";
+        activeClaimDates = claimP1RangeStr;
+      }
+    }
+
+    if (activeClaimLabel === "Unknown") {
+      if (claimP2Start <= claimP2End) {
+        if (currentMonthDay >= claimP2Start && currentMonthDay <= claimP2End) {
+          activeClaimLabel = "P2";
+          activeClaimDates = claimP2RangeStr;
+        }
+      } else {
+        if (currentMonthDay >= claimP2Start || currentMonthDay <= claimP2End) {
+          activeClaimLabel = "P2";
+          activeClaimDates = claimP2RangeStr;
+        }
+      }
+    }
+
+    if (activeClaimLabel === "Unknown") {
+      activeClaimLabel = "P1";
+      activeClaimDates = claimP1RangeStr;
+    }
+  }
 
   return (
     <motion.div
@@ -97,24 +176,34 @@ export function DashboardContent({ data }: { data: DashboardData }) {
         variants={itemVariants}
         className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-start justify-between"
       >
-        <div>
+        <div className="space-y-2">
           <motion.h1
             data-testid="employee-dashboard-heading"
-            className="text-2xl font-extrabold text-[--color-text-secondary] mb-3 leading-none"
+            className="text-2xl font-extrabold text-[--color-text-secondary] mb-1 leading-none"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
             Dashboard
           </motion.h1>
-          <motion.p
-            className="text-sm text-[--color-text-secondary] leading-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            Active Earning Period: {data.period}
-          </motion.p>
+          <div className="flex flex-col gap-1">
+            <motion.p
+              className="text-sm text-[--color-text-secondary]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              Active Earning Period: <span className="font-bold text-[--color-text-primary]">{activePeriodLabel} ({activePeriodDates})</span>
+            </motion.p>
+            <motion.p
+              className="text-sm text-[--color-text-tertiary]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.35 }}
+            >
+              Active Claim Period: <span className="font-bold text-[--color-text-secondary]">{activeClaimLabel} ({activeClaimDates})</span>
+            </motion.p>
+          </div>
         </div>
         
         <motion.div
