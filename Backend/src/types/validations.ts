@@ -27,13 +27,10 @@ export const TokenEventTypeEnum = z.enum([
 export const ClaimStatusEnum = z.enum(["PENDING", "APPROVED", "REJECTED"]);
 export const UploadStatusEnum = z.enum(["STAGED", "VALIDATING", "PROCESSING", "COMPLETED", "FAILED"]);
 export const RedemptionStatusEnum = z.enum([
-  "DRAFT",
-  "PENDING_VERIFICATION",
-  "VERIFIED",
+  "REQUESTED",
+  "REVIEWED",
+  "ACCEPTED",
   "REJECTED",
-  "PURCHASED",
-  "PICKUP_SCHEDULED",
-  "COMPLETED",
   "CANCELLED",
 ]);
 
@@ -54,6 +51,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 
 export const redeemRequestSchema = z.object({
   rewardItemId: z.string().uuid("Invalid reward item ID"),
+  isRepresented: z.preprocess((val) => val === 'true' || val === true, z.boolean()).optional(),
 });
 
 export const updateStatusSchema = z.object({
@@ -146,3 +144,13 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 export const uuidSchema = z.string().uuid("Invalid UUID format");
 
 export type UuidInput = z.infer<typeof uuidSchema>;
+
+// ============================================================
+// TOKEN CONVERSION RULE (HC ADMIN)
+// ============================================================
+
+export const updateTokenRuleSchema = z.object({
+  tokensPerUnit: z.number().int().min(1, "Tokens per unit must be at least 1"),
+});
+
+export type UpdateTokenRuleInput = z.infer<typeof updateTokenRuleSchema>;

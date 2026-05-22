@@ -1,10 +1,17 @@
 import { HealthBenefit, MemberTierType } from "@prisma/client";
 import { TokenEngine, TierCalculationResult, PeriodInfo } from "../types";
 import { LOYALTY_POLICIES } from "../../../policies/loyalty.policy";
+import { TokenRuleService } from "@/services/token-rule.service";
 
 export class OpcentTeleTokenEngine implements TokenEngine {
   calculateTokens(slots: number): number {
+    // Synchronous fallback — use hardcoded default
     return slots * LOYALTY_POLICIES.CONVERSION.OPCENT_TELE_SLOT;
+  }
+
+  async calculateTokensAsync(slots: number): Promise<number> {
+    const rate = await TokenRuleService.getConversionRate("OPCENT_TELE");
+    return slots * rate;
   }
 
   calculateTier(cumulativeSlots: number): TierCalculationResult {

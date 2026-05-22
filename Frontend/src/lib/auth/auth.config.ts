@@ -18,6 +18,8 @@ export const authConfig = {
       if (user) {
         token.id            = user.id ?? "";
         token.email         = user.email ?? "";
+        token.name          = user.name ?? "";
+        token.npk           = (user as { npk?: string }).npk ?? "";
         token.role          = (user as { role: "MITRA" | "TEAM_LEADER" | "HC_PM" }).role;
         token.division      = (user as { division?: string }).division;
         token.partnerStatus = (user as { partnerStatus?: string }).partnerStatus;
@@ -26,9 +28,11 @@ export const authConfig = {
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id as string;
+        session.user.id   = token.id as string;
+        session.user.name = token.name as string;
         const user = session.user as unknown as Record<string, unknown>;
         user.email         = token.email;
+        user.npk           = token.npk;
         user.role          = token.role;
         user.division      = token.division;
         user.partnerStatus = token.partnerStatus;

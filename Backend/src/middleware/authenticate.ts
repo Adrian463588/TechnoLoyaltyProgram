@@ -104,25 +104,41 @@ function buildSessionUser(input: {
 }
 
 function verifyInternalToken(token: string, secret: string): SessionUser | null {
-  if (!token.startsWith("internal.")) return null;
+  if (!token.startsWith("internal.")) {
+    console.log("[verifyInternalToken] Does not start with internal.");
+    return null;
+  }
 
   const [, payload, signature] = token.split(".");
-  if (!payload || !signature) return null;
+  if (!payload || !signature) {
+    console.log("[verifyInternalToken] Missing payload or signature");
+    return null;
+  }
 
   const expected = signPayload(payload, secret);
-  if (!safeEqual(signature, expected)) return null;
+  if (!safeEqual(signature, expected)) {
+    console.log("[verifyInternalToken] Signature mismatch", { signature, expected, secretLength: secret.length });
+    return null;
+  }
 
   const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as unknown;
-  if (!isInternalTokenPayload(parsed)) return null;
-  if (parsed.exp < Math.floor(Date.now() / 1000)) return null;
+  if (!isInternalTokenPayload(parsed)) {
+    console.log("[verifyInternalToken] Invalid payload structure", parsed);
+    return null;
+  }
+  
+  if ((parsed as any).exp < Math.floor(Date.now() / 1000)) {
+    console.log("[verifyInternalToken] Token expired");
+    return null;
+  }
 
-  const divisionId = toOptionalString(parsed.divisionId);
+  const divisionId = toOptionalString((parsed as any).divisionId);
   return buildSessionUser({
-    id: parsed.id,
-    npk: parsed.npk,
-    name: parsed.name,
-    email: parsed.email,
-    role: parsed.role,
+    id: (parsed as any).id,
+    npk: (parsed as any).npk,
+    name: (parsed as any).name,
+    email: (parsed as any).email,
+    role: (parsed as any).role,
     ...(divisionId ? { divisionId } : {}),
   });
 }
@@ -143,6 +159,7 @@ export const authenticate: RequestHandler = async (req, res, next) => {
     res.status(500).json({ error: "Internal server error" });
     return;
   }
+  console.log("[Auth] NEXTAUTH_SECRET length:", secret.length, "starts with:", secret.substring(0, 5));
 
   try {
     const internalUser = verifyInternalToken(token, secret);

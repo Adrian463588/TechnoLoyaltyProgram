@@ -15,6 +15,8 @@ import { RedemptionController }              from "@/controllers/redemption.cont
 import { ManualAdjustmentController }        from "@/controllers/manual-adjustment.controller";
 import { RewardCatalogController }           from "@/controllers/reward-catalog.controller";
 import { PartnerStatusConfirmationController } from "@/controllers/partner-status-confirmation.controller";
+import { TokenRuleController }               from "@/controllers/token-rule.controller";
+import { SystemSettingController }           from "@/controllers/system-setting.controller";
 import {
   AdminFoundationController,
   uploadProcessMiddleware,
@@ -22,9 +24,14 @@ import {
 
 export const adminRoutes = Router();
 
-// ── Apply auth guards to all admin routes ──────────────────────────────────
+// ── Shared System Settings (Read-access for all authenticated users) ────────
+adminRoutes.get(  "/system-settings", authenticate, authorize("MITRA"), SystemSettingController.getSettings as RequestHandler);
+
+// ── Apply auth guards to all remaining admin routes ──────────────────────────
 adminRoutes.use(authenticate, authorize("HC_PM"));
 
+adminRoutes.get("/users", AdminFoundationController.listUsers as RequestHandler);
+adminRoutes.post("/users/status", AdminFoundationController.updateUserStatus as RequestHandler);
 adminRoutes.get("/audit", AdminFoundationController.listAuditLogs as RequestHandler);
 adminRoutes.get("/uploads", AdminFoundationController.listUploads as RequestHandler);
 adminRoutes.post(
@@ -32,6 +39,9 @@ adminRoutes.post(
   uploadProcessMiddleware,
   AdminFoundationController.processUpload as RequestHandler,
 );
+
+// ── System Settings (Write-access for HC_PM only) ──────────────────────────
+adminRoutes.patch("/system-settings",                    SystemSettingController.updateSettings    as RequestHandler);
 
 // ── Redemptions ─────────────────────────────────────────────────────────────
 /**
@@ -213,7 +223,8 @@ adminRoutes.post( "/rewards",                            RewardCatalogController
  *         description: Reward deactivated
  */
 adminRoutes.patch("/rewards/:id",                        RewardCatalogController.update            as RequestHandler);
-adminRoutes.delete("/rewards/:id",                       RewardCatalogController.deactivate        as RequestHandler);
+adminRoutes.delete("/rewards/:id",                       RewardCatalogController.delete            as RequestHandler);
+adminRoutes.post("/rewards/:id/toggle-status",           RewardCatalogController.toggleStatus      as RequestHandler);
 
 // ── Partner Status Confirmations (HC-06) ─────────────────────────────────────
 /**
@@ -264,3 +275,44 @@ adminRoutes.post( "/partner-confirmations",              PartnerStatusConfirmati
  *         description: Request cancelled
  */
 adminRoutes.post( "/partner-confirmations/:id/cancel",   PartnerStatusConfirmationController.cancel          as RequestHandler);
+
+// ── Token Conversion Rules ───────────────────────────────────────────────────
+/**
+ * @openapi
+ * /api/admin/token-rules:
+ *   get:
+ *     tags: [Admin]
+ *     summary: List all token conversion rules
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: List of conversion rules
+ */
+adminRoutes.get(  "/token-rules",                        TokenRuleController.listRules             as RequestHandler);
+
+/**
+ * @openapi
+ * /api/admin/token-rules/{id}:
+ *   patch:
+ *     tags: [Admin]
+ *     summary: Update a token conversion rule
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [tokensPerUnit]
+ *             properties:
+ *               tokensPerUnit: { type: integer, minimum: 1 }
+ *     responses:
+ *       200:
+ *         description: Rule updated
+ */
+adminRoutes.patch("/token-rules/:id",                    TokenRuleController.updateRule            as RequestHandler);

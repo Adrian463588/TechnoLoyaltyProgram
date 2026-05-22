@@ -3,34 +3,28 @@ import { cn } from "@/lib/utils";
 
 // Mapping Redemption Status
 export type RedemptionStatus =
-  | "DRAFT"
-  | "PENDING_VERIFICATION"
-  | "VERIFIED"
+  | "REQUESTED"
+  | "REVIEWED"
+  | "ACCEPTED"
   | "REJECTED"
-  | "PURCHASED"
-  | "PICKUP_SCHEDULED"
-  | "COMPLETED"
   | "CANCELLED";
 
 const statusConfig: Record<RedemptionStatus, { bg: string; color: string; label: string }> = {
-  DRAFT: { bg: "rgba(148, 163, 184, 0.15)", color: "#94A3B8", label: "DRAFT" },
-  PENDING_VERIFICATION: { bg: "rgba(245, 158, 11, 0.15)", color: "#FCD34D", label: "PENDING VERIFY" },
-  VERIFIED: { bg: "rgba(59, 130, 246, 0.15)", color: "#93C5FD", label: "VERIFIED" },
-  REJECTED: { bg: "rgba(239, 68, 68, 0.15)", color: "#FCA5A5", label: "REJECTED" },
-  PURCHASED: { bg: "rgba(107, 206, 83, 0.10)", color: "#86EFAC", label: "PURCHASED" },
-  PICKUP_SCHEDULED: { bg: "rgba(107, 206, 83, 0.18)", color: "#6BCE53", label: "PICKUP SCHEDULED" },
-  COMPLETED: { bg: "rgba(107, 206, 83, 0.25)", color: "#6BCE53", label: "COMPLETED" },
-  CANCELLED: { bg: "rgba(71, 85, 105, 0.25)", color: "#475569", label: "CANCELLED" },
+  REQUESTED: { bg: "#FEF3C7", color: "#D97706", label: "REQUESTED" },
+  REVIEWED:  { bg: "#DBEAFE", color: "#2563EB", label: "REVIEWED" },
+  ACCEPTED:  { bg: "#DCFCE7", color: "#16A34A", label: "ACCEPTED" },
+  REJECTED:  { bg: "#FEE2E2", color: "#DC2626", label: "REJECTED" },
+  CANCELLED: { bg: "#F1F5F9", color: "#475569", label: "CANCELLED" },
 };
 
 export function RedemptionStatusChip({ status, className }: { status: RedemptionStatus; className?: string }) {
-  const config = statusConfig[status] || statusConfig.DRAFT;
+  const config = statusConfig[status] || statusConfig.REQUESTED;
   return (
     <span
       role="status"
       aria-label={`Status: ${config.label}`}
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-medium tracking-[0.06em] uppercase",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-bold tracking-[0.06em] uppercase border border-transparent shadow-sm",
         className
       )}
       style={{ backgroundColor: config.bg, color: config.color }}
@@ -43,11 +37,11 @@ export function RedemptionStatusChip({ status, className }: { status: Redemption
 // Mapping Tiers from PRD (SAPHIRE, EMERALD, RUBY, DIAMOND)
 export type MembershipTier = "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
 
-const tierConfig: Record<MembershipTier, { bg: string; color: string; glow: string }> = {
-  SAPHIRE: { bg: "rgba(148, 163, 184, 0.15)", color: "#94A3B8", glow: "rgba(148, 163, 184, 0.30)" }, // Muted blue/slate
-  EMERALD: { bg: "rgba(107, 206, 83, 0.15)", color: "#6BCE53", glow: "rgba(107, 206, 83, 0.30)" }, // Green
-  RUBY: { bg: "rgba(239, 68, 68, 0.15)", color: "#EF4444", glow: "rgba(239, 68, 68, 0.30)" }, // Red
-  DIAMOND: { bg: "rgba(103, 232, 249, 0.15)", color: "#67E8F9", glow: "rgba(103, 232, 249, 0.30)" }, // Cyan
+const tierConfig: Record<MembershipTier, { bg: string; color: string; border: string }> = {
+  SAPHIRE: { bg: "bg-blue-100", color: "text-blue-700", border: "border-blue-300" },
+  EMERALD: { bg: "bg-emerald-100", color: "text-emerald-700", border: "border-emerald-300" },
+  RUBY:    { bg: "bg-red-100", color: "text-red-700", border: "border-red-300" },
+  DIAMOND: { bg: "bg-purple-100", color: "text-purple-700", border: "border-purple-300" },
 };
 
 export function TierBadge({ tier, className }: { tier: MembershipTier; className?: string }) {
@@ -55,14 +49,12 @@ export function TierBadge({ tier, className }: { tier: MembershipTier; className
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-3 py-1 text-[12px] font-semibold tracking-[0.06em] uppercase",
+        "inline-flex items-center rounded-full px-3 py-1 text-[12px] font-bold tracking-wider uppercase border",
+        config.bg,
+        config.color,
+        config.border,
         className
       )}
-      style={{
-        backgroundColor: config.bg,
-        color: config.color,
-        boxShadow: `0 0 12px ${config.glow}`,
-      }}
     >
       {tier}
     </span>
@@ -87,13 +79,14 @@ export function EligibilityChip({ eligible, reason, className }: { eligible: boo
 }
 
 // Partner/Employee Status Badge
-export type PartnerStatus = "ACTIVE" | "DOWNGRADED" | "RESET" | "INACTIVE";
+export type PartnerStatus = "ACTIVE" | "DOWNGRADED" | "RESET" | "INACTIVE" | "RESIGNED";
 
 const partnerStatusConfig: Record<PartnerStatus, { bg: string; color: string; label: string }> = {
-  ACTIVE: { bg: "rgba(107, 206, 83, 0.15)", color: "#6BCE53", label: "ACTIVE" },
-  DOWNGRADED: { bg: "rgba(245, 158, 11, 0.15)", color: "#FCD34D", label: "DOWNGRADED" },
-  RESET: { bg: "rgba(239, 68, 68, 0.15)", color: "#FCA5A5", label: "RESET" },
-  INACTIVE: { bg: "rgba(148, 163, 184, 0.15)", color: "#94A3B8", label: "INACTIVE" },
+  ACTIVE: { bg: "#DCFCE7", color: "#16A34A", label: "ACTIVE" },
+  DOWNGRADED: { bg: "#FEF3C7", color: "#D97706", label: "DOWNGRADED" },
+  RESET: { bg: "#FEE2E2", color: "#DC2626", label: "RESET" },
+  INACTIVE: { bg: "#F1F5F9", color: "#64748B", label: "INACTIVE" },
+  RESIGNED: { bg: "#FEE2E2", color: "#EF4444", label: "RESIGNED" },
 };
 
 export function EmployeeStatusBadge({ status, className }: { status: PartnerStatus | string; className?: string }) {
@@ -102,13 +95,12 @@ export function EmployeeStatusBadge({ status, className }: { status: PartnerStat
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wider uppercase border",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wider uppercase border border-transparent shadow-sm",
         className
       )}
       style={{ 
         backgroundColor: config.bg, 
-        color: config.color,
-        borderColor: `rgba(${parseInt(config.color.slice(1,3), 16)}, ${parseInt(config.color.slice(3,5), 16)}, ${parseInt(config.color.slice(5,7), 16)}, 0.3)`
+        color: config.color
       }}
     >
       {config.label}

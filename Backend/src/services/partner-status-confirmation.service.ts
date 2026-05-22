@@ -176,19 +176,28 @@ export class PartnerStatusConfirmationService {
   }
 
   /** List confirmations created by HC. */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async listForHC(requestedBy: string, statusFilter?: ConfirmationStatus): Promise<any[]> {
-    return prisma.partnerStatusConfirmation.findMany({
-      where: {
-        requestedBy,
-        ...(statusFilter ? { status: statusFilter } : {}),
-      },
-      include: {
-        mitra:    { select: { id: true, name: true, npk: true, division: true } },
-        assignee: { select: { id: true, name: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+  async listForHC(requestedBy: string, params: { status?: ConfirmationStatus; limit?: number; offset?: number } = {}): Promise<{ items: any[]; total: number }> {
+    const { status, limit = 100, offset = 0 } = params;
+    const where = {
+      requestedBy,
+      ...(status ? { status } : {}),
+    };
+
+    const [items, total] = await Promise.all([
+      prisma.partnerStatusConfirmation.findMany({
+        where,
+        include: {
+          mitra:    { select: { id: true, name: true, npk: true, division: true } },
+          assignee: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.partnerStatusConfirmation.count({ where })
+    ]);
+
+    return { items, total };
   }
 }
 

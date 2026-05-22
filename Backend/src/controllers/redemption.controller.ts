@@ -16,11 +16,48 @@ import { NotFoundError } from "@/errors/not-found-error";
 
 export const RedemptionController = {
 
-  // GET /api/admin/redemptions — HC_ADMIN: list all requests
-  listAll: (async (_req, res, next) => {
+  // GET /api/admin/redemptions — list all for HC
+  listAll: (async (req, res, next) => {
     try {
-      const requests = await redemptionService.listAll();
-      res.json(requests);
+      const limit = Number(req.query["limit"]) || 100;
+      const offset = Number(req.query["offset"]) || 0;
+      const status = req.query["status"] as any;
+
+      const { requests, total } = await redemptionService.listAll({ status, limit, offset });
+      const mapped = requests.map((r) => {
+        // Use type-safe property access from prisma include results
+        return {
+          id: r.id,
+          status: r.status,
+          createdAt: r.submittedAt.toISOString(),
+          mitra: {
+            id: r.mitra.id,
+            name: r.mitra.name,
+            email: r.mitra.email,
+            npk: r.mitra.npk,
+            division: r.mitra.division,
+            documents: r.mitra.documents.map(d => ({
+              id: d.id,
+              type: d.type,
+              fileUrl: d.fileUrl
+            })),
+          },
+          item: {
+            id: r.rewardItem.id,
+            name: r.rewardItem.name,
+            tokenCost: r.tokenCost,
+          },
+          isRepresented: r.isRepresented,
+          powerOfAttorneyUrl: r.powerOfAttorneyUrl,
+          rejectReason: r.rejectionReason,
+        };
+      });
+      res.json({
+        total,
+        limit,
+        offset,
+        requests: mapped
+      });
     } catch (err) {
       next(err);
     }
@@ -50,7 +87,31 @@ export const RedemptionController = {
     try {
       const { user } = req;
       const requests = await redemptionService.listByMitra(user.id);
-      res.json(requests);
+      const mapped = requests.map((r) => ({
+        id: r.id,
+        status: r.status,
+        createdAt: r.createdAt.toISOString(),
+        item: {
+          id: r.rewardItem.id,
+          name: r.rewardItem.name,
+          tokenCost: r.tokenCost,
+        },
+        isRepresented: r.isRepresented,
+        powerOfAttorneyUrl: r.powerOfAttorneyUrl,
+        idCardVerified: r.idCardVerified,
+        ktpVerified: r.ktpVerified,
+        npwpVerified: r.npwpVerified,
+        powerOfAttorneyVerified: r.powerOfAttorneyVerified,
+        rejectReason: r.rejectionReason ?? "Alasan tidak disebutkan oleh HC.",
+        mitra: (r as any).mitra ? {
+          documents: (r as any).mitra.documents.map((d: any) => ({
+            id: d.id,
+            type: d.type,
+            fileUrl: d.fileUrl
+          }))
+        } : null
+      }));
+      res.json(mapped);
     } catch (err) {
       next(err);
     }
@@ -66,9 +127,15 @@ export const RedemptionController = {
         throw new ValidationError("Invalid input", z.treeifyError(parsed.error));
       }
 
+      const powerOfAttorneyUrl = req.file ? req.file.path.replace(/\\/g, "/") : undefined;
+
       const redemption = await redemptionService.submitRequest(
         user.id,
         parsed.data.rewardItemId,
+        {
+          isRepresented: parsed.data.isRepresented,
+          powerOfAttorneyUrl,
+        } as any
       );
       res.status(201).json(redemption);
     } catch (err) {
@@ -139,6 +206,47 @@ export const RedemptionController = {
       res.json({
         success: true,
         message: "Documents verified successfully",
+        request: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }) satisfies RequestHandler,
+
+  // POST /api/employee/redemptions/:id/cancel — Mitra: cancel own request
+  cancelRequest: (async (req, res, next) => {
+    try {
+      const { user } = req;
+      const idParam = req.params["id"];
+      const idResult = uuidSchema.safeParse(idParam);
+      if (!idResult.success) {
+        throw new ValidationError("Invalid request ID format", { id: idParam });
+      }
+
+      // Check if the redemption belongs to the user and is in a cancellable state
+      const request = await redemptionService.getById(idResult.data);
+      if (!request) {
+        throw new NotFoundError("Redemption request", idResult.data);
+      }
+
+      if (request.mitraId !== user.id) {
+        throw new ValidationError("You can only cancel your own redemption requests.");
+      }
+
+      if (!["REQUESTED", "REVIEWED"].includes(request.status)) {
+        throw new ValidationError("Only requests in 'REQUESTED' or 'REVIEWED' status can be cancelled by employee.");
+      }
+
+      const result = await redemptionService.transitionStatus(
+        idResult.data,
+        "CANCELLED",
+        user.id,
+        "Cancelled by employee",
+      );
+
+      res.json({
+        success: true,
+        message: "Redemption successfully cancelled",
         request: result,
       });
     } catch (err) {

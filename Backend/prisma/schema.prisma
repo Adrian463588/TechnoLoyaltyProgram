@@ -63,13 +63,10 @@ enum UploadStatus {
 }
 
 enum RedemptionStatus {
-  DRAFT
-  PENDING_VERIFICATION
-  VERIFIED
+  REQUESTED
+  REVIEWED
+  ACCEPTED
   REJECTED
-  PURCHASED
-  PICKUP_SCHEDULED
-  COMPLETED
   CANCELLED
 }
 
@@ -97,6 +94,7 @@ model User {
   shiftClaims                     ShiftClaim[]
   projectClaims                   ProjectClaim[]
   redemptions                     RedemptionRequest[]
+  documents                       UserDocument[]
   // Partner Status Confirmation back-relations
   partnerConfirmationsAsSubject   PartnerStatusConfirmation[] @relation("PartnerConfirmationSubject")
   partnerConfirmationsAsRequester PartnerStatusConfirmation[] @relation("PartnerConfirmationRequester")
@@ -171,17 +169,18 @@ model ProjectClaim {
 
 // ── Rewards & Redemptions ──
 model RewardItem {
-  id          String   @id @default(uuid())
+  id          String         @id @default(uuid())
   name        String
   description String?
   tokenCost   Int
   imageUrl    String?
   category    String? // optional eligibility category
-  isActive    Boolean  @default(true)
+  minTier     MemberTierType @default(SAPHIRE)
+  isActive    Boolean        @default(true)
   stock       Int? // null = unlimited
   createdBy   String // actor ID
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   redemptions RedemptionRequest[]
 }
@@ -191,7 +190,7 @@ model RedemptionRequest {
   mitraId                 String
   rewardItemId            String
   tokenCost               Int // snapshot
-  status                  RedemptionStatus @default(DRAFT)
+  status                  RedemptionStatus @default(REQUESTED)
   submittedAt             DateTime         @default(now())
   verifiedBy              String? // actor ID
   verifiedAt              DateTime?
@@ -202,6 +201,8 @@ model RedemptionRequest {
   idCardVerified          Boolean          @default(false)
   ktpVerified             Boolean          @default(false)
   npwpVerified            Boolean          @default(false)
+  isRepresented           Boolean          @default(false)
+  powerOfAttorneyUrl      String? // relative path to uploaded file
   powerOfAttorneyRequired Boolean          @default(false)
   powerOfAttorneyVerified Boolean?
   createdAt               DateTime         @default(now())
@@ -276,4 +277,51 @@ model PartnerStatusConfirmation {
 
   @@index([redemptionRequestId])
   @@index([assignedTo, status])
+}
+
+// ── Token Conversion Rules ──
+// Admin-configurable conversion rates per division group
+model TokenConversionRule {
+  id            String   @id @default(uuid())
+  divisionGroup String   @unique // "OPCENT_TELE" | "TECHNO"
+  tokensPerUnit Int // how many tokens per 1 slot/project
+  label         String // human-readable label e.g. "Slot (Opcent/Tele)"
+  updatedBy     String // actor ID who last changed this
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ── User Documents ──
+model UserDocument {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String // "ID_CARD_MITRA", "KTP", "NPWP"
+  fileUrl   String // relative path
+  fileName  String // original filename
+  fileSize  Int // bytes
+  mimeType  String // image/png, etc
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, type])
+}
+
+// ── Global System Settings ──
+// Stores recurring configurations like P1/P2 dates, redemption windows, and pickup locations.
+// Dates are stored as "MM-DD" string to repeat annually.
+model SystemSetting {
+  id                  String   @id @default("GLOBAL_CONFIG")
+  p1Start             String   @default("06-16")
+  p1End               String   @default("12-15")
+  p2Start             String   @default("12-16")
+  p2End               String   @default("06-15")
+  claimP1Start        String   @default("01-01")
+  claimP1End          String   @default("01-31")
+  claimP2Start        String   @default("07-01")
+  claimP2End          String   @default("07-31")
+  rewardPickupLocation String   @default("HC Office - Main Building")
+  updatedBy           String?
+  updatedAt           DateTime @updatedAt
 }
