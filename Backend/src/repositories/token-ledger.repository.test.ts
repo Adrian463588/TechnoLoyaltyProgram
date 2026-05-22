@@ -73,8 +73,8 @@ describe("TokenLedgerRepository", () => {
       performedBy: "SYSTEM",
     });
 
-    // 2023 + 3 = 2026, Dec 31
-    expect(result.expiresAt?.getFullYear()).toBe(2026);
+    // 2023 + 4 = 2027, Dec 31
+    expect(result.expiresAt?.getFullYear()).toBe(2027);
     expect(result.expiresAt?.getMonth()).toBe(11); // Dec
     expect(result.expiresAt?.getDate()).toBe(31);
   });
