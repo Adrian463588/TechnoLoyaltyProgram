@@ -7,7 +7,6 @@ import { BentoCard } from "@/components/ui/bento-card";
 import { Button } from "@/components/ui/button";
 import { SuccessAnimation } from "@/components/shared/success-animation";
 import { RedemptionPipeline } from "@/components/shared/redemption-pipeline";
-import { TooltipWrapper } from "@/components/shared/tooltip-wrapper";
 import { TierBadge } from "@/components/shared/status-badge";
 import { Coins, Lock, ShoppingBag, Loader2, FileText, Upload, Check, Trash2, AlertCircle, ArrowRight, X, Package } from "lucide-react";
 import { toast } from "sonner";
@@ -213,111 +212,108 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
               )}
               style={{ animationDelay: `${i * 40}ms` } as React.CSSProperties}
             >
-              {/* Thumbnail area */}
-              <div className="aspect-[4/3] bg-muted/50 relative overflow-hidden flex items-center justify-center border-b border-border">
-                {reward.imageUrl ? (
-                  <img 
-                    src={reward.imageUrl} 
-                    alt={reward.name} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center opacity-20">
-                    <ShoppingBag className="w-14 h-14 text-muted-foreground" />
-                  </div>
-                )}
-                
-                {/* Badges overlay */}
-                <div className="absolute bottom-2 left-2 flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
-                    {reward.category}
-                  </span>
-                  <TierBadge tier={reward.minTier} className="text-[10px] py-1 px-3 h-auto opacity-100" />
-                </div>
-
-                {/* Stock indicator badge */}
-                <div className="absolute top-2 right-2 flex flex-col items-end gap-2 z-10">
-                  {reward.stock === null ? (
-                    <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-white/90 backdrop-blur-sm text-emerald-600 border border-emerald-100 shadow-sm">
-                      <Check size={10} strokeWidth={3} />
-                      Ready Stock
-                    </span>
-                  ) : isOutOfStock ? (
-                    <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-red-600 text-white border border-red-700 shadow-sm">
-                      Out of Stock
-                    </span>
-                  ) : reward.stock <= 5 ? (
-                    <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200 shadow-sm animate-pulse">
-                      <AlertCircle size={10} />
-                      Only {reward.stock} left!
-                    </span>
+                {/* Thumbnail area */}
+                <div className="aspect-[4/3] bg-muted/50 relative overflow-hidden flex items-center justify-center border-b border-border">
+                  {reward.imageUrl ? (
+                    <img 
+                      src={reward.imageUrl} 
+                      alt={reward.name} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                    />
                   ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-white/90 backdrop-blur-sm text-slate-600 border border-slate-200 shadow-sm">
-                      <Package size={10} />
-                      {reward.stock} in stock
-                    </span>
+                    <div className="absolute inset-0 flex items-center justify-center opacity-20">
+                      <ShoppingBag className="w-14 h-14 text-muted-foreground" />
+                    </div>
+                  )}
+
+                  {/* Stock indicator badge */}
+                  <div className="absolute top-2 right-2 flex flex-col items-end gap-2 z-10">
+                    {reward.stock === null ? (
+                      <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-white/90 backdrop-blur-sm text-emerald-600 border border-emerald-100 shadow-sm">
+                        <Check size={10} strokeWidth={3} />
+                        Ready Stock
+                      </span>
+                    ) : isOutOfStock ? (
+                      <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-red-600 text-white border border-red-700 shadow-sm">
+                        Out of Stock
+                      </span>
+                    ) : reward.stock <= 5 ? (
+                      <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200 shadow-sm animate-pulse">
+                        <AlertCircle size={10} />
+                        Only {reward.stock} left!
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-white/90 backdrop-blur-sm text-slate-600 border border-slate-200 shadow-sm">
+                        <Package size={10} />
+                        {reward.stock} in stock
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Status Overlays */}
+                  {!isAvailable && !isOutOfStock && (
+                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-20">
+                      <span className="inline-flex items-center rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] bg-slate-900 text-white shadow-xl">
+                        Unavailable
+                      </span>
+                    </div>
+                  )}
+                  {!tierMet && isAvailable && !isOutOfStock && (
+                    <div className="absolute inset-0 bg-neutral-900/40 backdrop-blur-[1px] flex items-center justify-center z-20">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 text-orange-700 text-[10px] font-black uppercase tracking-widest border border-orange-200 px-4 py-1.5 shadow-lg">
+                        <Lock className="w-3.5 h-3.5" />
+                        Tier Locked
+                      </span>
+                    </div>
+                  )}
+                  {!canAfford && tierMet && isAvailable && !isOutOfStock && (
+                    <div className="absolute inset-0 bg-neutral-900/40 backdrop-blur-[1px] flex items-center justify-center z-20">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-widest border border-red-200 px-4 py-1.5 shadow-lg">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        Insufficient Tokens
+                      </span>
+                    </div>
                   )}
                 </div>
 
-                {/* Status Overlays */}
-                {!isAvailable && !isOutOfStock && (
-                  <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-20">
-                    <span className="inline-flex items-center rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] bg-slate-900 text-white shadow-xl">
-                      Unavailable
-                    </span>
-                  </div>
-                )}
-                {!tierMet && isAvailable && !isOutOfStock && (
-                  <div className="absolute inset-0 bg-orange-900/5 backdrop-blur-[0.5px] flex items-center justify-center z-20">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 text-orange-700 text-[10px] font-black uppercase tracking-widest border border-orange-200 px-4 py-1.5 shadow-lg">
-                      <Lock className="w-3.5 h-3.5" />
-                      Tier Locked
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Content */}
-              <div className="p-5 flex flex-col flex-1 space-y-3">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground leading-tight mb-1">
-                    {reward.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {reward.description}
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t border-border mt-auto flex items-center justify-between">
-                  <div
-                    className={cn(
-                      "flex items-center font-extrabold text-lg",
-                      canAfford ? "text-primary" : "text-red-500"
-                    )}
-                  >
-                    {reward.tokenCost.toLocaleString()}
-                    <Coins className="w-[18px] h-[18px] ml-1.5" />
+                {/* Content */}
+                <div className="p-5 flex flex-col flex-1 space-y-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
+                        {reward.category}
+                      </span>
+                      <TierBadge tier={reward.minTier} className="text-[10px] py-1 px-3 h-auto opacity-100" />
+                    </div>
+                    <h3 className="font-semibold text-foreground leading-tight mb-1">
+                      {reward.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {reward.description}
+                    </p>
                   </div>
 
-                  {canRedeem ? (
-                    <Button
-                      size="sm"
-                      onClick={() => handleInitiateRedeem(reward)}
-                      data-testid={`redeem-btn-${reward.id}`}
-                      className="transition-all hover:scale-105 active:scale-95 px-4"
+                  <div className="pt-4 border-t border-border mt-auto flex items-center justify-between">
+                    <div
+                      className={cn(
+                        "flex items-center font-extrabold text-lg",
+                        canAfford ? "text-primary" : "text-red-500"
+                      )}
                     >
-                      Redeem
-                    </Button>
-                  ) : (
-                    <TooltipWrapper
-                      label={
-                        !isAvailable
-                          ? "This reward is currently out of stock"
-                          : !tierMet
-                          ? `This reward requires ${reward.minTier} membership tier or higher. You are currently ${userTier}.`
-                          : `You need ${(reward.tokenCost - userTokens).toLocaleString()} more tokens to claim this.`
-                      }
-                    >
+                      {reward.tokenCost.toLocaleString()}
+                      <Coins className="w-[18px] h-[18px] ml-1.5" />
+                    </div>
+
+                    {canRedeem ? (
+                      <Button
+                        size="sm"
+                        onClick={() => handleInitiateRedeem(reward)}
+                        data-testid={`redeem-btn-${reward.id}`}
+                        className="transition-all hover:scale-105 active:scale-95 px-4"
+                      >
+                        Redeem
+                      </Button>
+                    ) : (
                       <Button
                         size="sm"
                         disabled
@@ -326,11 +322,10 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
                       >
                         {!tierMet ? "Locked" : "Redeem"}
                       </Button>
-                    </TooltipWrapper>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            </BentoCard>
+              </BentoCard>
           );
         })}
       </div>
