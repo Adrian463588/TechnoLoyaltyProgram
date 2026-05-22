@@ -1,6 +1,6 @@
 import React from "react";
 import { auth, getServerToken } from "@/lib/auth";
-import { employeeApi } from "@/lib/api-client";
+import { employeeApi, adminApi } from "@/lib/api-client";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { DashboardContent } from "./dashboard-content";
 
@@ -10,13 +10,18 @@ import { DashboardContent } from "./dashboard-content";
  */
 async function getDashboardData(token: string) {
   try {
-    const summary = await employeeApi.getDashboard(token);
+    const [summary, settings] = await Promise.all([
+      employeeApi.getDashboard(token),
+      adminApi.getSystemSettings(token), // Using adminApi as it holds the global config
+    ]);
+
     return {
       tokenBalance:      summary.tokenSummary.totalTokens,
       tier:              summary.user.membershipTier,
       eligibilityStatus: { eligible: summary.tokenSummary.isEligibleForReward },
-      period:            "P2: Jun 16 → Dec 15",  // TODO: derive from backend once endpoint exposes period
+      period:            "—", // Will be calculated in client component for consistency
       recentTransactions: summary.recentTransactions,
+      settings:          settings,
     };
   } catch {
     return {
@@ -24,6 +29,7 @@ async function getDashboardData(token: string) {
       tier:              "SAPHIRE" as const,
       eligibilityStatus: { eligible: false },
       period:            "—",
+      settings:          null,
     };
   }
 }
@@ -40,7 +46,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="flex-1 p-4 md:p-6 max-w-[1600px] w-full mx-auto">
-        <DashboardContent data={data} />
+        <DashboardContent data={data as any} />
       </div>
     </div>
   );

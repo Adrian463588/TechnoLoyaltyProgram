@@ -24,7 +24,10 @@ import {
 
 export const adminRoutes = Router();
 
-// ── Apply auth guards to all admin routes ──────────────────────────────────
+// ── Shared System Settings (Read-access for all authenticated users) ────────
+adminRoutes.get(  "/system-settings", authenticate, authorize("MITRA"), SystemSettingController.getSettings as RequestHandler);
+
+// ── Apply auth guards to all remaining admin routes ──────────────────────────
 adminRoutes.use(authenticate, authorize("HC_PM"));
 
 adminRoutes.get("/users", AdminFoundationController.listUsers as RequestHandler);
@@ -37,8 +40,7 @@ adminRoutes.post(
   AdminFoundationController.processUpload as RequestHandler,
 );
 
-// ── System Settings (Earning Periods, etc.) ──────────────────────────────────
-adminRoutes.get(  "/system-settings",                    SystemSettingController.getSettings       as RequestHandler);
+// ── System Settings (Write-access for HC_PM only) ──────────────────────────
 adminRoutes.patch("/system-settings",                    SystemSettingController.updateSettings    as RequestHandler);
 
 // ── Redemptions ─────────────────────────────────────────────────────────────
