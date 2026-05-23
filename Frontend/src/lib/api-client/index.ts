@@ -346,7 +346,7 @@ export const adminApi = {
 export const leaderApi = {
   /** TL-02: Team-wide token and membership summary */
   getTeamSummary: (token: string) =>
-    apiFetch<TeamSummaryResponse[]>("/api/leader/team", {
+    apiFetch<TeamSummaryResult>("/api/leader/team", {
       headers: withAuth(token),
     }),
 
@@ -504,10 +504,17 @@ export interface AuditLogResponse {
 export interface TeamSummaryResponse {
   id: string;
   name: string;
-  tokens: number;
-  tier: string;
-  status: string;
+  npk: string;
   division: string;
+  membershipTier: string;
+  partnerStatus: string;
+  currentBalance: number;
+}
+
+export interface TeamSummaryResult {
+  teamLeadId: string;
+  members: TeamSummaryResponse[];
+  count: number;
 }
 
 export interface MemberDetailResponse {

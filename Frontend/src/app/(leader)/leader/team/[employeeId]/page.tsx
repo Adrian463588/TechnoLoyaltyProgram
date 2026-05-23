@@ -33,14 +33,15 @@ export const metadata = { title: "Member Detail | Berijalan Loyalty" };
 export default async function MemberDetailPage({
   params,
 }: {
-  params: { employeeId: string };
+  params: Promise<{ employeeId: string }>;
 }) {
+  const { employeeId } = await params;
   await auth();
   const token = await getServerToken();
 
   let detail = null;
   try {
-    detail = await leaderApi.getMemberDetail(token, params.employeeId);
+    detail = await leaderApi.getMemberDetail(token, employeeId);
   } catch {
     notFound();
   }
