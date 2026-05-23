@@ -279,18 +279,6 @@ model PartnerStatusConfirmation {
   @@index([assignedTo, status])
 }
 
-// ── Token Conversion Rules ──
-// Admin-configurable conversion rates per division group
-model TokenConversionRule {
-  id            String   @id @default(uuid())
-  divisionGroup String   @unique // "OPCENT_TELE" | "TECHNO"
-  tokensPerUnit Int // how many tokens per 1 slot/project
-  label         String // human-readable label e.g. "Slot (Opcent/Tele)"
-  updatedBy     String // actor ID who last changed this
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
 // ── User Documents ──
 model UserDocument {
   id        String   @id @default(uuid())
