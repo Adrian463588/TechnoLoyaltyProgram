@@ -31,7 +31,7 @@ import {
 import { AlertTriangle, Coins, Search, Users, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Division } from "@/types";
-import type { TeamSummaryResponse } from "@/lib/api-client";
+import type { TeamSummaryResult } from "@/lib/api-client";
 
 type TeamMember = {
   id: string;
@@ -51,7 +51,7 @@ const mockTeamData: TeamMember[] = [
 ];
 
 function toMembershipTier(value: string): MembershipTier {
-  const normalized = value.toUpperCase();
+  const normalized = value?.toUpperCase() || "";
   if (
     normalized === "SAPHIRE" ||
     normalized === "EMERALD" ||
@@ -64,7 +64,7 @@ function toMembershipTier(value: string): MembershipTier {
 }
 
 function toPartnerStatus(value: string): PartnerStatus {
-  const normalized = value.toUpperCase();
+  const normalized = value?.toUpperCase() || "";
   if (
     normalized === "ACTIVE" ||
     normalized === "DOWNGRADED" ||
@@ -76,18 +76,18 @@ function toPartnerStatus(value: string): PartnerStatus {
   return "ACTIVE";
 }
 
-export function LeaderTeamClient({ data }: { data: TeamSummaryResponse[] | null }) {
+export function LeaderTeamClient({ data }: { data: TeamSummaryResult | null }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [divisionFilter, setDivisionFilter] = useState<"All" | Division>("All");
   const [statusFilter, setStatusFilter] = useState<"All" | PartnerStatus>("All");
 
-  const teamData: TeamMember[] = data ? data.map(m => ({
+  const teamData: TeamMember[] = data?.members ? data.members.map(m => ({
     id: m.id,
     name: m.name,
     division: m.division === "TECHNO" ? "Techno" : "Optel",
-    tokens: m.tokens,
-    tier: toMembershipTier(m.tier),
-    status: toPartnerStatus(m.status),
+    tokens: m.currentBalance ?? 0,
+    tier: toMembershipTier(m.membershipTier),
+    status: toPartnerStatus(m.partnerStatus),
   })) : mockTeamData;
 
   const filteredData = useMemo(() => {
