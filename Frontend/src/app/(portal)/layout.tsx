@@ -3,7 +3,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
-export default async function EmployeeLayout({ children }: { children: ReactNode }) {
+export default async function PortalLayout({ children }: { children: ReactNode }) {
   const session = await auth();
 
   if (!session?.user) {
@@ -11,9 +11,8 @@ export default async function EmployeeLayout({ children }: { children: ReactNode
   }
 
   const role = (session.user as { role?: string }).role;
-
-  // Allow MITRA, TEAM_LEADER, and HC_PM.
   const allowedRoles = ["MITRA", "TEAM_LEADER", "HC_PM"];
+  
   if (role && !allowedRoles.includes(role)) {
     redirect("/login");
   }

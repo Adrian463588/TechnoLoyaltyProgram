@@ -36,9 +36,6 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
   return (
     <LazyMotion features={domAnimation}>
     <m.header
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className="h-16 app-nav shrink-0 flex items-center justify-between px-4 md:px-6 relative z-30"
     >
       <div className="flex items-center gap-4">
