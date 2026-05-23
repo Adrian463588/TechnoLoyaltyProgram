@@ -40,15 +40,19 @@ export default async function MitraValidationPage(props: {
       <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto space-y-6">
         <div className="bento-grid">
           {/* Header Card */}
-          <div className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
-            <div>
-              <h1 className="text-card-heading text-2xl mb-1 flex items-center gap-3">
-                <UserCheck className="h-6 w-6 text-[--color-accent]" />
-                Mitra Status Validation
-              </h1>
-              <p className="text-[var(--color-text-secondary)]">
-                Verify and manage the active or resigned status of Mitras.
-              </p>
+          <div className="bento-span-12 bento-card p-8 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
+            <div className="flex items-center gap-5">
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-sm shadow-primary/5">
+                <UserCheck size={28} />
+              </div>
+              <div className="space-y-1">
+                <h1 className="text-2xl font-extrabold text-[--color-text-secondary] leading-none">
+                  Mitra Status Validation
+                </h1>
+                <p className="text-sm text-[--color-text-secondary]">
+                  Verify and manage the active or resigned status of Mitras.
+                </p>
+              </div>
             </div>
           </div>
 
