@@ -31,7 +31,7 @@ const DEMO_CREDENTIALS = [
 
 const ROLE_REDIRECT: Record<string, string> = {
   MITRA:       "/employee/dashboard",
-  TEAM_LEADER: "/leader/team",
+  TEAM_LEADER: "/employee/dashboard",
   HC_PM:       "/admin/dashboard",
 };
 
