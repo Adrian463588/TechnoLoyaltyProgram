@@ -351,10 +351,14 @@ export const leaderApi = {
     }),
 
   /** TL-03: Detailed token history for a specific team member */
-  getMemberDetail: (token: string, memberId: string) =>
-    apiFetch<MemberDetailResponse>(`/api/leader/team/${memberId}`, {
+  getMemberDetail: (token: string, memberId: string, params: { limit?: number; offset?: number } = {}) => {
+    const query = new URLSearchParams();
+    if (params.limit) query.append("limit", params.limit.toString());
+    if (params.offset) query.append("offset", params.offset.toString());
+    return apiFetch<MemberDetailResponse>(`/api/leader/team/${memberId}?${query.toString()}`, {
       headers: withAuth(token),
-    }),
+    });
+  },
 
   /** TL-01: List pending partner status confirmations for this leader */
   listPendingConfirmations: (token: string) =>
@@ -535,6 +539,7 @@ export interface MemberDetailResponse {
     reason: string | null;
     createdAt: string;
   }>;
+  total: number;
 }
 
 export interface PartnerConfirmationResponse {
