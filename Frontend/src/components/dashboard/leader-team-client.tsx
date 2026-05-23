@@ -228,12 +228,12 @@ export function LeaderTeamClient({
                     className="group border-b border-[var(--color-border-subtle)] transition-all duration-200 hover:bg-[var(--color-accent)]/[0.05] cursor-default"
                   >
                     <TableCell className="py-4 px-6">
-                      <p className="font-semibold text-[var(--color-text-primary)] group-hover:text-primary transition-colors">
+                      <p className="text-[var(--color-text-secondary)] transition-colors">
                         {member.name}
                       </p>
                     </TableCell>
                     <TableCell className="py-4 px-6">
-                      <p className="text-xs font-mono text-[var(--color-text-secondary)] uppercase tracking-tighter">
+                      <p className="text-[var(--color-text-secondary)] uppercase tracking-tighter">
                         {member.npk}
                       </p>
                     </TableCell>
@@ -261,7 +261,7 @@ export function LeaderTeamClient({
                     <TableCell className="py-4 px-6">
                       <EmployeeStatusBadge status={member.status} />
                     </TableCell>
-                    <TableCell className="py-4 px-6 text-right font-mono font-bold text-foreground">
+                    <TableCell className="py-4 px-6 text-right text-foreground">
                       {member.tokens.toLocaleString()}
                     </TableCell>
                     <TableCell className="py-4 px-6 text-center">

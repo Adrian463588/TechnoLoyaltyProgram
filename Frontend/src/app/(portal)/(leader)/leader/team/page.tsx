@@ -15,16 +15,17 @@ export default async function TeamLeaderPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="h-16 border-b border-[var(--color-border-subtle)] bg-white/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-20">
+    <div className="flex flex-col h-full">
+      <div className="px-4 md:px-6">
         <Breadcrumb 
+          className="py-4"
           items={[
             { label: "Dashboard", href: "/employee/dashboard" },
             { label: "Team Overview" }
           ]} 
         />
       </div>
-      <main className="flex-1 p-6 overflow-y-auto hide-scrollbar">
+      <main className="flex-1 p-4 md:p-6 overflow-y-auto hide-scrollbar">
         <LeaderTeamClient data={data} />
       </main>
     </div>
