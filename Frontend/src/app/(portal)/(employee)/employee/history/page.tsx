@@ -60,16 +60,22 @@ export default async function TokenHistoryPage(props: {
 
       <div className="flex-1 p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-6 animate-fade-up-in">
 
-        {/* Header Banner */}
-        <BentoCard className="p-6 flex flex-col justify-center">
-          <div className="flex items-center gap-3 mb-1">
-            <History className="h-6 w-6 text-[--color-accent]" />
-            <h1 className="text-card-heading text-2xl">Token History</h1>
+        {/* Header Card */}
+        <div className="bento-card p-8 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
+          <div className="flex items-center gap-5">
+            <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-sm shadow-primary/5">
+              <History size={28} />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl font-extrabold text-[--color-text-secondary] leading-none">
+                Token History
+              </h1>
+              <p className="text-sm text-[--color-text-secondary]">
+                Detailed record of all your token earnings and usage activity.
+              </p>
+            </div>
           </div>
-          <p className="text-[--color-text-secondary]">
-            Detailed record of all your token earnings and usage activity.
-          </p>
-        </BentoCard>
+        </div>
 
         {/* Stats Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
