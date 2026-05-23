@@ -52,8 +52,8 @@ const navItems = {
     { href: "/admin/audit", label: "Audit Log", icon: History },
   ],
   TEAM_LEADER: [
-    { href: "/leader/team", label: "Team Overview", icon: Users },
     { href: "/employee/dashboard", label: "My Dashboard", icon: LayoutDashboard },
+    { href: "/leader/team", label: "Team Overview", icon: Users },
     { href: "/employee/rewards", label: "Rewards", icon: ShoppingBag },
     { href: "/employee/documents", label: "My Documents", icon: FileText },
   ],

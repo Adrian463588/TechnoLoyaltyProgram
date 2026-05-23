@@ -3,8 +3,6 @@
 import { useState, useMemo } from "react";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -13,29 +11,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { StatCard } from "@/components/shared/stat-card";
 import {
   TierBadge,
   EmployeeStatusBadge,
   type MembershipTier,
   type PartnerStatus,
 } from "@/components/shared/status-badge";
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getPaginationRowModel,
-  getFilteredRowModel,
-} from "@tanstack/react-table";
 import { AlertTriangle, Coins, Search, Users, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Division } from "@/types";
 import type { TeamSummaryResult } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
+import { Pagination } from "@/components/shared/pagination";
 
 type TeamMember = {
   id: string;
   name: string;
+  npk: string;
   division: Division;
   tokens: number;
   tier: MembershipTier;
@@ -43,11 +35,11 @@ type TeamMember = {
 };
 
 const mockTeamData: TeamMember[] = [
-  { id: "EMP-001", name: "Alice Optel", division: "Optel", tokens: 5200, tier: "DIAMOND", status: "ACTIVE" },
-  { id: "EMP-005", name: "Bob Techno", division: "Techno", tokens: 1200, tier: "EMERALD", status: "DOWNGRADED" },
-  { id: "EMP-012", name: "Charlie Optel", division: "Optel", tokens: 0, tier: "SAPHIRE", status: "RESET" },
-  { id: "EMP-018", name: "Diana Techno", division: "Techno", tokens: 8500, tier: "DIAMOND", status: "ACTIVE" },
-  { id: "EMP-022", name: "Eve Optel", division: "Optel", tokens: 3000, tier: "RUBY", status: "ACTIVE" },
+  { id: "1", npk: "EMP-001", name: "Alice Optel", division: "Optel", tokens: 5200, tier: "DIAMOND", status: "ACTIVE" },
+  { id: "2", npk: "EMP-005", name: "Bob Techno", division: "Techno", tokens: 1200, tier: "EMERALD", status: "DOWNGRADED" },
+  { id: "3", npk: "EMP-012", name: "Charlie Optel", division: "Optel", tokens: 0, tier: "SAPHIRE", status: "RESET" },
+  { id: "4", npk: "EMP-018", name: "Diana Techno", division: "Techno", tokens: 8500, tier: "DIAMOND", status: "ACTIVE" },
+  { id: "5", npk: "EMP-022", name: "Eve Optel", division: "Optel", tokens: 3000, tier: "RUBY", status: "ACTIVE" },
 ];
 
 function toMembershipTier(value: string): MembershipTier {
@@ -76,228 +68,223 @@ function toPartnerStatus(value: string): PartnerStatus {
   return "ACTIVE";
 }
 
-export function LeaderTeamClient({ data }: { data: TeamSummaryResult | null }) {
+export function LeaderTeamClient({ 
+  data,
+  totalCount = 0,
+  currentPage = 1,
+  totalPages = 1,
+}: { 
+  data: TeamSummaryResult | null;
+  totalCount?: number;
+  currentPage?: number;
+  totalPages?: number;
+}) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [divisionFilter, setDivisionFilter] = useState<"All" | Division>("All");
   const [statusFilter, setStatusFilter] = useState<"All" | PartnerStatus>("All");
 
-  const teamData: TeamMember[] = data?.members ? data.members.map(m => ({
-    id: m.id,
-    name: m.name,
-    division: m.division === "TECHNO" ? "Techno" : "Optel",
-    tokens: m.currentBalance ?? 0,
-    tier: toMembershipTier(m.membershipTier),
-    status: toPartnerStatus(m.partnerStatus),
-  })) : mockTeamData;
+  const teamData: TeamMember[] = useMemo(() => {
+    return data?.members ? data.members.map(m => ({
+      id: m.id,
+      name: m.name,
+      npk: m.npk,
+      division: m.division === "TECHNO" ? "Techno" : "Optel",
+      tokens: m.currentBalance ?? 0,
+      tier: toMembershipTier(m.membershipTier),
+      status: toPartnerStatus(m.partnerStatus),
+    })) : mockTeamData;
+  }, [data]);
 
   const filteredData = useMemo(() => {
     return teamData.filter((m) => {
       const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.id.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesDivision = divisionFilter === "All" || m.division === divisionFilter;
+        m.npk.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "All" || m.status === statusFilter;
-      return matchesSearch && matchesDivision && matchesStatus;
+      return matchesSearch && matchesStatus;
     });
-  }, [teamData, searchQuery, divisionFilter, statusFilter]);
-
-  const columns: ColumnDef<TeamMember>[] = [
-    {
-      accessorKey: "name",
-      header: "Name",
-      cell: ({ row }) => (
-        <div>
-          <p className="font-medium text-foreground">{row.getValue("name")}</p>
-          <p className="text-xs text-muted-foreground font-mono">{row.original.id}</p>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "division",
-      header: "Division",
-      cell: ({ row }) => (
-        <Badge variant="outline" className={
-          row.getValue("division") === "Optel"
-            ? "bg-secondary/10 text-secondary border-secondary/30"
-            : "bg-primary/10 text-primary border-primary/30"
-        }>
-          {row.getValue("division") as string}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: "tokens",
-      header: "Total Tokens",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1.5 font-semibold text-foreground">
-          <Coins className="w-3.5 h-3.5 text-primary" />
-          {(row.getValue("tokens") as number).toLocaleString()}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "tier",
-      header: "Current Tier",
-      cell: ({ row }) => <TierBadge tier={row.original.tier} />,
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => (
-        <EmployeeStatusBadge status={row.original.status} />
-      ),
-    },
-    {
-      id: "actions",
-      header: "Action",
-      cell: ({ row }) => (
-        <Link
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          href={`/leader/team/${row.original.id}` as any}
-          data-testid="leader-team-table-action-view"
-          className="text-sm text-primary font-medium hover:underline flex items-center gap-1"
-        >
-          View Detail
-          <ExternalLink className="w-3 h-3" />
-        </Link>
-      ),
-    },
-  ];
-
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable({
-    data: filteredData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  });
+  }, [teamData, searchQuery, statusFilter]);
 
   const totalTokens = teamData.reduce((acc, curr) => acc + curr.tokens, 0);
   const eligibleMembers = teamData.filter((m) => m.tokens >= 2000).length;
   const alertsCount = teamData.filter((m) => m.status !== "ACTIVE").length;
 
+  const getTierStyles = (tier: string) => {
+    switch (tier?.toUpperCase()) {
+      case "SAPHIRE": return "bg-blue-500/10 text-blue-600 border-blue-200";
+      case "EMERALD": return "bg-emerald-500/10 text-emerald-600 border-emerald-200";
+      case "RUBY": return "bg-red-500/10 text-red-600 border-red-200";
+      case "DIAMOND": return "bg-purple-500/10 text-purple-600 border-purple-200";
+      default: return "bg-neutral-100 text-neutral-600 border-neutral-200";
+    }
+  };
+
   return (
-    <div className="p-6 max-w-6xl mx-auto w-full space-y-6 animate-fade-up-in">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Team View</h1>
-          <p className="text-muted-foreground mt-1">
-            Monitor your team&apos;s loyalty performance and eligibility.
+    <div className="max-w-7xl mx-auto w-full space-y-6 animate-fade-up-in">
+      {/* Header Card */}
+      <BentoCard className="p-6 flex flex-col md:flex-row md:items-start justify-between bg-white border-[var(--color-border-subtle)] shadow-sm">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Team Overview</h1>
+          <p className="text-sm text-muted-foreground">
+            Monitor your team&apos;s loyalty performance, tiers, and status updates.
           </p>
         </div>
-      </div>
+      </BentoCard>
 
-      {/* Team Summary Cards */}
+      {/* Team Summary Cards - Admin Dashboard Style */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard
-          label="Team Aggregate Tokens"
-          value={totalTokens.toLocaleString()}
-          icon={Coins}
-          description="Combined across all members"
-          accent="primary"
-          data-testid="leader-team-total-tokens"
-        />
-        <StatCard
-          label="Eligible for Rewards"
-          value={`${eligibleMembers} Members`}
-          icon={Users}
-          description="Have 2,000+ tokens"
-          accent="secondary"
-          data-testid="leader-team-eligible-members"
-        />
-        <StatCard
-          label="Alerts (Reset/Downgrade)"
-          value={`${alertsCount} Members`}
-          icon={AlertTriangle}
-          description="Need attention"
-          accent="destructive"
-          data-testid="leader-team-alerts-count"
-        />
+        <BentoCard className="p-6 flex flex-col justify-between bg-white border-[var(--color-border-subtle)] shadow-sm">
+          <h3 className="text-label flex items-center gap-2 mb-4">
+            <Coins className="h-[14px] w-[14px] text-primary" />
+            Team Aggregate Tokens
+          </h3>
+          <div>
+            <p className="text-3xl font-bold text-foreground leading-none">{totalTokens.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-tight">Combined team balance</p>
+          </div>
+        </BentoCard>
+
+        <BentoCard className="p-6 flex flex-col justify-between bg-white border-[var(--color-border-subtle)] shadow-sm">
+          <h3 className="text-label flex items-center gap-2 mb-4">
+            <Users className="h-[14px] w-[14px] text-emerald-500" />
+            Eligible for Rewards
+          </h3>
+          <div>
+            <p className="text-3xl font-bold text-foreground leading-none">{eligibleMembers} Members</p>
+            <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-tight">Balance {'>'}= 2,000 tokens</p>
+          </div>
+        </BentoCard>
+
+        <BentoCard className="p-6 flex flex-col justify-between bg-white border-[var(--color-border-subtle)] shadow-sm">
+          <h3 className="text-label flex items-center gap-2 mb-4">
+            <AlertTriangle className="h-[14px] w-[14px] text-amber-500" />
+            Team Alerts
+          </h3>
+          <div>
+            <p className="text-3xl font-bold text-foreground leading-none">{alertsCount} Members</p>
+            <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-tight">Action required or inactive</p>
+          </div>
+        </BentoCard>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or employee ID..."
-            className="pl-9 bg-muted/30"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+      {/* Members Data Grid - Admin Style */}
+      <BentoCard className="overflow-hidden p-0 shadow-sm border-[var(--color-border-subtle)]">
+        <div className="p-6 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-tertiary)]" />
+            <input
+              type="text"
+              placeholder="Search team member by name or NPK..."
+              className="w-full pl-10 pr-4 py-2.5 bg-[var(--color-surface-base)] border border-[var(--color-border-subtle)] rounded-xl text-sm text-[var(--color-text-primary)] placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 transition-all shadow-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-3">
+             <div className="flex gap-1.5 p-1 bg-slate-100/50 rounded-lg border border-slate-200/50">
+               {(["All", "ACTIVE", "RESET"] as const).map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => setStatusFilter(status === "All" ? "All" : status)}
+                    className={cn(
+                      "px-3 py-1.5 text-xs font-semibold rounded-md transition-all",
+                      statusFilter === status 
+                        ? "bg-white text-primary shadow-sm" 
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {status}
+                  </button>
+               ))}
+             </div>
+             <Badge variant="outline" className="font-mono bg-[var(--color-surface-base)] text-[var(--color-text-secondary)]">
+               {filteredData.length} Members
+             </Badge>
+          </div>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {(["All", "Optel", "Techno"] as const).map((div) => (
-            <Button
-              key={div}
-              variant={divisionFilter === div ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDivisionFilter(div)}
-            >
-              {div}
-            </Button>
-          ))}
-          <div className="h-8 w-px bg-border mx-1" />
-          {(["All", "ACTIVE", "DOWNGRADED", "RESET"] as const).map((status) => (
-            <Button
-              key={status}
-              variant={statusFilter === status ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter(status)}
-            >
-              {status}
-            </Button>
-          ))}
-        </div>
-      </div>
 
-      {/* Members Data Grid */}
-      <BentoCard className="overflow-x-auto p-0">
-        <div className="p-6 border-b border-border flex items-center justify-between">
-          <h3 className="font-semibold text-lg">Team Members</h3>
-          <span className="text-xs text-muted-foreground">
-            {filteredData.length} of {teamData.length} members
-          </span>
-        </div>
-        <Table data-testid="leader-team-table">
-          <TableHeader className="bg-muted/50">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
+        <div className="overflow-x-auto hide-scrollbar">
+          <Table className="min-w-[900px]">
+            <TableHeader className="bg-[var(--color-surface-elevated)]/50">
+              <TableRow className="border-[var(--color-border-subtle)] hover:bg-transparent">
+                <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Employee</TableHead>
+                <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">NPK</TableHead>
+                <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Division</TableHead>
+                <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Membership Tier</TableHead>
+                <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Status</TableHead>
+                <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)] text-right">Tokens</TableHead>
+                <TableHead className="w-[120px] py-4 px-6 text-center font-semibold text-[var(--color-text-secondary)]">Action</TableHead>
               </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  data-testid="leader-team-table-row"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
+            </TableHeader>
+            <TableBody>
+              {filteredData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-40 text-center text-[var(--color-text-tertiary)]">
+                    No team members found matching your search.
+                  </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                  No members match your filters.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                filteredData.map((member) => (
+                  <TableRow 
+                    key={member.id} 
+                    className="group border-b border-[var(--color-border-subtle)] transition-all duration-200 hover:bg-[var(--color-accent)]/[0.05] cursor-default"
+                  >
+                    <TableCell className="py-4 px-6">
+                      <p className="font-semibold text-[var(--color-text-primary)] group-hover:text-primary transition-colors">
+                        {member.name}
+                      </p>
+                    </TableCell>
+                    <TableCell className="py-4 px-6">
+                      <p className="text-xs font-mono text-[var(--color-text-secondary)] uppercase tracking-tighter">
+                        {member.npk}
+                      </p>
+                    </TableCell>
+                    <TableCell className="py-4 px-6">
+                      <Badge variant="outline" className={cn(
+                        "text-[10px] font-bold px-2 py-0.5 rounded-md",
+                        member.division === "Optel"
+                          ? "bg-slate-100 text-slate-600 border-slate-200"
+                          : "bg-indigo-50 text-indigo-600 border-indigo-100"
+                      )}>
+                        {member.division}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-4 px-6">
+                      <Badge 
+                        variant="outline" 
+                        className={cn(
+                          "font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5 rounded-full border shadow-sm",
+                          getTierStyles(member.tier)
+                        )}
+                      >
+                        {member.tier}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-4 px-6">
+                      <EmployeeStatusBadge status={member.status} />
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-right font-mono font-bold text-foreground">
+                      {member.tokens.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-center">
+                      <Link
+                        href={`/leader/team/${member.id}` as any}
+                        className="inline-flex items-center justify-center h-9 w-9 text-primary hover:bg-primary/10 rounded-xl transition-all border border-transparent hover:border-primary/20 active:scale-95 mx-auto"
+                        title="View Detail"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalResults={totalCount || teamData.length}
+        />
       </BentoCard>
     </div>
   );
