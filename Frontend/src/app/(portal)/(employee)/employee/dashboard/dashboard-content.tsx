@@ -292,8 +292,9 @@ export function DashboardContent({ data }: { data: DashboardData }) {
       <motion.div variants={itemVariants} className="bento-span-12">
         <BentoCard className="h-full p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-card-title">Token History</h3>
-            <Button 
+            <h3 className="text-sm font-bold text-slate-600">Token History</h3>
+            <Button
+ 
               variant="ghost" 
               size="sm" 
               className="text-xs font-bold uppercase tracking-widest hover:bg-slate-50 flex items-center gap-1 whitespace-nowrap"

@@ -97,7 +97,14 @@ export const TeamLeaderController = {
       }
 
       const tokenSummary = await LoyaltyCalculationService.getTokenSummary(member.id);
-      const history      = await tokenLedgerRepository.getHistory(member.id, 20, 0);
+      
+      const limit = Number(req.query["limit"]) || 10;
+      const offset = Number(req.query["offset"]) || 0;
+
+      const [history, total] = await Promise.all([
+        tokenLedgerRepository.getHistory(member.id, limit, offset),
+        prisma.tokenLedger.count({ where: { userId: member.id } })
+      ]);
 
       res.json({
         member: {
@@ -106,6 +113,7 @@ export const TeamLeaderController = {
         },
         tokenSummary,
         ledger: history,
+        total,
       });
     } catch (err) {
       next(err);
