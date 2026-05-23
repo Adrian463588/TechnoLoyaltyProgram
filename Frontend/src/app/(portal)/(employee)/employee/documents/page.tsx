@@ -32,16 +32,22 @@ export default async function DocumentsPage() {
 
       <div className="flex-1 p-4 md:p-6 max-w-[1600px] w-full mx-auto space-y-8">
         
-        {/* Header Banner */}
-        <BentoCard className="p-6 flex flex-col justify-center">
-          <div className="flex items-center gap-3 mb-1">
-            <FileText className="h-6 w-6 text-[--color-accent]" />
-            <h1 className="text-card-heading text-2xl">My Documents</h1>
+        {/* Header Card */}
+        <div className="bento-card p-8 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
+          <div className="flex items-center gap-5">
+            <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-sm shadow-primary/5">
+              <FileText size={28} />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl font-extrabold text-[--color-text-secondary] leading-none">
+                My Documents
+              </h1>
+              <p className="text-sm text-[--color-text-secondary]">
+                Upload and manage your identification documents for verification.
+              </p>
+            </div>
           </div>
-          <p className="text-[--color-text-secondary]">
-            Upload and manage your identification documents for verification.
-          </p>
-        </BentoCard>
+        </div>
 
         {/* Informational Note */}
         <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-5 flex items-start gap-4 animate-fade-up-in" style={{ animationDelay: '100ms' }}>
