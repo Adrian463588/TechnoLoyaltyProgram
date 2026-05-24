@@ -35,7 +35,7 @@ async function getDashboardData(token: string) {
 }
 
 export default async function DashboardPage() {
-  await auth();
+  const session = await auth();
   const token = await getServerToken();
   const data = await getDashboardData(token);
 
@@ -46,7 +46,10 @@ export default async function DashboardPage() {
       </div>
 
       <div className="flex-1 p-4 md:p-6 max-w-[1600px] w-full mx-auto">
-        <DashboardContent data={data as any} />
+        <DashboardContent 
+          data={data as any} 
+          userName={session?.user?.name || "Member"} 
+        />
       </div>
     </div>
   );

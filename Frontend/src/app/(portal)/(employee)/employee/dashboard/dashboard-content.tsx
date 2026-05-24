@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, TrendingUp, ChevronRight, ArrowUpRight, Clock, Gift, Zap, Coins, ShieldCheck } from "lucide-react";
+import { ShoppingBag, TrendingUp, ChevronRight, ArrowUpRight, Clock, Gift, Zap, Coins, ShieldCheck, MapPin, Calendar } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { TokenHeroSection } from "@/components/dashboard/token-hero-section";
 import { DashboardClock } from "@/components/dashboard/dashboard-clock";
@@ -75,7 +75,7 @@ const formatDate = (dateStr: string) => {
   }).format(new Date(dateStr));
 };
 
-export function DashboardContent({ data }: { data: DashboardData }) {
+export function DashboardContent({ data, userName }: { data: DashboardData; userName?: string }) {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const router = useRouter();
 
@@ -164,6 +164,51 @@ export function DashboardContent({ data }: { data: DashboardData }) {
     }
   }
 
+  // ── Helper logic for countdowns ─────────────────────────────────────────
+  const getDaysDiff = (targetMMDD: string) => {
+    const [m, d] = targetMMDD.split("-").map(Number);
+    const targetDate = new Date(now.getFullYear(), m - 1, d);
+    
+    // If target date is in the past for this month, and we might be looking at next month 
+    // (simplified for current year logic)
+    const diffTime = targetDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  let earningStatusText = "Phase Finished";
+  let claimingStatusText = "Upcoming Phase";
+  let isClaimingActive = false;
+
+  if (data.settings) {
+    const { p1End, p2End, claimP1Start, claimP1End, claimP2Start, claimP2End } = data.settings;
+    
+    // Earning Countdown
+    const currentEarningEnd = activePeriodLabel === "P1" ? p1End : p2End;
+    const daysLeftEarning = getDaysDiff(currentEarningEnd);
+    if (daysLeftEarning > 0) {
+      earningStatusText = `${daysLeftEarning} days remaining`;
+    } else if (daysLeftEarning === 0) {
+      earningStatusText = "Last day to earn!";
+    }
+
+    // Claiming Countdown
+    const currentClaimStart = activeClaimLabel === "P1" ? claimP1Start : claimP2Start;
+    const currentClaimEnd   = activeClaimLabel === "P1" ? claimP1End   : claimP2End;
+    
+    const daysUntilClaim = getDaysDiff(currentClaimStart);
+    const daysLeftClaim  = getDaysDiff(currentClaimEnd);
+
+    if (daysUntilClaim > 0) {
+      claimingStatusText = `Starts in ${daysUntilClaim} days`;
+    } else if (daysLeftClaim >= 0) {
+      claimingStatusText = `${daysLeftClaim === 0 ? "Last day" : daysLeftClaim + " days"} remaining`;
+      isClaimingActive = true;
+    } else {
+      claimingStatusText = "Phase Finished";
+    }
+  }
+
   return (
     <motion.div
       variants={containerVariants}
@@ -176,34 +221,24 @@ export function DashboardContent({ data }: { data: DashboardData }) {
         variants={itemVariants}
         className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-start justify-between"
       >
-        <div className="space-y-2">
+        <div className="flex flex-col">
           <motion.h1
             data-testid="employee-dashboard-heading"
-            className="text-2xl font-extrabold text-[--color-text-secondary] mb-1 leading-none"
+            className="text-2xl font-extrabold text-[--color-text-secondary] leading-none mb-3"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
             Dashboard
           </motion.h1>
-          <div className="flex flex-col gap-1">
-            <motion.p
-              className="text-sm text-[--color-text-secondary]"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              Active Earning Period: <span className="font-bold text-[--color-text-primary]">{activePeriodLabel} ({activePeriodDates})</span>
-            </motion.p>
-            <motion.p
-              className="text-sm text-[--color-text-tertiary]"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.35 }}
-            >
-              Active Claim Period: <span className="font-bold text-[--color-text-secondary]">{activeClaimLabel} ({activeClaimDates})</span>
-            </motion.p>
-          </div>
+          <motion.p
+            className="text-sm text-slate-400 font-medium leading-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            Welcome back, <span className="font-bold">{userName}</span>! Here's an overview of your loyalty status.
+          </motion.p>
         </div>
         
         <motion.div
@@ -216,77 +251,134 @@ export function DashboardContent({ data }: { data: DashboardData }) {
         </motion.div>
       </motion.div>
 
-      {/* Token Balance Card */}
-      <motion.div variants={itemVariants} className="bento-span-12 md:bento-span-6">
-        <div
-          onMouseEnter={() => setHoveredCard("tokens")}
-          onMouseLeave={() => setHoveredCard(null)}
-          className="h-full"
-        >
-          <TokenHeroSection
-            tokenBalance={data.tokenBalance}
-            tier={data.tier}
-            eligibilityStatus={data.eligibilityStatus}
-          />
-        </div>
-      </motion.div>
+      {/* Row 2: Stats Grid */}
+      <div className="bento-span-12 grid grid-cols-12 gap-4">
+        {/* Token Balance Card */}
+        <motion.div variants={itemVariants} className="col-span-12 lg:col-span-4 h-full">
+          <div
+            onMouseEnter={() => setHoveredCard("tokens")}
+            onMouseLeave={() => setHoveredCard(null)}
+            className="h-full"
+          >
+            <TokenHeroSection
+              tokenBalance={data.tokenBalance}
+              tier={data.tier}
+              eligibilityStatus={data.eligibilityStatus}
+            />
+          </div>
+        </motion.div>
 
-      {/* Your Tier Card - Dynamic Gemstone Style */}
-      <motion.div variants={itemVariants} className="bento-span-12 md:bento-span-6">
-        {(() => {
-          const tier = data.tier.toUpperCase();
-          const config = {
-            SAPHIRE: { bg: "bg-blue-50/50", border: "border-blue-100", text: "text-blue-700", accent: "bg-blue-600", light: "bg-blue-100" },
-            EMERALD: { bg: "bg-emerald-50/50", border: "border-emerald-100", text: "text-emerald-700", accent: "bg-emerald-600", light: "bg-emerald-100" },
-            RUBY:    { bg: "bg-red-50/50", border: "border-red-100", text: "text-red-700", accent: "bg-red-600", light: "bg-red-100" },
-            DIAMOND: { bg: "bg-purple-50/50", border: "border-purple-100", text: "text-purple-700", accent: "bg-purple-600", light: "bg-purple-100" },
-          }[tier] || { bg: "bg-slate-50", border: "border-slate-100", text: "text-slate-700", accent: "bg-slate-600", light: "bg-slate-100" };
+        {/* Your Tier Card - Dynamic Gemstone Style */}
+        <motion.div variants={itemVariants} className="col-span-12 lg:col-span-4 h-full">
+          {(() => {
+            const tier = data.tier.toUpperCase();
+            const config = {
+              SAPHIRE: { bg: "bg-blue-50/50", border: "border-blue-100", text: "text-blue-700", accent: "bg-blue-600", light: "bg-blue-100" },
+              EMERALD: { bg: "bg-emerald-50/50", border: "border-emerald-100", text: "text-emerald-700", accent: "bg-emerald-600", light: "bg-emerald-100" },
+              RUBY:    { bg: "bg-red-50/50", border: "border-red-100", text: "text-red-700", accent: "bg-red-600", light: "bg-red-100" },
+              DIAMOND: { bg: "bg-purple-50/50", border: "border-purple-100", text: "text-purple-700", accent: "bg-purple-600", light: "bg-purple-100" },
+            }[tier] || { bg: "bg-slate-50", border: "border-slate-100", text: "text-slate-700", accent: "bg-slate-600", light: "bg-slate-100" };
 
-          return (
-            <div className={cn("bento-card h-full p-6 relative overflow-hidden", config.bg, config.border)}>
-              <div className="relative z-10 flex flex-col h-full">
-                <div className="pb-0">
-                  <h3 className={cn("text-[10px] font-black tracking-[0.2em] uppercase mb-4 opacity-60", config.text)}>
-                    YOUR TIER IS
-                  </h3>
-                </div>
-                
-                <div className="flex items-center gap-4 mb-6">
-                  <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner", config.light)}>
-                    <ShieldCheck className={cn("h-8 w-8", config.text)} />
+            return (
+              <div className={cn("bento-card h-full p-6 relative overflow-hidden group transition-all duration-500", config.bg, config.border)}>
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="flex items-baseline justify-between mb-4">
+                    <h3 className={cn("text-[10px] font-black tracking-[0.2em] uppercase opacity-60", config.text)}>
+                      YOUR TIER IS
+                    </h3>
                   </div>
-                  <p className={cn("text-4xl font-black tracking-tighter uppercase", config.text)}>
-                    {data.tier}
-                  </p>
-                </div>
 
-                <div className="mt-auto pt-6 border-t border-black/5">
+                  <div className="flex items-center gap-4 mb-12">
+                    <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner", config.light)}>
+                      <ShieldCheck className={cn("h-8 w-8", config.text)} />
+                    </div>
+                    <p className={cn("text-3xl font-black tracking-tighter uppercase", config.text)}>
+                      {data.tier}
+                    </p>
+                  </div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className={cn("text-[10px] font-bold uppercase tracking-wider opacity-70", config.text)}>Retention Status</span>
-                    <span className={cn("text-[10px] font-black uppercase", config.text)}>Secured</span>
+                      <span className={cn("text-[10px] font-bold uppercase tracking-wider opacity-70", config.text)}>Retention Status</span>
+                      <span className={cn("text-[10px] font-black uppercase", config.text)}>Secured</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-black/5 rounded-full overflow-hidden">
+                      <motion.div
+                        className={cn("h-full rounded-full", config.accent)}
+                        initial={{ width: "0%" }}
+                        animate={{ width: "100%" }}
+                        transition={{ duration: 1, delay: 0.5 }}
+                      />
+                    </div>
+                    <p className={cn("text-[10px] mt-2 font-medium opacity-60", config.text)}>
+                      Benefits are active for next period.
+                    </p>
+                </div>
+
+                <div className="absolute -bottom-6 -right-6 opacity-[0.04] group-hover:scale-110 group-hover:opacity-[0.07] transition-all duration-1000 pointer-events-none text-slate-900">
+                  <ShieldCheck size={160} />
+                </div>
+              </div>
+            );
+          })()}
+        </motion.div>
+
+        {/* Schedule Info Card (Opsi 1 Revised) */}
+        <motion.div variants={itemVariants} className="col-span-12 lg:col-span-4 h-full">
+          <BentoCard className="h-full p-6 relative overflow-hidden border-slate-200 bg-white group">
+            <div className="relative z-10 flex flex-col h-full">
+              <div className="flex items-baseline justify-between mb-4">
+                <h3 className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-400">
+                  CURRENT CYCLE : {activePeriodLabel}
+                </h3>
+              </div>
+
+
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                {/* Earning Phase */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Clock size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Earning</span>
                   </div>
-                  <div className="h-1.5 w-full bg-black/5 rounded-full overflow-hidden">
-                    <motion.div
-                      className={cn("h-full rounded-full", config.accent)}
-                      initial={{ width: "0%" }}
-                      animate={{ width: "100%" }}
-                      transition={{ duration: 1, delay: 0.5 }}
-                    />
+                  <p className="text-sm font-black text-slate-600 leading-none">{activePeriodDates}</p>
+                  <p className="text-[10px] font-bold text-slate-400">{earningStatusText}</p>
+                </div>
+
+                {/* Claim Phase */}
+                <div className="space-y-2 border-l border-slate-100 pl-4">
+                  <div className={cn("flex items-center gap-2", isClaimingActive ? "text-primary" : "text-slate-400")}>
+                    <Gift size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Claiming</span>
                   </div>
-                  <p className={cn("text-[10px] mt-2 font-medium opacity-60", config.text)}>
-                    Your {data.tier.toLowerCase()} benefits are active for the next period.
+                  <p className={cn("text-sm font-black leading-none", isClaimingActive ? "text-slate-900" : "text-slate-600")}>
+                    {activeClaimDates}
+                  </p>
+                  <p className={cn("text-[10px] font-bold", isClaimingActive ? "text-primary animate-pulse" : "text-slate-400")}>
+                    {claimingStatusText}
                   </p>
                 </div>
               </div>
 
-              {/* Decorative Background Icon */}
-              <div className="absolute -bottom-6 -right-6 opacity-[0.03] pointer-events-none">
-                <ShieldCheck size={160} />
+              <div className="mt-auto pt-6 border-t border-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                    <MapPin size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pickup Point</p>
+                    <p className="text-xs font-bold text-slate-700">
+                      {data.settings?.rewardPickupLocation || "Contact HC for pickup location"}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-          );
-        })()}
-      </motion.div>
+            
+            <div className="absolute -bottom-6 -right-6 opacity-[0.04] group-hover:scale-110 group-hover:opacity-[0.07] transition-all duration-1000 pointer-events-none text-slate-900">
+              <Calendar size={160} />
+            </div>
+          </BentoCard>
+        </motion.div>
+      </div>
 
       {/* Token History */}
       <motion.div variants={itemVariants} className="bento-span-12">
