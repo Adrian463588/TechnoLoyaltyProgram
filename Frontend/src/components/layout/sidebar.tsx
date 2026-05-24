@@ -31,6 +31,7 @@ import {
   UserCheck,
   FileText,
   CalendarClock,
+  UserCog,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -50,18 +51,21 @@ const navItems = {
     { href: "/admin/mitra-validation", label: "Mitra Validation", icon: UserCheck },
     { href: "/admin/earning-period", label: "Earning Period", icon: CalendarClock },
     { href: "/admin/audit", label: "Audit Log", icon: History },
+    { href: "/admin/profile", label: "Profile Settings", icon: UserCog },
   ],
   TEAM_LEADER: [
-    { href: "/leader/team", label: "Team Overview", icon: Users },
     { href: "/employee/dashboard", label: "My Dashboard", icon: LayoutDashboard },
+    { href: "/leader/team", label: "Team Overview", icon: Users },
     { href: "/employee/rewards", label: "Rewards", icon: ShoppingBag },
     { href: "/employee/documents", label: "My Documents", icon: FileText },
+    { href: "/leader/profile", label: "Profile Settings", icon: UserCog },
   ],
   MITRA: [
     { href: "/employee/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/employee/rewards", label: "Rewards", icon: ShoppingBag },
     { href: "/employee/history", label: "History", icon: History },
     { href: "/employee/documents", label: "My Documents", icon: FileText },
+    { href: "/employee/profile", label: "Profile Settings", icon: UserCog },
   ],
 };
 

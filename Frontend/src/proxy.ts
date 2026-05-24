@@ -71,7 +71,7 @@ export default auth((req) => {
       if (!hasAccess) {
         const fallback =
           userRole === "HC_PM"         ? "/admin/dashboard"
-          : userRole === "TEAM_LEADER" ? "/leader/team"
+          : userRole === "TEAM_LEADER" ? "/employee/dashboard"
           : "/employee/dashboard";
         return NextResponse.redirect(new URL(fallback, req.url));
       }

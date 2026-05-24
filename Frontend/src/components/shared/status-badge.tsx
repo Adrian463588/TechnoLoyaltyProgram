@@ -38,10 +38,10 @@ export function RedemptionStatusChip({ status, className }: { status: Redemption
 export type MembershipTier = "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
 
 const tierConfig: Record<MembershipTier, { bg: string; color: string; border: string }> = {
-  SAPHIRE: { bg: "bg-blue-100", color: "text-blue-700", border: "border-blue-300" },
-  EMERALD: { bg: "bg-emerald-100", color: "text-emerald-700", border: "border-emerald-300" },
-  RUBY:    { bg: "bg-red-100", color: "text-red-700", border: "border-red-300" },
-  DIAMOND: { bg: "bg-purple-100", color: "text-purple-700", border: "border-purple-300" },
+  SAPHIRE: { bg: "bg-blue-50", color: "text-blue-600", border: "border-blue-200" },
+  EMERALD: { bg: "bg-emerald-50", color: "text-emerald-600", border: "border-emerald-200" },
+  RUBY:    { bg: "bg-red-50", color: "text-red-600", border: "border-red-200" },
+  DIAMOND: { bg: "bg-purple-50", color: "text-purple-600", border: "border-purple-200" },
 };
 
 export function TierBadge({ tier, className }: { tier: MembershipTier; className?: string }) {
@@ -49,7 +49,7 @@ export function TierBadge({ tier, className }: { tier: MembershipTier; className
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-3 py-1 text-[12px] font-bold tracking-wider uppercase border",
+        "inline-flex items-center rounded-full px-3 py-0.5 text-[11px] font-bold tracking-wider uppercase border",
         config.bg,
         config.color,
         config.border,
@@ -81,12 +81,12 @@ export function EligibilityChip({ eligible, reason, className }: { eligible: boo
 // Partner/Employee Status Badge
 export type PartnerStatus = "ACTIVE" | "DOWNGRADED" | "RESET" | "INACTIVE" | "RESIGNED";
 
-const partnerStatusConfig: Record<PartnerStatus, { bg: string; color: string; label: string }> = {
-  ACTIVE: { bg: "#DCFCE7", color: "#16A34A", label: "ACTIVE" },
-  DOWNGRADED: { bg: "#FEF3C7", color: "#D97706", label: "DOWNGRADED" },
-  RESET: { bg: "#FEE2E2", color: "#DC2626", label: "RESET" },
-  INACTIVE: { bg: "#F1F5F9", color: "#64748B", label: "INACTIVE" },
-  RESIGNED: { bg: "#FEE2E2", color: "#EF4444", label: "RESIGNED" },
+const partnerStatusConfig: Record<PartnerStatus, { bg: string; color: string; border: string; label: string }> = {
+  ACTIVE: { bg: "#F0FDF4", color: "#16A34A", border: "#BBF7D0", label: "ACTIVE" },
+  DOWNGRADED: { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A", label: "DOWNGRADED" },
+  RESET: { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA", label: "RESET" },
+  INACTIVE: { bg: "#F8FAFC", color: "#64748B", border: "#E2E8F0", label: "INACTIVE" },
+  RESIGNED: { bg: "#FEF2F2", color: "#EF4444", border: "#FECACA", label: "RESIGNED" },
 };
 
 export function EmployeeStatusBadge({ status, className }: { status: PartnerStatus | string; className?: string }) {
@@ -95,12 +95,13 @@ export function EmployeeStatusBadge({ status, className }: { status: PartnerStat
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold tracking-wider uppercase border border-transparent shadow-sm",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase border",
         className
       )}
       style={{ 
         backgroundColor: config.bg, 
-        color: config.color
+        color: config.color,
+        borderColor: config.border
       }}
     >
       {config.label}

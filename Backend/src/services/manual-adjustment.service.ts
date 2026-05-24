@@ -52,14 +52,31 @@ export class ManualAdjustmentService {
         throw new ValidationError("Manual adjustment would result in a negative balance");
       }
 
-      // 1. Append ledger event
-      const entry = await tokenLedgerRepository.appendTokenEvent({
-        userId,
-        eventType: TokenEventType.MANUAL_ADJUSTMENT,
-        amount,
-        reason,
-        performedBy,
-      }, tx);
+      let entry: TokenLedger;
+      if (amount < 0) {
+        // 1. Deduct tokens using FIFO for negative adjustments
+        const entries = await tokenLedgerRepository.deductTokensFIFO({
+          userId,
+          eventType: TokenEventType.MANUAL_ADJUSTMENT,
+          amount: Math.abs(amount),
+          performedBy,
+          reason,
+        }, tx);
+        entry = entries[entries.length - 1]; // Use last snapshot as representative entry
+      } else {
+        // 1. Calculate earnedYear for positive adjustments
+        const earnedYear = new Date().getFullYear();
+
+        // 2. Append ledger event
+        entry = await tokenLedgerRepository.appendTokenEvent({
+          userId,
+          eventType: TokenEventType.MANUAL_ADJUSTMENT,
+          amount,
+          earnedYear,
+          reason,
+          performedBy,
+        }, tx);
+      }
 
       // 2. Audit
       await logAudit({

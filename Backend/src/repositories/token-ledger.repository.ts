@@ -37,10 +37,8 @@ export class TokenLedgerRepository {
   ): Promise<TokenLedger> {
     const operation = async (tx: Prisma.TransactionClient): Promise<TokenLedger> => {
       // 1. Lock the User record to serialize transactions for this specific user.
-      // This prevents race conditions when appending ledger entries concurrently.
       await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${input.userId} FOR UPDATE`;
       
-      // 2. Fetch current balance
       const lastEntry = await tx.tokenLedger.findFirst({
         where: { userId: input.userId },
         orderBy: { createdAt: "desc" },
@@ -53,14 +51,13 @@ export class TokenLedgerRepository {
         throw new DomainError("INSUFFICIENT_TOKENS", "Token balance cannot go negative");
       }
 
-      // Calculate expiry if not provided but earnedYear is present
       let expiresAt = input.expiresAt;
       if (!expiresAt && input.earnedYear && input.amount > 0) {
-        expiresAt = new Date(input.earnedYear + 3, 11, 31, 23, 59, 59);
+        // Requirement Update: Tokens earned in Year N expire on Dec 31 of Year (N+4)
+        expiresAt = new Date(input.earnedYear + 4, 11, 31, 23, 59, 59);
       }
 
-      // 2. Insert new ledger row
-      const newEntry = await tx.tokenLedger.create({
+      return tx.tokenLedger.create({
         data: {
           userId:      input.userId,
           eventType:   input.eventType,
@@ -73,13 +70,97 @@ export class TokenLedgerRepository {
           performedBy: input.performedBy,
         },
       });
-
-      return newEntry;
     };
 
-    const result = await (externalTx ? operation(externalTx) : prisma.$transaction(operation));
+    return (externalTx ? operation(externalTx) : prisma.$transaction(operation));
+  }
 
-    return result;
+  /**
+   * Deducts tokens using FIFO (First In First Out) across annual cohorts.
+   * Splits the deduction into multiple entries if it spans multiple years.
+   */
+  async deductTokensFIFO(
+    input: {
+      userId: string;
+      amount: number; // Positive number representing the deduction (will be negated)
+      eventType: TokenEventType;
+      referenceId?: string;
+      performedBy: string;
+      reason?: string;
+    },
+    externalTx: Prisma.TransactionClient
+  ): Promise<TokenLedger[]> {
+    const tx = externalTx;
+    const { userId, amount: totalToDeduct, eventType, referenceId, performedBy, reason } = input;
+
+    // 1. Ensure sufficient total balance
+    const currentTotalBalance = await this.getBalance(userId, tx);
+    if (currentTotalBalance < totalToDeduct) {
+      throw new DomainError("INSUFFICIENT_TOKENS", `Insufficient total balance: ${currentTotalBalance}`);
+    }
+
+    // 2. Get balances per cohort (Credit - Debit per year)
+    const rawCohorts = await tx.tokenLedger.groupBy({
+      by: ["earnedYear"],
+      where: { userId },
+      _sum: { amount: true },
+      orderBy: { earnedYear: "asc" },
+    });
+
+    const cohorts = rawCohorts
+      .map(c => ({ year: c.earnedYear, balance: c._sum.amount ?? 0 }))
+      .filter(c => c.balance > 0);
+
+    let remainingDeduction = totalToDeduct;
+    const createdEntries: TokenLedger[] = [];
+    let runningBalance = currentTotalBalance;
+
+    // 3. Deduct from oldest cohorts first
+    for (const cohort of cohorts) {
+      if (remainingDeduction <= 0) break;
+
+      const consume = Math.min(remainingDeduction, cohort.balance);
+      const earnedYear = cohort.year ?? undefined;
+      
+      // Calculate expiresAt based on original earnedYear
+      const expiresAt = earnedYear ? new Date(earnedYear + 4, 11, 31, 23, 59, 59) : undefined;
+
+      runningBalance -= consume;
+      remainingDeduction -= consume;
+
+      const entry = await tx.tokenLedger.create({
+        data: {
+          userId,
+          eventType,
+          amount: -consume,
+          balanceAfter: runningBalance,
+          referenceId,
+          earnedYear,
+          expiresAt,
+          performedBy,
+          reason: `${reason || "Token deduction"} (Cohort ${earnedYear || "Unknown"})`,
+        }
+      });
+      createdEntries.push(entry);
+    }
+
+    // 4. Handle edge case: deduction exceeding cohorts (should be prevented by getBalance check but safety first)
+    if (remainingDeduction > 0) {
+       const entry = await tx.tokenLedger.create({
+        data: {
+          userId,
+          eventType,
+          amount: -remainingDeduction,
+          balanceAfter: runningBalance - remainingDeduction,
+          referenceId,
+          performedBy,
+          reason: `${reason || "Token deduction"} (Residual)`,
+        }
+      });
+      createdEntries.push(entry);
+    }
+
+    return createdEntries;
   }
 
   /**
@@ -147,8 +228,6 @@ export class TokenLedgerRepository {
       by: ["earnedYear", "expiresAt"],
       where: {
         userId,
-        // Only include entries with positive balance (not yet expired/redeemed)
-        amount: { gt: 0 },
       },
       _sum: {
         amount: true,

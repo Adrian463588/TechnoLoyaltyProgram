@@ -205,8 +205,8 @@ export class EvaluationService {
   }
 
   /**
-   * Processes token expiry based on a 4-year lifecycle.
-   * Tokens earned in Year N expire on Dec 31 of Year (N+3).
+   * Processes token expiry based on a 5-year lifecycle.
+   * Tokens earned in Year N expire on Dec 31 of Year (N+4).
    *
    * AGENTS.md §8: Uses JobRun guard + tokenLedgerRepository for append-only writes.
    */
