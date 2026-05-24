@@ -14,20 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Lock, Shield, Trophy, Users } from "lucide-react";
 import { motion } from "framer-motion";
-
-const DEMO_CREDENTIALS = [
-  { label: "Admin (HC PM)", npk: "12345", password: "password123", icon: Shield },
-  { label: "Leader (OpCent)", npk: "23456", password: "password123", icon: Users },
-  { label: "Leader (Tele)", npk: "23457", password: "password123", icon: Users },
-  { label: "Leader (Techno)", npk: "23458", password: "password123", icon: Users },
-  { label: "Alice (OpCent, Emerald)", npk: "34567", password: "password123", icon: Trophy },
-  { label: "Saphire (Tele, Saphire)", npk: "40001", password: "password123", icon: Trophy },
-  { label: "Emerald (OpCent, Emerald)", npk: "40002", password: "password123", icon: Trophy },
-  { label: "Ruby (Techno, Ruby)", npk: "40003", password: "password123", icon: Trophy },
-  { label: "Diamond (Techno, Diamond)", npk: "40004", password: "password123", icon: Trophy },
-  { label: "Eve (OpCent, Inactive)", npk: "40005", password: "password123", icon: Trophy },
-  { label: "Frank (Tele, Resigned)", npk: "40006", password: "password123", icon: Trophy },
-];
+import { DemoAccountDock } from "@/components/auth/demo-account-dock";
 
 const ROLE_REDIRECT: Record<string, string> = {
   MITRA:       "/employee/dashboard",
@@ -177,41 +164,13 @@ export default function LoginPage() {
         </form>
       </div>
 
-      {/* Demo accounts */}
-      <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider text-center">
-          Demo Accounts
-        </p>
-        <div className="space-y-2" role="list" aria-label="Demo account credentials">
-          {DEMO_CREDENTIALS.map(({ label, npk, password, icon: Icon }) => (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              key={npk}
-              type="button"
-              role="listitem"
-              aria-label={`Fill credentials for ${label}`}
-              onClick={() => {
-                setValue("npk", npk);
-                setValue("password", password);
-              }}
-              className="w-full flex items-center justify-between text-left rounded-lg bg-background border border-border px-3 py-2.5 hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-1.5 rounded-md bg-primary/10" aria-hidden="true">
-                  <Icon className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-                </div>
-                <span className="text-sm font-medium text-foreground">{label}</span>
-              </div>
-              <div className="text-right" aria-hidden="true">
-                <p className="text-xs font-mono text-muted-foreground">{npk}</p>
-                <p className="text-xs text-muted-foreground/60">password123</p>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </div>
+      {/* Floating Demo Account Selector */}
+      <DemoAccountDock 
+        onSelect={(npk, pass) => {
+          setValue("npk", npk);
+          setValue("password", pass);
+        }} 
+      />
     </div>
   );
 }
