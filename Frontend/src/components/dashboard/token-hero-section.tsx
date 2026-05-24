@@ -54,13 +54,10 @@ export function TokenHeroSection({
           </div>
           
           <div className="flex-1 flex flex-col justify-center mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-6">
-              <div className="text-8xl font-black text-[--color-accent] font-display tracking-tighter leading-none" data-testid="token-counter">
+            <div className="flex items-baseline gap-2">
+              <div className="text-7xl font-black text-[--color-accent] font-display tracking-tighter leading-none" data-testid="token-counter">
                 <AnimatedTokenCount value={tokenBalance} />
               </div>
-              <span className="text-xl font-bold text-[--color-text-secondary] opacity-70 tracking-tight">
-                tokens available
-              </span>
             </div>
           </div>
 

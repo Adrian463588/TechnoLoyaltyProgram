@@ -1,11 +1,18 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState, useEffect } from "react";
-import { X, Loader2, Trash2 } from "lucide-react";
+import { X, Loader2, Trash2, ChevronDown } from "lucide-react";
 import type { RewardCatalogItem } from "@/lib/api-client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const rewardSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -40,6 +47,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
     reset,
     watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<RewardFormValues>({
     resolver: zodResolver(rewardSchema),
@@ -115,7 +123,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white border border-neutral-200 rounded-2xl shadow-xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-neutral-100 flex-shrink-0">
@@ -206,7 +214,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
                 {...register("tokenCost", { valueAsNumber: true })}
                 type="number"
                 min={1}
-                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all font-mono shadow-sm"
+                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all shadow-sm"
               />
               {errors.tokenCost && <p className="mt-1.5 text-sm text-red-500">{errors.tokenCost.message}</p>}
             </div>
@@ -216,15 +224,26 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
               <label className="block text-sm font-medium text-neutral-700 mb-1.5">
                 Minimum Membership Tier <span className="text-red-500">*</span>
               </label>
-              <select
-                {...register("minTier")}
-                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all shadow-sm appearance-none"
-              >
-                <option value="SAPHIRE">Saphire</option>
-                <option value="EMERALD">Emerald</option>
-                <option value="RUBY">Ruby</option>
-                <option value="DIAMOND">Diamond</option>
-              </select>
+              <Controller
+                control={control}
+                name="minTier"
+                render={({ field }) => (
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  >
+                    <SelectTrigger className="h-11 w-full bg-white border border-neutral-300 rounded-xl text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all shadow-sm">
+                      <SelectValue placeholder="Select tier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="SAPHIRE">Saphire</SelectItem>
+                      <SelectItem value="EMERALD">Emerald</SelectItem>
+                      <SelectItem value="RUBY">Ruby</SelectItem>
+                      <SelectItem value="DIAMOND">Diamond</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errors.minTier && <p className="mt-1.5 text-sm text-red-500">{errors.minTier.message}</p>}
             </div>
 

@@ -175,11 +175,11 @@ export class RedemptionService {
         },
       });
 
-      // 2. Deduct tokens immediately
-      await tokenLedgerRepository.appendTokenEvent({
+      // 2. Deduct tokens using FIFO across cohorts
+      await tokenLedgerRepository.deductTokensFIFO({
         userId,
         eventType: TokenEventType.REDEEMED,
-        amount: -item.tokenCost,
+        amount: item.tokenCost,
         referenceId: request.id,
         performedBy: userId,
         reason: `Redemption: ${item.name}`,
@@ -288,16 +288,29 @@ export class RedemptionService {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // Refund tokens if REJECTED or CANCELLED from a state that already deducted them (which is now all submissions)
+      // Refund tokens if REJECTED or CANCELLED from a state that already deducted them
       if (["REJECTED", "CANCELLED"].includes(newStatus)) {
-        await tokenLedgerRepository.appendTokenEvent({
-          userId: request.mitraId,
-          eventType: TokenEventType.MANUAL_ADJUSTMENT,
-          amount: request.tokenCost,
-          referenceId: request.id,
-          performedBy: actorId,
-          reason: `Refund: Redemption ${newStatus.toLowerCase()} (${request.rewardItem.name})`,
-        }, tx);
+        // Find original deductions for this request to restore cohorts accurately
+        const deductions = await tx.tokenLedger.findMany({
+          where: { 
+            referenceId: requestId,
+            amount: { lt: 0 },
+            eventType: TokenEventType.REDEEMED
+          }
+        });
+
+        for (const d of deductions) {
+          await tokenLedgerRepository.appendTokenEvent({
+            userId: request.mitraId,
+            eventType: TokenEventType.MANUAL_ADJUSTMENT,
+            amount: Math.abs(d.amount),
+            referenceId: requestId,
+            earnedYear: d.earnedYear ?? undefined,
+            expiresAt: d.expiresAt ?? undefined,
+            performedBy: actorId,
+            reason: `Refund: Redemption ${newStatus.toLowerCase()} (${request.rewardItem.name}) - Restoring cohort ${d.earnedYear || 'Unknown'}`,
+          }, tx);
+        }
       }
 
       // ── New Simplification Logic ──

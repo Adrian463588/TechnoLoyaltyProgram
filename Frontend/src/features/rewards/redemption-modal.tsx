@@ -107,7 +107,7 @@ export function RedemptionModal({ reward, userTokens, onClose }: RedemptionModal
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
-          className="relative w-full max-w-md bg-card shadow-xl border border-[--color-border-glass] rounded-xl p-6 overflow-hidden"
+          className="relative w-full max-w-md bg-card shadow-xl rounded-xl p-6 overflow-hidden"
           role="dialog"
           aria-modal="true"
           aria-labelledby="redeem-modal-title"
@@ -135,7 +135,7 @@ export function RedemptionModal({ reward, userTokens, onClose }: RedemptionModal
           </div>
 
           <div id="redeem-modal-desc" className="space-y-4 mb-8">
-            <div className="p-4 bg-black/20 rounded-xl border border-[--color-border-subtle]">
+            <div className="p-4 bg-black/20 rounded-xl">
               <h3 className="font-semibold text-[--color-text-primary]">{reward.name}</h3>
               <p className="text-sm text-[--color-text-secondary] mt-1">{reward.description}</p>
             </div>
