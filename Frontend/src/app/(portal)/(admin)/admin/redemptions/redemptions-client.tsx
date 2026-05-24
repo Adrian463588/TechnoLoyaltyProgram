@@ -56,7 +56,7 @@ export default function RedemptionsClient({
   totalPages,
 }: RedemptionsClientProps) {
   const [requests, setRequests] = useState(initialRequests);
-  const [filter, setFilter] = useState<"All" | "REQUESTED">("All");
+  const [filter, setFilter] = useState<"All" | RewardRequestStatus>("All");
   const [selectedRequest, setSelectedRequest] = useState<typeof initialRequests[0] | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -68,7 +68,21 @@ export default function RedemptionsClient({
   const [previewDoc, setPreviewDoc] = useState<{ url: string, label: string } | null>(null);
 
   const filtered =
-    filter === "All" ? requests : requests.filter((r) => r.status === "REQUESTED");
+    filter === "All" ? requests : requests.filter((r) => r.status === filter);
+
+  // Pagination logic for filtered results
+  const displayTotalResults = filter === "All" ? totalCount : filtered.length;
+  const displayTotalPages = filter === "All" ? totalPages : Math.ceil(filtered.length / 10);
+  
+  // Note: For a true fix in a large dataset, pagination should happen on the server.
+  // This client-side adjustment handles the current local filtering scenario.
+
+  const handleFilterChange = (newFilter: "All" | RewardRequestStatus) => {
+    setFilter(newFilter);
+    // Optionally: if this was client-side only pagination, we'd reset the page here.
+    // However, since pagination is server-driven via URL, client-side filtering 
+    // is limited to the current page's data.
+  };
 
   const handleStatusUpdate = async (
     id: string,
@@ -151,39 +165,36 @@ export default function RedemptionsClient({
 
   return (
     <div className="space-y-6">
-      {/* Filter */}
-      <div className="flex flex-wrap gap-2 animate-fade-up-in" data-testid="redemption-status-filter">
-        {[
-          { label: "All Requests", value: "All" as const },
-          { label: "Requested Only", value: "REQUESTED" as const },
-        ].map((item) => {
-          const isActive = filter === item.value;
-          return (
-            <button
-              key={item.value}
-              onClick={() => setFilter(item.value)}
-              className={cn(
-                "flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold transition-all duration-300 active:scale-95 cursor-pointer",
-                isActive 
-                  ? "bg-[var(--color-surface-elevated)] border-[var(--color-accent)] text-[var(--color-accent)] ring-1 ring-[var(--color-accent)]/20 shadow-sm" 
-                  : "bg-[var(--color-surface-base)] border-[var(--color-border-subtle)] text-[var(--color-text-secondary)] opacity-80 hover:opacity-100 hover:shadow-sm"
-              )}
-            >
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
-
       <BentoCard className="p-0 overflow-hidden shadow-sm border-[var(--color-border-subtle)] animate-fade-up-in" style={{ animationDelay: "100ms" }}>
-        <div className="p-5 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/30 flex items-center justify-between">
+        <div className="p-5 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/30 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <CheckSquare className="h-4 w-4 text-[var(--color-text-tertiary)]" />
-            <span className="text-sm font-semibold text-[var(--color-text-secondary)]">Redemption Requests</span>
+            <span className="text-sm font-semibold text-[var(--color-text-secondary)]">Redemption List</span>
           </div>
-          <Badge variant="outline" className="font-mono bg-[var(--color-surface-base)] text-[var(--color-text-secondary)]">
-            {filtered.length} Requests
-          </Badge>
+
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1.5 p-1 bg-slate-100/50 rounded-lg border border-slate-200/50">
+              {(["All", "REQUESTED", "REVIEWED", "REJECTED"] as const).map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setFilter(status)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-semibold rounded-md transition-all",
+                    filter === status 
+                      ? "bg-white text-primary shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {status === "All" ? "All" : 
+                   status === "REQUESTED" ? "Request" : 
+                   status === "REVIEWED" ? "Reviewed" : "Rejected"}
+                </button>
+              ))}
+            </div>
+            <Badge variant="outline" className="font-mono bg-white text-slate-500 border-slate-200">
+              {filtered.length} Results
+            </Badge>
+          </div>
         </div>
 
         <div className="overflow-x-auto hide-scrollbar">
@@ -200,7 +211,7 @@ export default function RedemptionsClient({
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
-                <TableRow>
+                <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={6} className="h-40 text-center text-[var(--color-text-tertiary)]">
                     No requests match your criteria.
                   </TableCell>
@@ -249,8 +260,8 @@ export default function RedemptionsClient({
 
         <Pagination 
           currentPage={currentPage}
-          totalPages={totalPages}
-          totalResults={totalCount}
+          totalPages={displayTotalPages}
+          totalResults={displayTotalResults}
         />
       </BentoCard>
 
