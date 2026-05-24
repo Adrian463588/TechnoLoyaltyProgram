@@ -8,8 +8,9 @@ import { auth, getServerToken } from "@/lib/auth";
 import { adminApi } from "@/lib/api-client";
 
 export default async function AdminDashboardPage() {
-  await auth();
+  const session = await auth();
   const token = await getServerToken();
+  const userName = session?.user?.name || "Admin";
 
   let redemptionRes: import("@/lib/api-client").AdminRedemptionResponse | null = null;
   let userRes: import("@/lib/api-client").AdminUserListResponse | null = null;
@@ -158,16 +159,11 @@ export default async function AdminDashboardPage() {
         <div className="bento-grid">
           {/* Active Period Banner */}
           <div className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-start justify-between animate-fade-up-in">
-            <div className="space-y-2">
-              <h1 className="text-2xl font-extrabold text-[--color-text-secondary] mb-1 leading-none">HC Admin Dashboard</h1>
-              <div className="flex flex-col gap-1">
-                <p className="text-sm text-[--color-text-secondary]">
-                  Active Earning Period: <span className="font-bold text-[--color-text-primary]">{activePeriodLabel} ({activePeriodDates})</span>
-                </p>
-                <p className="text-sm text-[--color-text-tertiary]">
-                  Active Claim Period: <span className="font-bold text-[--color-text-secondary]">{activeClaimLabel} ({activeClaimDates})</span>
-                </p>
-              </div>
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-extrabold text-[--color-text-secondary] leading-none mb-3">HC Admin Dashboard</h1>
+              <p className="text-sm text-slate-400 font-medium leading-none">
+                Welcome back, <span className="font-bold">{userName}</span>! Monitor and manage rewards below.
+              </p>
             </div>
             <div className="mt-4 md:mt-0">
               <DashboardClock />
@@ -277,7 +273,7 @@ export default async function AdminDashboardPage() {
           {/* Redemption Queue Table */}
           <div className="bento-span-12 bento-card p-6 animate-fade-up-in stagger-5 min-h-[300px]">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-card-title text-[--color-text-secondary]">Redemption Queue</h3>
+              <h3 className="text-sm font-bold text-[--color-text-tertiary]">Redemption Queue</h3>
               <Link
                 href="/admin/redemptions"
                 className="text-xs font-bold uppercase tracking-widest text-[--color-text-tertiary] hover:text-[--color-text-primary] hover:bg-slate-50 px-2 py-1 rounded-md flex items-center gap-1 transition-all"
