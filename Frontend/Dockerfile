@@ -1,40 +1,36 @@
-# Frontend/Dockerfile
-# Multi-stage build for GCP Cloud Run using Next.js standalone output mode.
-
-# ── Stage 1: Build ────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
-
+# ---- Stage 1: Dependencies ----
+FROM node:20-alpine AS deps
 WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
 
-# Install dependencies
-COPY package*.json ./
+# ---- Stage 2: Build ----
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package.json package-lock.json ./
 RUN npm ci
-
-# Copy source
 COPY . .
-
-# Build Next.js in standalone mode (set in next.config.ts: output: 'standalone')
 RUN npm run build
 
-# ── Stage 2: Production runner ─────────────────────────────────────────────
+# ---- Stage 3: Production runner ----
 FROM node:20-alpine AS runner
-
 WORKDIR /app
 
-ENV NODE_ENV=production
-# Disable Next.js telemetry in production
-ENV NEXT_TELEMETRY_DISABLED=1
+# DevSecOps: non-root user
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 nextjs
 
-# Standalone build includes its own node_modules copy
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static     ./.next/static
-COPY --from=builder /app/public           ./public
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Cloud Run uses PORT env variable
+USER nextjs
 EXPOSE 3000
+ENV NODE_ENV=production
 ENV PORT=3000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s \
-  CMD wget -qO- http://localhost:3000 || exit 1
+# Health check for Kubernetes probes
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget -qO- http://localhost:3000/api/health || exit 1
 
 CMD ["node", "server.js"]
