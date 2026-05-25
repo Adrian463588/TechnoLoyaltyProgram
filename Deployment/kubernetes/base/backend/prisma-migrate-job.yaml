@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: prisma-migrate-job
+  namespace: loyalty-prod
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    spec:
+      containers:
+      - name: prisma-migrate
+        image: asia-southeast2-docker.pkg.dev/project-654b743a-b24b-45ad-85e/loyalty-program-repo/backend:latest
+        command: ["npx", "prisma", "db", "push"]
+        envFrom:
+        - secretRef:
+            name: loyalty-backend-secrets
+      restartPolicy: Never
+  backoffLimit: 2

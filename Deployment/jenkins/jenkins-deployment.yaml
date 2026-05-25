@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: tools
+  labels:
+    app: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      nodeSelector:
+        role: tools
+      tolerations:
+        - key: "dedicated"
+          operator: "Equal"
+          value: "tools"
+          effect: "NoSchedule"
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsNonRoot: true
+      containers:
+        - name: jenkins
+          image: jenkins/jenkins:lts
+          ports:
+            - containerPort: 8080
+              name: web
+            - containerPort: 50000
+              name: agent
+          env:
+            # Tuning JVM agar tidak OOM di limit 2Gi
+            - name: JAVA_OPTS
+              value: "-Xms512m -Xmx1280m -Dhudson.slaves.NodeProvisioner.initialDelay=0 -Dhudson.model.UpdateCenter.never=true"
+            - name: JENKINS_OPTS
+              value: "--httpPort=8080"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1.5Gi"
+              cpu: "1"
+          volumeMounts:
+            - name: jenkins-home
+              mountPath: /var/jenkins_home
+          # startupProbe: beri Jenkins waktu 3 menit (18 * 10s) untuk startup pertama kali
+          startupProbe:
+            httpGet:
+              path: /login
+              port: 8080
+            failureThreshold: 18
+            periodSeconds: 10
+            timeoutSeconds: 5
+          # readinessProbe: nginx hanya forward traffic saat Jenkins sudah siap
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # livenessProbe: restart pod jika Jenkins hang
+          livenessProbe:
+            httpGet:
+              path: /login
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            timeoutSeconds: 10
+            failureThreshold: 5
+      volumes:
+        - name: jenkins-home
+          persistentVolumeClaim:
+            claimName: jenkins-pvc
