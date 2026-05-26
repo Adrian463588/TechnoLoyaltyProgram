@@ -205,6 +205,140 @@ export class EvaluationService {
   }
 
   /**
+   * Evaluates membership downgrade and reset conditions for TECHNO division.
+   * Runs semi-annually.
+   */
+  async runTechnoMembershipEvaluation(): Promise<{ skipped: boolean; message: string } | { evaluated: number; downgraded: number; reset: number; skipped: number }> {
+    const today = new Date();
+    // Use half-year period key
+    const periodKey = buildPeriodKey(today.getFullYear(), today.getMonth() < 6 ? 0 : 6) + "-techno";
+    const JOB_NAME = "techno-membership-evaluation";
+
+    const runId = await acquireJobRun(JOB_NAME, periodKey);
+    if (!runId) {
+      return { skipped: true, message: `Already run for period ${periodKey}` };
+    }
+
+    const results = { evaluated: 0, downgraded: 0, reset: 0, skipped: 0 };
+
+    try {
+      const activeMitras = await prisma.user.findMany({
+        where: {
+          partnerStatus: PartnershipStatus.ACTIVE,
+          division: DivisionType.TECHNO,
+        },
+      });
+
+      const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 6, today.getDate());
+
+      for (const mitra of activeMitras) {
+        results.evaluated++;
+
+        const rejections = await prisma.projectClaim.count({
+          where: {
+            mitraId: mitra.id,
+            completedAt: { gte: sixMonthsAgo, lte: today },
+            status: "REJECTED",
+          },
+        });
+
+        const totalAttempts = await prisma.projectClaim.count({
+          where: {
+            mitraId: mitra.id,
+            completedAt: { gte: sixMonthsAgo, lte: today },
+          },
+        });
+
+        const isReset = totalAttempts === 0;
+        const isDowngrade = !isReset && rejections >= 3;
+
+        if (isReset || isDowngrade) {
+          const currentBalance = await tokenLedgerRepository.getBalance(mitra.id);
+
+          const { newTier, penaltyAmount } = await prisma.$transaction(async (tx) => {
+            let newTier: MemberTierType = MemberTierType.SAPHIRE;
+            let penaltyAmount = currentBalance; // RESET: full balance
+            let eventType: TokenEventType = TokenEventType.RESET_PENALTY;
+
+            if (isDowngrade) {
+              const tierOrder = LOYALTY_POLICIES.TIER_ORDER;
+              const currentIdx = tierOrder.indexOf(mitra.membershipTier);
+              newTier = currentIdx > 0
+                ? (tierOrder[currentIdx - 1] as MemberTierType)
+                : MemberTierType.SAPHIRE;
+              penaltyAmount = Math.floor(currentBalance * 0.5);
+              eventType = TokenEventType.DOWNGRADE_PENALTY;
+            }
+
+            if (penaltyAmount > 0 || mitra.membershipTier !== newTier) {
+              await tokenLedgerRepository.appendTokenEvent(
+                {
+                  userId: mitra.id,
+                  eventType,
+                  amount: -penaltyAmount,
+                  reason: isReset ? "6 months total unavailability" : "3 project rejections in 6 months",
+                  performedBy: "SYSTEM",
+                },
+                tx,
+              );
+
+              await tx.membershipHistory.create({
+                data: {
+                  userId: mitra.id,
+                  previousTier: mitra.membershipTier,
+                  newTier,
+                  changeReason: isReset ? "RESET: TECHNO INACTIVE" : "DOWNGRADE: TECHNO REJECTIONS",
+                  triggeredBy: "SYSTEM",
+                  tokenBalanceBefore: currentBalance,
+                  tokenBalanceAfter: currentBalance - penaltyAmount,
+                },
+              });
+
+              await tx.user.update({
+                where: { id: mitra.id },
+                data: { membershipTier: newTier },
+              });
+
+              await tx.auditLog.create({
+                data: {
+                  actorId: "SYSTEM",
+                  action: isReset ? "MEMBERSHIP_RESET" : "MEMBERSHIP_DOWNGRADED",
+                  targetUserId: mitra.id,
+                  targetEntityType: "User",
+                  targetEntityId: mitra.id,
+                  previousValue: { tier: mitra.membershipTier, balance: currentBalance },
+                  newValue: { tier: newTier, balance: currentBalance - penaltyAmount },
+                },
+              });
+
+              if (isReset) results.reset++; else results.downgraded++;
+            } else {
+              results.skipped++;
+            }
+
+            return { newTier, penaltyAmount };
+          });
+
+          if (mitra.membershipTier !== newTier) {
+            await cacheInvalidationService.invalidateAfterCommit({ type: "MEMBERSHIP_MUTATED", userId: mitra.id });
+          }
+          if (penaltyAmount > 0) {
+            await cacheInvalidationService.invalidateAfterCommit({ type: "TOKEN_MUTATED", userId: mitra.id });
+          }
+        } else {
+          results.skipped++;
+        }
+      }
+
+      await finishJobRun(runId, "SUCCESS", results);
+      return results;
+    } catch (err) {
+      await finishJobRun(runId, "FAILED", { error: String(err) });
+      throw err;
+    }
+  }
+
+  /**
    * Processes token expiry based on a 5-year lifecycle.
    * Tokens earned in Year N expire on Dec 31 of Year (N+4).
    *

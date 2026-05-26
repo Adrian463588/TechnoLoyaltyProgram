@@ -38,6 +38,7 @@ adminRoutes.post(
   uploadProcessMiddleware,
   AdminFoundationController.processUpload as RequestHandler,
 );
+adminRoutes.post("/uploads/commit", AdminFoundationController.commitUpload as RequestHandler);
 
 // ── System Settings (Write-access for HC_PM only) ──────────────────────────
 adminRoutes.patch("/system-settings",                    SystemSettingController.updateSettings    as RequestHandler);
