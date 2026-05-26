@@ -5,6 +5,8 @@ import { prisma } from "@/db/prisma";
 import { ValidationError } from "@/errors";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
 import { logAudit } from "@/services/audit.service";
+import { uploadProcessingService } from "@/services/upload-processing.service";
+import { DivisionType } from "@prisma/client";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -231,6 +233,27 @@ export const AdminFoundationController = {
           canCommit: rows.length > 0 && errorRows.size === 0,
         },
       });
+    } catch (err) {
+      next(err);
+    }
+  }) satisfies RequestHandler,
+
+  commitUpload: (async (req, res, next) => {
+    try {
+      const { division, rows } = req.body;
+      const { user: actor } = req;
+
+      if (!division || !rows || !Array.isArray(rows)) {
+        throw new ValidationError("division and rows array are required");
+      }
+
+      if (!["OPCENT", "TELE", "TECHNO"].includes(division)) {
+        throw new ValidationError("Invalid division");
+      }
+
+      const result = await uploadProcessingService.processUploadBatch(division as DivisionType, rows, actor.id);
+
+      res.json({ success: true, ...result });
     } catch (err) {
       next(err);
     }

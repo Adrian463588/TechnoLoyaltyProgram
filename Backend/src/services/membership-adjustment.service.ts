@@ -118,6 +118,67 @@ export class MembershipAdjustmentService {
   }
 
   /**
+   * Applies an upgrade to a user's membership tier automatically.
+   */
+  async upgradeMembership(
+    userId: string,
+    newTier: MemberTierType,
+    performedBy: string,
+    txClient?: any
+  ): Promise<{ status: "APPLIED"; newTier: MemberTierType }> {
+    const runInTx = async (tx: any) => {
+      const user = await tx.user.findUnique({ where: { id: userId } });
+      if (!user) throw new NotFoundError("User not found");
+
+      const currentBalance = await tokenLedgerRepository.getBalance(userId, tx);
+
+      // Add history entry
+      await tx.membershipHistory.create({
+        data: {
+          userId,
+          previousTier: user.membershipTier,
+          newTier,
+          changeReason: `UPGRADE: Reached token threshold`,
+          triggeredBy: performedBy,
+          tokenBalanceBefore: currentBalance,
+          tokenBalanceAfter: currentBalance, // Upgrades don't cost tokens
+        },
+      });
+
+      // Update user tier
+      await tx.user.update({
+        where: { id: userId },
+        data: { membershipTier: newTier },
+      });
+
+      // Audit
+      await logAudit({
+        action: "TIER_UPGRADE",
+        actorId: performedBy,
+        targetType: "User",
+        targetId: userId,
+        previousValue: { tier: user.membershipTier },
+        newValue: { tier: newTier },
+        tx,
+      });
+
+      return { status: "APPLIED" as const, newTier };
+    };
+
+    const result = txClient ? await runInTx(txClient) : await prisma.$transaction(runInTx);
+
+    if (result.status === "APPLIED") {
+      await cacheInvalidationService.invalidateAfterCommit({ 
+        type: "MEMBERSHIP_MUTATED", 
+        userId, 
+        tokenPenaltyApplied: false
+      });
+    }
+
+    return result;
+  }
+
+  /**
    * Applies a reset penalty to a user's membership.
    */
   async resetMembership(
