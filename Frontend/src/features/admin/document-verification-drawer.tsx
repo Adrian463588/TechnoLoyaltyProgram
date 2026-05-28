@@ -1,16 +1,18 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { X, Check, Shield, FileText, CreditCard } from "lucide-react";
+import { X, Check, Shield, FileText, CreditCard, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { RedemptionStatusChip } from "@/components/shared/status-badge";
 import { motion } from "framer-motion";
+import { verifyRedemptionDocuments, updateRedemptionStatus } from "@/features/redemptions/actions";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function DocumentVerificationDrawer({ request, onClose }: { request: any; onClose: () => void }) {
+export function DocumentVerificationDrawer({ request, onClose, onSuccess }: { request: any; onClose: () => void; onSuccess?: () => void }) {
   const [docs, setDocs] = useState({ idCard: false, ktp: false, npwp: false, poa: false });
   const [isVisible, setIsVisible] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   // Capture the element that opened the drawer so focus returns on close
   const returnFocusRef = useRef<Element | null>(null);
 
@@ -47,13 +49,45 @@ export function DocumentVerificationDrawer({ request, onClose }: { request: any;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
-
+  // BUG-002 FIX: Previously this was a fake setTimeout with no API call.
+  // Now it:
+  //   1. Calls verifyRedemptionDocuments to persist the doc verification flags
+  //   2. Calls updateRedemptionStatus to advance the FSM to REVIEWED
+  //   3. Notifies parent (onSuccess) to refresh the redemption list
   const handleApprove = async () => {
+    if (!isAllVerified) return;
     setIsApproving(true);
-    await new Promise(res => setTimeout(res, 600));
-    toast.success("Redemption verified and approved!");
-    handleClose();
+    setApiError(null);
+
+    try {
+      // Step 1: Persist document verification flags
+      const verifyResult = await verifyRedemptionDocuments(request.id as string, {
+        idCardVerified:          docs.idCard,
+        ktpVerified:             docs.ktp,
+        npwpVerified:            docs.npwp,
+        powerOfAttorneyVerified: docs.poa,
+      });
+
+      if (!verifyResult.success) {
+        throw new Error(verifyResult.error ?? "Gagal memverifikasi dokumen");
+      }
+
+      // Step 2: Transition redemption status REQUESTED → REVIEWED
+      const statusResult = await updateRedemptionStatus(request.id as string, "REVIEWED");
+      if (!statusResult.success) {
+        throw new Error(statusResult.error ?? "Gagal memperbarui status");
+      }
+
+      toast.success("Dokumen terverifikasi — status berubah ke REVIEWED");
+      onSuccess?.();
+      handleClose();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Terjadi kesalahan, silakan coba lagi";
+      setApiError(msg);
+      toast.error(msg);
+    } finally {
+      setIsApproving(false);
+    }
   };
 
   const checkedCount = [docs.idCard, docs.ktp, docs.npwp].filter(Boolean).length;
@@ -187,14 +221,21 @@ export function DocumentVerificationDrawer({ request, onClose }: { request: any;
         <div className="pt-6 border-t border-[--color-border-subtle] mt-6 space-y-3">
           {!isAllVerified && (
             <p className="text-xs text-center text-[--color-text-secondary]">
-              Complete all required documents to approve
+              Centang semua dokumen yang diperlukan untuk melanjutkan
             </p>
+          )}
+          {/* API error feedback */}
+          {apiError && (
+            <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-200 px-3 py-2">
+              <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+              <p className="text-xs text-red-700 font-medium leading-snug">{apiError}</p>
+            </div>
           )}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            onClick={handleApprove}
+            onClick={() => { void handleApprove(); }}
             disabled={!isAllVerified || isApproving}
             className="btn-primary w-full flex justify-center items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
             data-testid="approve-redemption-btn"
@@ -202,7 +243,7 @@ export function DocumentVerificationDrawer({ request, onClose }: { request: any;
             {isApproving ? (
               <>
                 <span className="w-4 h-4 rounded-full border-2 border-[--color-bg-base]/60 border-t-[--color-bg-base] animate-spin" />
-                Approving...
+                Memverifikasi...
               </>
             ) : (
               <>

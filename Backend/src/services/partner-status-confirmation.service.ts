@@ -148,7 +148,8 @@ export class PartnerStatusConfirmationService {
     });
 
     await logAudit({
-      action:        "PARTNER_STATUS_CONFIRMED",
+      // BUG-003 FIX: was incorrectly logging as "PARTNER_STATUS_CONFIRMED"
+      action:        "PARTNER_STATUS_CANCELLED",
       actorId,
       targetType:    "PartnerStatusConfirmation",
       targetId:      confirmationId,
