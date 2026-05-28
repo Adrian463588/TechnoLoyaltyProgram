@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { ChatbotWidget } from "@/components/shared/chatbot-widget";
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -17,5 +18,10 @@ export default async function PortalLayout({ children }: { children: ReactNode }
     redirect("/login");
   }
 
-  return <AppShell>{children}</AppShell>;
+  return (
+    <AppShell>
+      {children}
+      <ChatbotWidget />
+    </AppShell>
+  );
 }

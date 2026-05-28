@@ -164,8 +164,17 @@ export function EmployeeDashboardContent({ data }: { data: EmployeeDashboardResp
   const tierOrder: Tier[] = ["SAPHIRE", "EMERALD", "RUBY", "DIAMOND"];
   const currentIdx        = tierOrder.indexOf(currentTier);
   const nextTier          = currentIdx < tierOrder.length - 1 ? tierOrder[currentIdx + 1] : null;
-  const totalForNextTier  = nextTier ? TIER_CONFIG[nextTier].min : totalTokens;
-  const progressPercent   = nextTier ? (totalTokens / totalForNextTier) * 100 : 100;
+  const currentTierMin    = TIER_CONFIG[currentTier].min;
+  const nextTierMin       = nextTier ? TIER_CONFIG[nextTier].min : null;
+
+  // BUG-009 FIX: Calculate progress relative to current tier band, not absolute tokens.
+  // Example: 500 tokens, EMERALD(430) → RUBY(860): (500-430)/(860-430) = 16% — correct.
+  // Old code: 500/860 = 58% — inflated and misleading.
+  const progressPercent = nextTierMin
+    ? Math.min(100, Math.max(0, ((totalTokens - currentTierMin) / (nextTierMin - currentTierMin)) * 100))
+    : 100;
+
+  const totalForNextTier = nextTierMin ?? totalTokens;
 
   const periodStart = new Date("2025-12-16");
   const periodEnd   = new Date("2026-06-15");
