@@ -90,7 +90,9 @@ export const RedemptionController = {
       const mapped = requests.map((r) => ({
         id: r.id,
         status: r.status,
-        createdAt: r.createdAt.toISOString(),
+        // BUG-001 FIX: RedemptionRequest.createdAt does not exist in Prisma schema.
+        // The correct field is submittedAt (matches listAll on line 32).
+        createdAt: r.submittedAt.toISOString(),
         item: {
           id: r.rewardItem.id,
           name: r.rewardItem.name,

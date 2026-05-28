@@ -53,6 +53,8 @@ export class UploadProcessingService {
 
           tokensToCredit = slots * LOYALTY_POLICIES.CONVERSION.OPCENT_TELE_SLOT;
 
+          // BUG-007 FIX: earnedYear is required so token-expiry job sets
+          // expiresAt = Dec 31 of (earnedYear + 4). Without it, tokens never expire.
           await tokenLedgerRepository.appendTokenEvent({
             userId: user.id,
             eventType: TokenEventType.EARNED_SHIFT,
@@ -60,6 +62,7 @@ export class UploadProcessingService {
             reason: `Bulk upload - Shift Claim (${slots} slots)`,
             performedBy: actorId,
             referenceId: claim.id,
+            earnedYear: new Date().getFullYear(),
           }, tx);
 
           createdCount++;
@@ -93,6 +96,8 @@ export class UploadProcessingService {
 
             tokensToCredit = totalSprints * LOYALTY_POLICIES.CONVERSION.TECHNO_PROJECT;
 
+            // BUG-007 FIX: earnedYear is required so token-expiry job sets
+            // expiresAt = Dec 31 of (earnedYear + 4). Without it, tokens never expire.
             await tokenLedgerRepository.appendTokenEvent({
               userId: user.id,
               eventType: TokenEventType.EARNED_PROJECT,
@@ -100,6 +105,7 @@ export class UploadProcessingService {
               reason: `Bulk upload - Project Claim (${totalSprints} sprints)`,
               performedBy: actorId,
               referenceId: claim.id,
+              earnedYear: new Date().getFullYear(),
             }, tx);
             createdCount++;
           }
