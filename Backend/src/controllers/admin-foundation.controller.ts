@@ -6,6 +6,7 @@ import { ValidationError } from "@/errors";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
 import { logAudit } from "@/services/audit.service";
 import { uploadProcessingService } from "@/services/upload-processing.service";
+import { aiColumnMapperService } from "@/services/ai-column-mapper.service";
 import { DivisionType } from "@prisma/client";
 
 const upload = multer({
@@ -202,21 +203,56 @@ export const AdminFoundationController = {
     }
   }) satisfies RequestHandler,
 
-  processUpload: ((req, res, next) => {
+  processUpload: (async (req, res, next) => {
     try {
       if (!req.file) {
         throw new ValidationError("Upload file is required");
       }
 
-      const rows = readRows(req.file).slice(0, 200);
+      let rows = readRows(req.file).slice(0, 200);
+      const body = req.body as Record<string, unknown>;
+      let division = typeof body["division"] === "string" ? body["division"] : undefined;
+
+      // Extract headers and map using AI
+      let columnMapping: Record<string, string> | undefined = undefined;
+      let aiDetected = false;
+      let unmappedColumns: string[] = [];
+
+      if (rows.length > 0) {
+        const headers = Object.keys(rows[0]);
+        // Call AI mapper
+        const aiResult = await aiColumnMapperService.mapColumns(headers, division);
+        columnMapping = aiResult.mapping;
+        unmappedColumns = aiResult.unmappedColumns;
+
+        // Auto-detect division if missing
+        if (!division && aiResult.division) {
+          division = aiResult.division;
+          aiDetected = true;
+        }
+
+        // Remap rows using the AI mapping result
+        if (columnMapping && Object.keys(columnMapping).length > 0) {
+          rows = rows.map((row) => {
+            const newRow: UploadRow = {};
+            for (const [key, value] of Object.entries(row)) {
+              const mappedKey = columnMapping![key] || key;
+              newRow[mappedKey] = value;
+            }
+            return newRow;
+          });
+        }
+      }
+
       const issues = validateRows(rows);
       const errorRows = new Set(issues.filter((issue) => issue.severity === "ERROR").map((issue) => issue.rowNumber));
       const warningRows = new Set(issues.filter((issue) => issue.severity === "WARNING").map((issue) => issue.rowNumber));
-      const body = req.body as Record<string, unknown>;
-      const division = typeof body["division"] === "string" ? body["division"] : undefined;
-
+      
       res.json({
         division,
+        aiDetected,
+        columnMapping,
+        unmappedColumns,
         rows: rows.map((row, index) => ({
           rowNumber: index + 2,
           npk: String(row["npk"] ?? ""),

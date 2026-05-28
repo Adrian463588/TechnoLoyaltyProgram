@@ -63,6 +63,9 @@ interface UploadSummary {
 
 interface ProcessResponse {
   division?: string;
+  aiDetected?: boolean;
+  columnMapping?: Record<string, string>;
+  unmappedColumns?: string[];
   rows: ParsedRow[];
   issues: ValidationIssue[];
   summary: UploadSummary;
@@ -167,27 +170,41 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
     setUploadStatus("committing");
 
     try {
-      // In a full DB integration this would POST to /api/admin/uploads/commit
-      // For now we simulate the commit and add to local history
-      await new Promise((r) => setTimeout(r, 1200));
+      const res = await fetch("/api/admin/uploads/commit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          division: parseResult.division ?? division,
+          rows:     parseResult.rows,
+        }),
+      });
+
+      const data = await res.json() as { success?: boolean; processed?: number; created?: number; error?: string };
+
+      if (!res.ok) {
+        throw new Error(data.error ?? `Server error ${res.status}`);
+      }
 
       const newEntry: MonthlyUpload = {
-        id:           crypto.randomUUID(),
-        filename:     files[0]?.name ?? "upload.xlsx",
-        uploadedAt:   new Date().toISOString(),
-        status:       "Completed",
-        validRows:    parseResult.summary.validRows,
-        errorRows:    parseResult.summary.errorRows,
-        issues:       [],
+        id:         crypto.randomUUID(),
+        filename:   files[0]?.name ?? "upload.xlsx",
+        uploadedAt: new Date().toISOString(),
+        status:     "Completed",
+        validRows:  data.created ?? parseResult.summary.validRows,
+        errorRows:  parseResult.summary.errorRows,
+        issues:     [],
       };
       setLocalHistory((h) => [newEntry, ...h]);
       setUploadStatus("success");
-      toast.success(`Committed ${parseResult.summary.validRows} rows successfully`);
-    } catch {
-      toast.error("Commit failed — please retry");
+      toast.success(
+        `Berhasil commit ${String(data.created ?? parseResult.summary.validRows)} baris ke ledger`,
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Commit gagal — silakan coba lagi";
+      toast.error(msg);
       setUploadStatus("preview");
     }
-  }, [parseResult, files]);
+  }, [parseResult, files, division]);
 
   const handleReset = useCallback(() => {
     setFiles([]);
@@ -400,8 +417,51 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                 )}
               </BentoCard>
 
+              {/* AI Mapping Panel */}
+              {(parseResult.columnMapping && Object.keys(parseResult.columnMapping).length > 0) && (
+                <BentoCard className="p-5 border-[var(--color-accent)]/30 bg-[var(--color-accent)]/[0.02] shadow-sm mt-6">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-2 border-b border-[var(--color-accent)]/10 pb-3">
+                      <div className="bg-[var(--color-accent)]/10 p-1.5 rounded-lg">
+                        <span className="text-[var(--color-accent)] text-lg">🤖</span>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-[var(--color-text-primary)]">AI Column Detection</h3>
+                        <p className="text-xs text-[var(--color-text-tertiary)]">Gemini AI automatically mapped your file headers to system fields.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {Object.entries(parseResult.columnMapping).map(([original, mapped]) => (
+                        <div key={original} className="flex items-center justify-between bg-white border border-slate-200 p-2.5 rounded-xl">
+                          <span className="text-xs font-medium text-slate-600 truncate max-w-[120px]" title={original}>"{original}"</span>
+                          <span className="text-slate-300 mx-2">→</span>
+                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-mono">
+                            {mapped} <CheckCircle className="inline w-3 h-3 ml-1" />
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+
+                    {parseResult.unmappedColumns && parseResult.unmappedColumns.length > 0 && (
+                      <div className="mt-2 p-3 bg-orange-50 border border-orange-100 rounded-xl">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-bold text-orange-800">Unmapped Columns Ignored:</p>
+                            <p className="text-[10px] text-orange-600 mt-0.5 font-mono">
+                              {parseResult.unmappedColumns.join(", ")}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </BentoCard>
+              )}
+
               {/* Data preview table */}
-              <BentoCard className="overflow-hidden p-0 shadow-sm border-[var(--color-border-subtle)]">
+              <BentoCard className="overflow-hidden p-0 shadow-sm border-[var(--color-border-subtle)] mt-6">
                 <div className="px-5 py-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/30 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Info className="h-4 w-4 text-[var(--color-text-tertiary)]" />
