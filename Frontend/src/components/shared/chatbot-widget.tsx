@@ -65,7 +65,14 @@ export function ChatbotWidget() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to connect to chatbot");
+        let errorMsg = "Gagal menyambung ke chatbot";
+        try {
+          const errData = await response.json();
+          if (errData?.details) errorMsg = errData.details;
+        } catch (e) {
+          // ignore
+        }
+        throw new Error(errorMsg);
       }
 
       if (!response.body) throw new Error("No response body");
@@ -98,11 +105,11 @@ export function ChatbotWidget() {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       setMessages((prev) => [
         ...prev.slice(0, -1),
-        { id: Date.now().toString(), role: "assistant", content: "Maaf, terjadi kesalahan saat menyambungkan ke layanan AI. Silakan coba lagi." }
+        { id: Date.now().toString(), role: "assistant", content: `Error: ${error.message || "Terjadi kesalahan"}` }
       ]);
     } finally {
       setIsTyping(false);
