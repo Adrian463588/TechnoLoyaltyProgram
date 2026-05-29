@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const backendUrl =
       process.env.BACKEND_URL ??
       process.env.NEXT_PUBLIC_BACKEND_URL ??
-      "http://localhost:4000";
+      "http://localhost:8080";
 
     const res = await fetch(`${backendUrl}/api/admin/uploads/commit`, {
       method: "POST",
