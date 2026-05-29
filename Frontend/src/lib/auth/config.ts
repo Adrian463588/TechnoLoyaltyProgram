@@ -12,7 +12,7 @@ import Credentials from "next-auth/providers/credentials";
 import { loginSchema } from "@/lib/validations";
 import { authConfig } from "./auth.config";
 
-const BACKEND_URL = process.env["BACKEND_URL"] ?? "http://localhost:4000";
+const BACKEND_URL = process.env["BACKEND_URL"] ?? "http://localhost:8080";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   ...authConfig,

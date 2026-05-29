@@ -7,7 +7,7 @@ import { GoogleGenAI } from "@google/genai";
 // A production app would store this securely on the server.
 
 const ai = new GoogleGenAI({ 
-  apiKey: process.env.GEMINI_API_KEY || "dummy_key" 
+  apiKey: process.env.GEMINI_API_KEY
 });
 
 export async function POST(req: NextRequest) {
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
     // 4. Call Gemini API with Streaming
     const responseStream = await ai.models.generateContentStream({
-      model: process.env.GEMINI_MODEL || "gemini-2.0-flash",
+      model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
       contents: formattedContents,
       config: {
         systemInstruction: systemInstruction,
@@ -78,8 +78,15 @@ export async function POST(req: NextRequest) {
         }
         await writer.write(encoder.encode(`data: [DONE]\n\n`));
         await writer.close();
-      } catch (err) {
+      } catch (err: any) {
         console.error("[Chatbot Stream Error]:", err);
+        
+        // If quota exceeded during streaming
+        if (err.status === 429 || err.message?.includes("429") || err.message?.includes("quota")) {
+          const errorMsg = JSON.stringify({ error: "Quota Gemini habis. Mohon tunggu sebentar." });
+          await writer.write(encoder.encode(`data: ${errorMsg}\n\n`));
+        }
+        
         await writer.abort(err);
       }
     })();

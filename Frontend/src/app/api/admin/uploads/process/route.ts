@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
     const token = await getServerToken();
     const formData = await req.formData();
     
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "http://localhost:4000";
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "http://localhost:8080";
     
     // Forward the POST request to the Express backend
     const res = await fetch(`${backendUrl}/api/admin/uploads/process`, {

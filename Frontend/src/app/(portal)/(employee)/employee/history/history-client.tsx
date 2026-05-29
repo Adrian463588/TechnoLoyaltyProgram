@@ -116,7 +116,7 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
   };
 
   const getDocUrl = (url: string) => {
-    return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}/${url}`;
+    return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/${url}`;
   };
 
   return (
