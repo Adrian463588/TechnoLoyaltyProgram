@@ -93,9 +93,19 @@ export async function POST(req: NextRequest) {
       },
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("[Chatbot Route Error]:", error);
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
+    
+    // Menangkap pesan error spesifik dari Google API
+    const errorMessage = error?.message || error?.toString() || "Unknown error occurred";
+    
+    return new Response(JSON.stringify({ 
+      error: "Internal Server Error",
+      details: errorMessage
+    }), { 
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 }
 
