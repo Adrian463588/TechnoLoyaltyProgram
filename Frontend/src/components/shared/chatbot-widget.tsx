@@ -65,7 +65,14 @@ export function ChatbotWidget() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to connect to chatbot");
+        let errorMessage = "Failed to connect to chatbot";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If response is not JSON (e.g. streaming already started or raw text)
+        }
+        throw new Error(errorMessage);
       }
 
       if (!response.body) throw new Error("No response body");
