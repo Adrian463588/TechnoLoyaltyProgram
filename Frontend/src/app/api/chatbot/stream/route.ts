@@ -102,18 +102,17 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error("[Chatbot Route Error]:", error);
-
-    // Specific handling for 429 Quota Exceeded
-    if (error.status === 429 || error.message?.includes("429") || error.message?.includes("quota")) {
-      return new Response(
-        JSON.stringify({ 
-          error: "API Quota Exceeded (Limit Habis). Silakan coba lagi dalam beberapa menit atau hubungi administrator." 
-        }), 
-        { status: 429 }
-      );
-    }
-
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
+    
+    // Menangkap pesan error spesifik dari Google API
+    const errorMessage = error?.message || error?.toString() || "Unknown error occurred";
+    
+    return new Response(JSON.stringify({ 
+      error: "Internal Server Error",
+      details: errorMessage
+    }), { 
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 }
 
