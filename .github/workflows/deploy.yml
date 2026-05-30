@@ -32,6 +32,7 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: asia-southeast2
   REGISTRY: asia-southeast2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/loyalty-program-repo
+  IMAGE_TAG: "latest" # Placeholder, overwritten dynamically in build step
 
 jobs:
   # ─────────────────────────────────────────────
