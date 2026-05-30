@@ -10,6 +10,13 @@
 #   5. Container Security Scan (Trivy)
 #   6. Push to Artifact Registry
 #   7. Trigger Coolify Deploy Webhooks
+#
+# REQUIRED GITHUB SECRETS (Settings → Secrets → Actions):
+#   GCP_PROJECT_ID  — GCP project ID (e.g. project-654b743a-b24b-45ad-85e)
+#   GCP_SA_KEY      — GCP service account JSON key (base64-encoded or raw JSON)
+#                     Create via: gcloud iam service-accounts keys create key.json \
+#                       --iam-account=<sa>@<project>.iam.gserviceaccount.com
+#                     Then paste the full JSON content as the secret value.
 # ============================================================
 
 name: Deploy to Production
@@ -109,6 +116,19 @@ jobs:
           IMAGE_TAG="${{ github.run_number }}-${SHORT_SHA}"
           echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
           echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+
+      - name: Verify GCP secrets are configured
+        run: |
+          if [ -z "${{ secrets.GCP_SA_KEY }}" ]; then
+            echo "::error::GCP_SA_KEY secret is not set."
+            echo "::error::Go to: GitHub repo → Settings → Secrets and variables → Actions → New repository secret"
+            echo "::error::Name: GCP_SA_KEY  Value: paste the full content of your GCP service account JSON key file"
+            exit 1
+          fi
+          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
+            echo "::error::GCP_PROJECT_ID secret is not set."
+            exit 1
+          fi
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
