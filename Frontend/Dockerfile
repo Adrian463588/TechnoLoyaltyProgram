@@ -7,12 +7,12 @@ RUN npm install --omit=dev
 # ---- Stage 2: Build ----
 FROM node:20-alpine AS builder
 WORKDIR /app
-# Override NODE_ENV so npm install includes devDependencies (tailwindcss, typescript, etc.)
-# Coolify/CI may inject NODE_ENV=production which would skip them and break the build.
-ENV NODE_ENV=development
+# Install ALL dependencies (including devDependencies) so Tailwind/TypeScript work
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm install --include=dev
 COPY . .
+# Enforce production mode for the build so Next.js optimizes _global-error correctly
+ENV NODE_ENV=production
 RUN npm run build
 
 # ---- Stage 3: Production runner ----
