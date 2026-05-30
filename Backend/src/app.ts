@@ -81,20 +81,23 @@ async function bootstrap() {
     );
   });
 
-  // ── Graceful shutdown — prevents orphaned DB/Redis connections ───────────
-  async function shutdown(signal: string) {
+  function shutdown(signal: string): void {
     console.warn(`[Backend] ${signal} received — shutting down gracefully`);
-    server.close(async () => {
-      await Promise.allSettled([
+    server.close(() => {
+      Promise.allSettled([
         prisma.$disconnect(),
         redisClient.disconnect(),
-      ]);
-      process.exit(0);
+      ]).then(() => {
+        process.exit(0);
+      }).catch((err: unknown) => {
+        console.error("Error during shutdown", err);
+        process.exit(1);
+      });
     });
   }
 
-  process.on("SIGTERM", () => { void shutdown("SIGTERM"); });
-  process.on("SIGINT",  () => { void shutdown("SIGINT"); });
+  process.on("SIGTERM", () => { shutdown("SIGTERM"); });
+  process.on("SIGINT",  () => { shutdown("SIGINT"); });
 }
 
 void bootstrap();
