@@ -20,7 +20,7 @@ export interface ColumnMappingResult {
 
 export class AiColumnMapperService {
   private ai: GoogleGenAI | null = null;
-  private modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash"; // default fallback
+  private modelName = process.env.GEMINI_MODEL || "gemini-flash-latest"; // default fallback
 
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
