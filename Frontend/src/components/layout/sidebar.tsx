@@ -54,10 +54,9 @@ const navItems = {
     { href: "/admin/profile", label: "Profile Settings", icon: UserCog },
   ],
   TEAM_LEADER: [
-    { href: "/employee/dashboard", label: "My Dashboard", icon: LayoutDashboard },
+    { href: "/leader/dashboard", label: "My Dashboard", icon: LayoutDashboard },
     { href: "/leader/team", label: "Team Overview", icon: Users },
-    { href: "/employee/rewards", label: "Rewards", icon: ShoppingBag },
-    { href: "/employee/documents", label: "My Documents", icon: FileText },
+    { href: "/leader/redemptions", label: "Team Redemptions", icon: CheckSquare },
     { href: "/leader/profile", label: "Profile Settings", icon: UserCog },
   ],
   MITRA: [

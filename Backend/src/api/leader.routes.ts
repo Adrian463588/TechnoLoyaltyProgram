@@ -13,10 +13,39 @@ import { authenticate }                       from "@/middleware/authenticate";
 import { authorize }                          from "@/middleware/authorize";
 import { PartnerStatusConfirmationController } from "@/controllers/partner-status-confirmation.controller";
 import { TeamLeaderController }               from "@/controllers/team-leader.controller";
+import { RedemptionController }               from "@/controllers/redemption.controller";
 
 export const leaderRoutes = Router();
 
 leaderRoutes.use(authenticate, authorize("TEAM_LEADER", "HC_PM"));
+
+// ── Dashboard (TL-00) ────────────────────────────────────────────────────────
+/**
+ * @openapi
+ * /api/leader/dashboard:
+ *   get:
+ *     tags: [Leader]
+ *     summary: Get high-level summary for team leader dashboard
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: Dashboard summary retrieved
+ */
+leaderRoutes.get(  "/dashboard",                          TeamLeaderController.getDashboard                as RequestHandler);
+
+// ── Redemptions ─────────────────────────────────────────────────────────────
+/**
+ * @openapi
+ * /api/leader/redemptions:
+ *   get:
+ *     tags: [Leader]
+ *     summary: List redemption requests in the leader's division
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: List retrieved
+ */
+leaderRoutes.get(  "/redemptions",                         RedemptionController.listForLeader               as RequestHandler);
 
 // ── Partner Status Confirmations (TL-01) ─────────────────────────────────────
 /**

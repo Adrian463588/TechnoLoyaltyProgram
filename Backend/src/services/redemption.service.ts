@@ -31,6 +31,42 @@ const VALID_TRANSITIONS: Record<RedemptionStatus, RedemptionStatus[]> = {
 
 export class RedemptionService {
   /**
+   * Team Leader: List all redemption requests in their division.
+   */
+  async listByDivision(division: string, params: { status?: RedemptionStatus; limit?: number; offset?: number } = {}) {
+    const { status, limit = 100, offset = 0 } = params;
+    const where: any = {
+      mitra: { division }
+    };
+    if (status) where.status = status;
+
+    const [requests, total] = await Promise.all([
+      prisma.redemptionRequest.findMany({
+        where,
+        include: {
+          mitra: { 
+            select: { 
+              id: true, 
+              name: true, 
+              email: true, 
+              npk: true,
+              division: true,
+              documents: true
+            } 
+          },
+          rewardItem: { select: { id: true, name: true, tokenCost: true } },
+        },
+        orderBy: { submittedAt: "desc" },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.redemptionRequest.count({ where })
+    ]);
+
+    return { requests, total };
+  }
+
+  /**
    * HC Admin: List all redemption requests with filtering and pagination.
    */
   async listAll(params: { status?: RedemptionStatus; limit?: number; offset?: number } = {}) {

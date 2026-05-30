@@ -344,6 +344,13 @@ export const adminApi = {
 // ── Leader API ─────────────────────────────────────────────────────────────
 
 export const leaderApi = {
+  /** TL-00: Unified dashboard summary */
+  getDashboard: (token: string) =>
+    apiFetch<LeaderDashboardResponse>("/api/leader/dashboard", {
+      headers: withAuth(token),
+      cache: "no-store",
+    } as RequestInit),
+
   /** TL-02: Team-wide token and membership summary */
   getTeamSummary: (token: string) =>
     apiFetch<TeamSummaryResult>("/api/leader/team", {
@@ -386,9 +393,38 @@ export const leaderApi = {
         body: JSON.stringify(payload),
       },
     ),
+
+  /** TL: List all redemptions in this leader's division */
+  listRedemptions: (token: string, params: { limit?: number; offset?: number; status?: string } = {}) => {
+    const query = new URLSearchParams();
+    if (params.limit) query.append("limit", params.limit.toString());
+    if (params.offset) query.append("offset", params.offset.toString());
+    if (params.status) query.append("status", params.status);
+    return apiFetch<AdminRedemptionResponse>(`/api/leader/redemptions?${query.toString()}`, {
+      headers: withAuth(token),
+    });
+  },
 };
 
 // ── Response types (Frontend-safe DTOs — no Prisma) ───────────────────────
+
+export interface LeaderDashboardResponse {
+  teamTotalTokens: number;
+  teamTierDistribution: {
+    SAPHIRE: number;
+    EMERALD: number;
+    RUBY: number;
+    DIAMOND: number;
+  };
+  recentRedemptions: Array<{
+    id: string;
+    status: string;
+    createdAt: string;
+    mitra: { name: string; division: string };
+    item: { name: string; tokenCost: number };
+  }>;
+  memberCount: number;
+}
 
 export interface UserDocumentResponse {
   id: string;
