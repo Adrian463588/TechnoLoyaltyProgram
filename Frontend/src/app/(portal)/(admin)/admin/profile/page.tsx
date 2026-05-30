@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { ProfilePageContent } from "@/features/profile/profile-page-content";
 import { Metadata } from "next";
 
