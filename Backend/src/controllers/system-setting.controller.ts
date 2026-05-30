@@ -1,3 +1,4 @@
+import { asyncHandler } from "@/middleware/asyncHandler";
 /**
  * Backend/src/controllers/system-setting.controller.ts
  *
@@ -29,20 +30,15 @@ export const SystemSettingController = {
   /**
    * GET /api/admin/system-settings
    */
-  getSettings: (async (_req, res, next) => {
-    try {
+  getSettings: asyncHandler(async (_req, res) => {
       const settings = await systemSettingService.getSettings();
       res.json(settings);
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   /**
    * PATCH /api/admin/system-settings
    */
-  updateSettings: (async (req, res, next) => {
-    try {
+  updateSettings: asyncHandler(async (req, res) => {
       const { user } = req as any;
       const result = updateSettingsSchema.safeParse(req.body);
 
@@ -59,8 +55,5 @@ export const SystemSettingController = {
         success: true,
         settings: updated
       });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 };

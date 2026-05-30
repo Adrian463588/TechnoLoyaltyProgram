@@ -10,7 +10,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
-RUN npm install && npx prisma generate
+RUN npm install --include=dev && npx prisma generate
 COPY . .
 RUN npm run build
 
@@ -33,6 +33,6 @@ ENV PORT=3000
 
 # Health check for Kubernetes probes
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD wget -qO- http://localhost:3000/health || exit 1
+  CMD wget --spider --timeout=2 -qO- http://127.0.0.1:3000/health || exit 1
 
 CMD ["node", "--max-old-space-size=384", "dist/src/app.js"]

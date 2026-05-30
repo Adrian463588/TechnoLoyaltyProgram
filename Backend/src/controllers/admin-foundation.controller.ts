@@ -1,4 +1,4 @@
-import type { RequestHandler } from "express";
+import { asyncHandler } from "@/middleware/asyncHandler";
 import multer, { type FileFilterCallback } from "multer";
 import * as XLSX from "xlsx";
 import { prisma } from "@/db/prisma";
@@ -83,8 +83,7 @@ function validateRows(rows: UploadRow[]): Array<{
 export const uploadProcessMiddleware = upload.single("file");
 
 export const AdminFoundationController = {
-  listAuditLogs: (async (req, res, next) => {
-    try {
+  listAuditLogs: asyncHandler(async (req, res) => {
       const limit = Number(req.query["limit"]) || 100;
       const offset = Number(req.query["offset"]) || 0;
 
@@ -113,17 +112,13 @@ export const AdminFoundationController = {
           createdAt: log.createdAt.toISOString(),
         }))
       });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
-  listUploads: ((_req, res) => {
+  listUploads: asyncHandler((_req, res) => {
     res.json([]);
-  }) satisfies RequestHandler,
+  }),
 
-  listUsers: (async (req, res, next) => {
-    try {
+  listUsers: asyncHandler(async (req, res) => {
       const limit = Number(req.query["limit"]) || 100;
       const offset = Number(req.query["offset"]) || 0;
 
@@ -162,13 +157,9 @@ export const AdminFoundationController = {
         offset,
         users: usersWithTokens
       });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
-  updateUserStatus: (async (req, res, next) => {
-    try {
+  updateUserStatus: asyncHandler(async (req, res) => {
       const { userId, status } = req.body;
       const { user: actor } = req;
 
@@ -198,13 +189,9 @@ export const AdminFoundationController = {
       });
 
       res.json({ success: true, user: updated });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
-  processUpload: (async (req, res, next) => {
-    try {
+  processUpload: asyncHandler(async (req, res) => {
       if (!req.file) {
         throw new ValidationError("Upload file is required");
       }
@@ -271,13 +258,9 @@ export const AdminFoundationController = {
           canCommit: rows.length > 0 && errorRows.size === 0,
         },
       });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
-  commitUpload: (async (req, res, next) => {
-    try {
+  commitUpload: asyncHandler(async (req, res) => {
       const { division, rows } = req.body;
       const { user: actor } = req;
 
@@ -292,8 +275,5 @@ export const AdminFoundationController = {
       const result = await uploadProcessingService.processUploadBatch(division as DivisionType, rows, actor.id);
 
       res.json({ success: true, ...result });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 };

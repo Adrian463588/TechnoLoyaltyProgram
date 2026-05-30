@@ -7,7 +7,7 @@
  * SOLID — SRP: only handles HTTP parsing/responding, no business logic.
  */
 
-import type { RequestHandler } from "express";
+import { asyncHandler } from "@/middleware/asyncHandler";
 import { z } from "zod";
 import { redemptionService } from "@/services/redemption.service";
 import { redeemRequestSchema, updateStatusSchema, uuidSchema, redemptionVerificationSchema } from "@/types/validations";
@@ -17,8 +17,7 @@ import { NotFoundError } from "@/errors/not-found-error";
 export const RedemptionController = {
 
   // GET /api/admin/redemptions — list all for HC
-  listAll: (async (req, res, next) => {
-    try {
+  listAll: asyncHandler(async (req, res) => {
       const limit = Number(req.query["limit"]) || 100;
       const offset = Number(req.query["offset"]) || 0;
       const status = req.query["status"] as any;
@@ -58,14 +57,10 @@ export const RedemptionController = {
         offset,
         requests: mapped
       });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   // GET /api/admin/redemptions/:id
-  getById: (async (req, res, next) => {
-    try {
+  getById: asyncHandler(async (req, res) => {
       const idParam = req.params["id"];
       const idResult = uuidSchema.safeParse(idParam);
       if (!idResult.success) {
@@ -77,14 +72,10 @@ export const RedemptionController = {
         throw new NotFoundError("Redemption request", idResult.data);
       }
       res.json(request);
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   // GET /api/employee/redemptions — current user's history
-  listMyRedemptions: (async (req, res, next) => {
-    try {
+  listMyRedemptions: asyncHandler(async (req, res) => {
       const { user } = req;
       const requests = await redemptionService.listByMitra(user.id);
       const mapped = requests.map((r) => ({
@@ -114,14 +105,10 @@ export const RedemptionController = {
         } : null
       }));
       res.json(mapped);
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   // POST /api/employee/redemptions — submit new request
-  createRequest: (async (req, res, next) => {
-    try {
+  createRequest: asyncHandler(async (req, res) => {
       const { user } = req;
       const parsed = redeemRequestSchema.safeParse(req.body);
 
@@ -140,14 +127,10 @@ export const RedemptionController = {
         } as any
       );
       res.status(201).json(redemption);
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   // POST /api/admin/redemptions/:id/status — HC_ADMIN: update status
-  updateStatus: (async (req, res, next) => {
-    try {
+  updateStatus: asyncHandler(async (req, res) => {
       const { user } = req;
 
       // Validate path parameter
@@ -178,14 +161,10 @@ export const RedemptionController = {
         message: `Status updated to ${parsed.data.status}`,
         request: result,
       });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   // POST /api/admin/redemptions/:id/verify-documents — HC_ADMIN: verify docs
-  verifyDocuments: (async (req, res, next) => {
-    try {
+  verifyDocuments: asyncHandler(async (req, res) => {
       const { user } = req;
 
       const idParam = req.params["id"];
@@ -210,14 +189,10 @@ export const RedemptionController = {
         message: "Documents verified successfully",
         request: result,
       });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   // POST /api/employee/redemptions/:id/cancel — Mitra: cancel own request
-  cancelRequest: (async (req, res, next) => {
-    try {
+  cancelRequest: asyncHandler(async (req, res) => {
       const { user } = req;
       const idParam = req.params["id"];
       const idResult = uuidSchema.safeParse(idParam);
@@ -251,8 +226,5 @@ export const RedemptionController = {
         message: "Redemption successfully cancelled",
         request: result,
       });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 };

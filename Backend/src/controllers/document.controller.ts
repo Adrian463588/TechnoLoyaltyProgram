@@ -1,3 +1,4 @@
+import { asyncHandler } from "@/middleware/asyncHandler";
 /**
  * Backend/src/controllers/document.controller.ts
  *
@@ -56,8 +57,7 @@ export const DocumentController = {
   /**
    * Handler for processing the uploaded document.
    */
-  uploadDocument: (async (req, res, next) => {
-    try {
+  uploadDocument: asyncHandler(async (req, res) => {
       const { user } = req as any;
       const { type } = req.body;
 
@@ -79,36 +79,25 @@ export const DocumentController = {
       });
 
       res.status(201).json(doc);
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   /**
    * Handler for listing user documents.
    */
-  listDocuments: (async (req, res, next) => {
-    try {
+  listDocuments: asyncHandler(async (req, res) => {
       const { user } = req as any;
       const docs = await DocumentService.getUserDocuments(user.id);
       res.json(docs);
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   /**
    * Handler for deleting a document.
    */
-  deleteDocument: (async (req, res, next) => {
-    try {
+  deleteDocument: asyncHandler(async (req, res) => {
       const { user } = req as any;
       const { type } = req.params;
       if (!type) throw new ValidationError("Document type is required");
       await DocumentService.deleteDocument(user.id, type);
       res.status(204).send();
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 };

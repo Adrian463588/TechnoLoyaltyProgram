@@ -35,6 +35,6 @@ ENV HOSTNAME="0.0.0.0"
 
 # Health check for Kubernetes probes
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:3000/ || exit 1
+  CMD wget --spider --timeout=2 -qO- http://127.0.0.1:3000/api/health || exit 1
 
 CMD ["node", "--max-old-space-size=512", "server.js"]
