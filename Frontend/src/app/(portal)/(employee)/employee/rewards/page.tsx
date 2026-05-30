@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { auth, getServerToken } from "@/lib/auth";
 import { employeeApi } from "@/lib/api-client";
 import RewardsClient from "./rewards-client";

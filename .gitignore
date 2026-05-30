@@ -254,3 +254,18 @@ tmp/
 coverage-report.html
 test-report.html
 audit-report.json
+
+# GCP credentials - never commit
+gcp-sa-key.json
+*.json.key
+
+# Terraform state
+errored.tfstate
+
+# Temp files
+temp-*.yaml
+query.sql
+uptime-kuma.yaml
+
+# Backend uploads
+Backend/uploads/

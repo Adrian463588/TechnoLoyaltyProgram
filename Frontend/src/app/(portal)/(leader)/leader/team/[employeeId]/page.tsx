@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 /**
  * /leader/team/[employeeId] — Team member detail (PRD TL-03)
  *

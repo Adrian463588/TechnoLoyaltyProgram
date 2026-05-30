@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { auth, getServerToken } from "@/lib/auth";
 import { adminApi } from "@/lib/api-client";
 import RedemptionsClient from "./redemptions-client";

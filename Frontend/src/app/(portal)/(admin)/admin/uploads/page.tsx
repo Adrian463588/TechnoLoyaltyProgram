@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import UploadsClient from "./uploads-client";
 import { adminApi } from "@/lib/api-client";
 import { getServerToken } from "@/lib/auth";

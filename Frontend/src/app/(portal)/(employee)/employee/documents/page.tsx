@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 /**
  * /employee/documents — Document Upload Page (Server Component)
  */

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { auth, getServerToken } from "@/lib/auth"
 import { leaderApi } from "@/lib/api-client"
 import { LeaderTeamClient } from "@/components/dashboard/leader-team-client"

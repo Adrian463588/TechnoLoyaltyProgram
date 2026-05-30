@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { Metadata } from "next";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { adminApi } from "@/lib/api-client";
