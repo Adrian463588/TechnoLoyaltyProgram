@@ -71,7 +71,7 @@ export default async function DocumentsPage() {
         <div className="pt-8 border-t border-slate-200">
            <p className="text-[11px] text-muted-foreground text-center italic leading-relaxed max-w-2xl mx-auto">
             Uploaded documents are stored securely and only accessible by authorized HC PM personnel for identity verification and administrative purposes. 
-            By uploading these documents, you agree to Berijalan's data processing policies.
+            By uploading these documents, you agree to Berijalan&apos;s data processing policies.
           </p>
         </div>
       </div>

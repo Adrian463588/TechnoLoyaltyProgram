@@ -199,8 +199,9 @@ function DocumentUploadCard({
 }) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: (acceptedFiles) => {
-      if (acceptedFiles.length > 0) {
-        onUpload(acceptedFiles[0]);
+      const file = acceptedFiles[0];
+      if (file) {
+        onUpload(file);
       }
     },
     accept: {

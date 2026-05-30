@@ -2,8 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getServerToken } from "@/lib/auth";
-import { adminApi } from "@/lib/api-client";
-import type { RewardCatalogItem } from "@/lib/api-client";
+import { adminApi, type RewardCatalogItem } from "@/lib/api-client";
 
 /** Fetch all reward catalog items (including inactive) */
 export async function fetchRewardsAction(): Promise<RewardCatalogItem[]> {

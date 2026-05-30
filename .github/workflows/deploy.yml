@@ -38,40 +38,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "pnpm"
+          cache: "npm"
+
+      - name: Install root dependencies
+        run: npm ci
 
       - name: Install Backend dependencies
         working-directory: Backend
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Install Frontend dependencies
         working-directory: Frontend
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Backend lint & typecheck
         working-directory: Backend
         run: |
-          pnpm lint
-          pnpm typecheck
+          npm run prisma:generate
+          npm run lint
+          npm run typecheck
 
       - name: Frontend lint & typecheck
         working-directory: Frontend
         run: |
-          pnpm lint
-          pnpm typecheck
+          npm run lint
+          npm run typecheck
 
       - name: Run unit tests
         working-directory: Backend
-        run: pnpm test:unit
+        run: npm run test:unit
 
   # ─────────────────────────────────────────────
   security-scan:

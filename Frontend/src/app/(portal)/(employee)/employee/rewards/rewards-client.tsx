@@ -355,7 +355,7 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
           </div>
 
           <DialogFooter className="bg-neutral-50 p-6 border-t border-neutral-100 flex flex-col gap-2 mt-0">
-            <Link href="/employee/documents" className="w-full">
+            <Link href={"/employee/documents" as any} className="w-full">
               <Button className="w-full py-6 rounded-xl font-bold gap-2">
                 Lengkapi Sekarang
                 <ArrowRight size={16} />

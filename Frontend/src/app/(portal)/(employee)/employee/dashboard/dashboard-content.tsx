@@ -94,7 +94,7 @@ export function DashboardContent({ data, userName }: { data: DashboardData; user
     const { p1Start, p1End, p2Start, p2End, claimP1Start, claimP1End, claimP2Start, claimP2End } = data.settings;
     
     const formatDateStr = (mmdd: string) => {
-      const [m, d] = mmdd.split("-");
+      const [m = "01", d = "01"] = mmdd.split("-");
       const date = new Date(2000, parseInt(m) - 1, parseInt(d));
       return date.toLocaleString('en-GB', { month: 'short', day: 'numeric' });
     };
@@ -166,7 +166,7 @@ export function DashboardContent({ data, userName }: { data: DashboardData; user
 
   // ── Helper logic for countdowns ─────────────────────────────────────────
   const getDaysDiff = (targetMMDD: string) => {
-    const [m, d] = targetMMDD.split("-").map(Number);
+    const [m = 1, d = 1] = targetMMDD.split("-").map(Number);
     const targetDate = new Date(now.getFullYear(), m - 1, d);
     
     // If target date is in the past for this month, and we might be looking at next month 
@@ -237,7 +237,7 @@ export function DashboardContent({ data, userName }: { data: DashboardData; user
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            Welcome back, <span className="font-bold">{userName}</span>! Here's an overview of your loyalty status.
+            Welcome back, <span className="font-bold">{userName}</span>! Here&apos;s an overview of your loyalty status.
           </motion.p>
         </div>
         

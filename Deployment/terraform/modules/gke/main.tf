@@ -40,9 +40,12 @@ resource "google_container_node_pool" "primary_nodes" {
   cluster    = google_container_cluster.primary.name
   node_count = 1
 
+  # Restrict to a single zone to save cost (1 node total instead of 3)
+  node_locations = ["${var.region}-b"]
+
   autoscaling {
     min_node_count = 1
-    max_node_count = 3
+    max_node_count = 2
   }
 
   node_config {
@@ -63,51 +66,8 @@ resource "google_container_node_pool" "primary_nodes" {
       mode = "GKE_METADATA"
     }
 
-    shielded_instance_config {
-      enable_secure_boot          = true
-      enable_integrity_monitoring = true
-    }
-  }
-}
-
-# Monitoring node pool — dedicated for Prometheus, Grafana, Uptime Kuma
-resource "google_container_node_pool" "monitoring_nodes" {
-  name       = "${var.cluster_name}-monitoring-pool"
-  location   = var.region
-  cluster    = google_container_cluster.primary.name
-  node_count = 1
-
-  autoscaling {
-    min_node_count = 1
-    max_node_count = 2
-  }
-
-  node_config {
-    oauth_scopes = [
-      "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring",
-      "https://www.googleapis.com/auth/devstorage.read_only",
-      "https://www.googleapis.com/auth/trace.append",
-    ]
-
-    machine_type = "e2-medium"
-    disk_size_gb = 20
-    disk_type    = "pd-standard"
-    spot         = true
-
     labels = {
       role = "monitoring"
-    }
-
-    # Taint to prevent regular workloads from scheduling here
-    taint {
-      key    = "dedicated"
-      value  = "monitoring"
-      effect = "NO_SCHEDULE"
-    }
-
-    workload_metadata_config {
-      mode = "GKE_METADATA"
     }
 
     shielded_instance_config {

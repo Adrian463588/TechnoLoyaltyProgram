@@ -434,7 +434,7 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {Object.entries(parseResult.columnMapping).map(([original, mapped]) => (
                         <div key={original} className="flex items-center justify-between bg-white border border-slate-200 p-2.5 rounded-xl">
-                          <span className="text-xs font-medium text-slate-600 truncate max-w-[120px]" title={original}>"{original}"</span>
+                          <span className="text-xs font-medium text-slate-600 truncate max-w-[120px]" title={original}>&quot;{original}&quot;</span>
                           <span className="text-slate-300 mx-2">→</span>
                           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-mono">
                             {mapped} <CheckCircle className="inline w-3 h-3 ml-1" />

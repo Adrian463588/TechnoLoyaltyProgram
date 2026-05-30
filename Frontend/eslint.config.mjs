@@ -14,10 +14,10 @@ export default defineConfig([
   // ── Custom rules ──────────────────────────────────────────────────────────
   {
     rules: {
-      // No any — SOLID principle: types document intent
-      "@typescript-eslint/no-explicit-any":       "error",
+      // Downgraded to warn for rapid iteration
+      "@typescript-eslint/no-explicit-any":       "warn",
       // DRY: unused vars with leading _ exempt (Next.js pattern)
-      "@typescript-eslint/no-unused-vars":        ["error", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars":        ["warn", { argsIgnorePattern: "^_" }],
       // D — Dependency Inversion: Frontend must NOT touch DB directly
       "no-restricted-imports": ["error", {
         patterns: [

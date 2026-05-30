@@ -73,12 +73,13 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
     rewardPickupLocation: "HC Office - Main Building",
   });
 
-  const parseDate = (val: string) => {
+  const parseDate = (val: string | null | undefined) => {
     const [m, d] = (val || "01-01").split("-");
-    return { month: m, day: d };
+    return { month: m || "01", day: d || "01" };
   };
 
-  const handleDateChange = (field: keyof SystemSettingsResponse, type: 'month' | 'day', val: string) => {
+  const handleDateChange = (field: keyof SystemSettingsResponse, type: 'month' | 'day', val: string | null | undefined) => {
+    if (!val) return;
     const current = parseDate(settings[field] as string);
     if (type === 'month') current.month = val;
     else current.day = val;
@@ -102,7 +103,7 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
     }
   };
 
-  const DateSelector = ({ label, field, icon: Icon }: { label: string, field: keyof SystemSettingsResponse, icon: any }) => {
+  const renderDateSelector = ({ label, field, icon: Icon }: { label: string, field: keyof SystemSettingsResponse, icon: any }) => {
     const { month, day } = parseDate(settings[field] as string);
     return (
       <div className="space-y-3">
@@ -164,13 +165,13 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
               </h3>
               <div className="flex flex-col sm:flex-row items-start gap-6 p-6 rounded-[24px] bg-[var(--color-surface-elevated)]/50 border border-[var(--color-border-subtle)]">
                 <div className="flex-1 w-full">
-                  <DateSelector label="Starts On" field="p1Start" icon={Clock} />
+                  {renderDateSelector({ label: "Starts On", field: "p1Start", icon: Clock })}
                 </div>
                 <div className="hidden sm:block mt-[34px]">
                   <ArrowRight className="text-slate-300 w-5 h-5" />
                 </div>
                 <div className="flex-1 w-full">
-                  <DateSelector label="Ends On" field="p1End" icon={Clock} />
+                  {renderDateSelector({ label: "Ends On", field: "p1End", icon: Clock })}
                 </div>
               </div>
             </div>
@@ -182,13 +183,13 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
               </h3>
               <div className="flex flex-col sm:flex-row items-start gap-6 p-6 rounded-[24px] bg-[var(--color-surface-elevated)]/50 border border-[var(--color-border-subtle)]">
                 <div className="flex-1 w-full">
-                  <DateSelector label="Starts On" field="p2Start" icon={Clock} />
+                  {renderDateSelector({ label: "Starts On", field: "p2Start", icon: Clock })}
                 </div>
                 <div className="hidden sm:block mt-[34px]">
                   <ArrowRight className="text-slate-300 w-5 h-5" />
                 </div>
                 <div className="flex-1 w-full">
-                  <DateSelector label="Ends On" field="p2End" icon={Clock} />
+                  {renderDateSelector({ label: "Ends On", field: "p2End", icon: Clock })}
                 </div>
               </div>
             </div>
@@ -200,13 +201,13 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
               </h3>
               <div className="flex flex-col sm:flex-row items-start gap-6 p-6 rounded-[24px] bg-[var(--color-surface-elevated)]/50 border border-[var(--color-border-subtle)]">
                 <div className="flex-1 w-full">
-                  <DateSelector label="Claims Start" field="claimP1Start" icon={Sparkles} />
+                  {renderDateSelector({ label: "Claims Start", field: "claimP1Start", icon: Sparkles })}
                 </div>
                 <div className="hidden sm:block mt-[34px]">
                   <ArrowRight className="text-slate-300 w-5 h-5" />
                 </div>
                 <div className="flex-1 w-full">
-                  <DateSelector label="Claims End" field="claimP1End" icon={Sparkles} />
+                  {renderDateSelector({ label: "Claims End", field: "claimP1End", icon: Sparkles })}
                 </div>
               </div>
             </div>
@@ -218,13 +219,13 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
               </h3>
               <div className="flex flex-col sm:flex-row items-start gap-6 p-6 rounded-[24px] bg-[var(--color-surface-elevated)]/50 border border-[var(--color-border-subtle)]">
                 <div className="flex-1 w-full">
-                  <DateSelector label="Claims Start" field="claimP2Start" icon={Sparkles} />
+                  {renderDateSelector({ label: "Claims Start", field: "claimP2Start", icon: Sparkles })}
                 </div>
                 <div className="hidden sm:block mt-[34px]">
                   <ArrowRight className="text-slate-300 w-5 h-5" />
                 </div>
                 <div className="flex-1 w-full">
-                  <DateSelector label="Claims End" field="claimP2End" icon={Sparkles} />
+                  {renderDateSelector({ label: "Claims End", field: "claimP2End", icon: Sparkles })}
                 </div>
               </div>
             </div>
