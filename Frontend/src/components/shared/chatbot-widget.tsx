@@ -65,10 +65,11 @@ export function ChatbotWidget() {
       });
 
       if (!response.ok) {
-        let errorMsg = "Gagal menyambung ke chatbot";
+        let errorMsg = `Gagal menyambung ke chatbot (Status: ${response.status})`;
         try {
           const errData = await response.json();
-          if (errData?.details) errorMsg = errData.details;
+          if (errData?.error) errorMsg = errData.error;
+          else if (errData?.details) errorMsg = errData.details;
         } catch (e) {
           // ignore
         }
