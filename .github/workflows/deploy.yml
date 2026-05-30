@@ -45,15 +45,15 @@ jobs:
           cache: "npm"
 
       - name: Install root dependencies
-        run: npm ci
+        run: npm install
 
       - name: Install Backend dependencies
         working-directory: Backend
-        run: npm ci
+        run: npm install
 
       - name: Install Frontend dependencies
         working-directory: Frontend
-        run: npm ci
+        run: npm install
 
       - name: Backend lint & typecheck
         working-directory: Backend
