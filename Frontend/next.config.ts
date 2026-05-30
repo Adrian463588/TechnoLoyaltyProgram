@@ -28,6 +28,11 @@ const nextConfig: NextConfig = {
   // Disable in dev if it's causing slow startup/HMR.
   typedRoutes: false,
 
+  // ── Memory optimization for dev mode (Webpack fallback) ──────────────────
+  experimental: {
+    webpackMemoryOptimizations: true,
+  },
+
   // ── Server-only env vars passed to client ───────────────────────────────
   env: {
     NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL ?? "",
@@ -39,6 +44,9 @@ const nextConfig: NextConfig = {
       // { protocol: "https", hostname: "storage.googleapis.com" },
     ],
   },
+  
+  // Disable source maps to save RAM during builds
+  productionBrowserSourceMaps: false,
 };
 
 export default nextConfig;

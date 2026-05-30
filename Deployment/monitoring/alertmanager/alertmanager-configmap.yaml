@@ -12,13 +12,11 @@ data:
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 3h
-      receiver: 'discord-webhook'
+      receiver: 'blackhole'
     receivers:
-    - name: 'discord-webhook'
-      discord_configs:
-      - webhook_url: 'https://discord.com/api/webhooks/1503984048643772597/nKPvQEDZBVLF8EvnLUwS20Ng8o5rj2FEUa0ng4bYakDZ52ceMeleNmheAmmHv5i8mHuL'
-        title: '{{ template "discord.title" . }}'
-        message: '{{ template "discord.message" . }}'
+    - name: 'blackhole'
+    # TODO(OQ-ALERTMANAGER-RECEIVER): mount a Secret-backed receiver config
+    # for Discord/Slack/PagerDuty after the production webhook is rotated.
   discord.tmpl: |
     {{ define "discord.title" }}
       [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }}

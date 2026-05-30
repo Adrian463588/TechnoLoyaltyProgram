@@ -15,13 +15,6 @@ spec:
       labels:
         app: uptime-kuma
     spec:
-      nodeSelector:
-        role: monitoring
-      tolerations:
-        - key: "dedicated"
-          operator: "Equal"
-          value: "monitoring"
-          effect: "NoSchedule"
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

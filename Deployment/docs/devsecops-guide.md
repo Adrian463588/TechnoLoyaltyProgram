@@ -1,8 +1,8 @@
 # DevSecOps Guide — Loyalty Program
 
-> Project: `project-654b743a-b24b-45ad-85e`
-> Region: `asia-southeast2` (Jakarta)
-> Cluster: `loyalty-cluster-prod`
+> Application runtime: Coolify
+> DevOps cluster: K3s on the Coolify VPS
+> Legacy cluster: Terraform-managed GKE, retired through `Deployment/runbooks/terraform-destroy.md`
 
 ---
 
@@ -22,7 +22,7 @@ MODEL   LINT   TRIVY       IMAGE  IMAGE   RULES
 ## 2. Supply Chain Security
 
 ### 2.1 Image Signing (Cosign)
-All images MUST be signed before pushing to Artifact Registry.
+All release images MUST use deterministic tags and be signed after they are pushed to the registry.
 ```bash
 # Install cosign
 cosign sign --key cosign.key \
@@ -53,28 +53,35 @@ snyk test
 
 **Rule: Zero plain-text secrets in Git. No exceptions.**
 
-### Recommended: External Secrets Operator + GCP Secret Manager
+### Runtime Secret Stores
+
+- Coolify stores backend/frontend application secrets.
+- Jenkins credential store keeps registry, Cosign, GitHub, Coolify, and notification credentials.
+- Kubernetes Secrets are allowed only for K3s DevOps tooling such as Grafana bootstrap credentials.
+- No plaintext secret may be committed to Git.
+
+### Optional: External Secrets Operator
 ```yaml
 # Example ExternalSecret (ESO)
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: loyalty-backend-secrets
-  namespace: loyalty-prod
+  name: grafana-secrets
+  namespace: monitoring
 spec:
   refreshInterval: 5m
   secretStoreRef:
     name: gcp-secret-store
     kind: SecretStore
   target:
-    name: loyalty-backend-secrets
+    name: grafana-secrets
   data:
-  - secretKey: DATABASE_URL
+  - secretKey: admin-user
     remoteRef:
-      key: loyalty-backend-database-url
-  - secretKey: JWT_SECRET
+      key: grafana-admin-user
+  - secretKey: admin-password
     remoteRef:
-      key: loyalty-backend-jwt-secret
+      key: grafana-admin-password
 ```
 
 ### Rotation Policy
@@ -86,49 +93,37 @@ spec:
 
 ## 4. Identity & Access Management (IAM)
 
-### Workload Identity (Preferred over SA keys)
-```bash
-# Create Kubernetes Service Account
-kubectl create serviceaccount loyalty-backend-sa \
-  --namespace=loyalty-prod
+### Least Privilege
 
-# Create GCP Service Account
-gcloud iam service-accounts create loyalty-backend-gsa \
-  --project=project-654b743a-b24b-45ad-85e
+Prefer short-lived credentials and dedicated service accounts. If a cloud provider is used for registry or backups, grant only the roles required by that component.
 
-# Bind them
-gcloud iam service-accounts add-iam-policy-binding \
-  loyalty-backend-gsa@project-654b743a-b24b-45ad-85e.iam.gserviceaccount.com \
-  --role=roles/iam.workloadIdentityUser \
-  --member="serviceAccount:project-654b743a-b24b-45ad-85e.svc.id.goog[loyalty-prod/loyalty-backend-sa]"
+### K3s Service Accounts
 
-kubectl annotate serviceaccount loyalty-backend-sa \
-  --namespace=loyalty-prod \
-  iam.gke.io/gcp-service-account=loyalty-backend-gsa@project-654b743a-b24b-45ad-85e.iam.gserviceaccount.com
-```
+Keep K3s service accounts scoped to their namespace unless a component needs read-only cluster discovery. Prometheus is the only default cluster reader in this stack.
 
 ### Least Privilege Roles
 | Component         | GCP Role                              |
 |-------------------|---------------------------------------|
-| Backend SA        | `roles/secretmanager.secretAccessor`  |
-| Backend SA        | `roles/cloudsql.client`               |
 | Jenkins CI SA     | `roles/artifactregistry.writer`       |
-| ArgoCD SA         | None (cluster-internal only)          |
-| Prometheus SA     | `roles/monitoring.viewer`             |
+| Jenkins CI SA     | registry read for scan/sign verification |
+| ArgoCD SA         | K3s cluster-internal only             |
+| Prometheus SA     | K3s read-only metrics access          |
 
 ---
 
 ## 5. Network Security
 
-### GKE Private Cluster
-- Nodes have no public IP addresses.
-- API server access restricted to authorized networks.
-- All node-to-node traffic via VPC.
+### K3s Host Protection
+- Restrict SSH to administrator IPs.
+- Keep Coolify, Docker, K3s, kubectl, and Helm patched.
+- Expose only required HTTPS endpoints through the reverse proxy.
+- Use host firewall rules for SSH, HTTP, HTTPS, and any required K3s administration port.
 
 ### Network Policies (Default Deny)
-Applied in `Deployment/kubernetes/overlays/prod/network-policy.yaml`:
-- Default: deny ALL ingress and egress.
-- Allowlist: frontend → backend, ingress-nginx → frontend, all pods → DNS.
+Applied through the root `Deployment` kustomization:
+- Default deny per namespace.
+- Allow required ingress/egress for ingress, registry access, webhooks, DNS, scraping, and GitOps.
+- Backend/frontend app traffic is governed by Coolify networking, not Kubernetes NetworkPolicy.
 
 ### TLS Everywhere
 - Ingress terminates TLS with cert-manager (Let's Encrypt or GCP-managed certs).
@@ -141,8 +136,8 @@ Applied in `Deployment/kubernetes/overlays/prod/network-policy.yaml`:
 ### Pod Security Standards
 All namespaces enforce `restricted` policy:
 ```bash
-kubectl label namespace loyalty-prod \
-  pod-security.kubernetes.io/enforce=restricted \
+kubectl label namespace devops monitoring argocd \
+  pod-security.kubernetes.io/enforce=baseline \
   pod-security.kubernetes.io/warn=restricted
 ```
 
@@ -157,7 +152,7 @@ securityContext:
     drop: ["ALL"]
 ```
 
-### Falco (Runtime Threat Detection)
+### Falco (Runtime Threat Detection - Optional)
 Deploy Falco daemonset to detect anomalous container behavior at runtime:
 ```bash
 helm repo add falcosecurity https://falcosecurity.github.io/charts
@@ -177,7 +172,9 @@ helm install falco falcosecurity/falco \
 - [ ] Fail pipeline on Trivy CRITICAL CVEs (`--exit-code 1 --severity CRITICAL`).
 - [ ] Run TruffleHog before build to catch leaked secrets.
 - [ ] Sign images with Cosign after build.
-- [ ] Use pinned image tags in GitOps manifests (not `:latest`).
+- [ ] Push deterministic image tags only; do not push production `:latest`.
+- [ ] Trigger Coolify deploy hooks from Jenkins credentials.
+- [ ] Do not commit application image tags into Kubernetes manifests.
 
 ---
 
@@ -194,19 +191,22 @@ helm install falco falcosecurity/falco \
 | TLSCertExpiringSoon      | cert expires < 14 days            | Warning  |
 
 ### Uptime Kuma Monitors
-- Frontend: `https://loyalty.example.com` — HTTP 200 every 1m
-- Backend health: `https://loyalty.example.com/api/health` — HTTP 200 every 1m
-- Grafana: `https://grafana.loyalty.example.com` — HTTP 200 every 5m
+- Frontend: Coolify frontend URL, HTTP 200 every 1m.
+- Backend health: Coolify backend `/health`, HTTP 200 every 1m.
+- Coolify dashboard: HTTP 200 every 5m.
+- Jenkins: HTTP 200 every 5m.
+- ArgoCD: HTTP 200 every 5m.
+- Grafana: HTTP 200 every 5m.
 
 ---
 
 ## 9. Incident Response
 
 1. **Detect** — Grafana alert fires / Uptime Kuma sends notification.
-2. **Triage** — Check `kubectl get pods -n loyalty-prod` and recent ArgoCD sync history.
-3. **Isolate** — Scale down affected deployment or apply network policy to block traffic.
-4. **Rollback** — Revert the image tag commit in Git; ArgoCD auto-syncs to previous state.
-5. **Root Cause** — Investigate logs in GCP Cloud Logging and Prometheus metrics.
+2. **Triage** — Check Coolify deployment logs, K3s pods, and recent Jenkins/ArgoCD history.
+3. **Isolate** — Disable the affected Coolify route or block traffic at the reverse proxy.
+4. **Rollback** — Redeploy the previous deterministic image tag in Coolify.
+5. **Root Cause** — Investigate Coolify logs, container logs, Jenkins evidence, and Prometheus metrics.
 6. **Post-Mortem** — Document within 48h: timeline, impact, root cause, action items.
 
 ---
@@ -215,5 +215,5 @@ helm install falco falcosecurity/falco \
 
 - All API mutations write to an audit log (enforced by AGENTS.md rule).
 - TokenLedger is append-only — verified by repository layer.
-- GCP Cloud Audit Logs captures all API and admin activity at the infrastructure level.
+- Coolify deployment history, Jenkins logs, ArgoCD sync history, and Git history capture operational changes.
 - Grafana dashboards retain 15 days of metrics (configurable via Prometheus retention).

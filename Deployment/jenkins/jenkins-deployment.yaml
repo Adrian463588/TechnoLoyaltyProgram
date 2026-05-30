@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: jenkins
-  namespace: tools
+  namespace: devops
   labels:
     app: jenkins
 spec:
@@ -15,13 +15,6 @@ spec:
       labels:
         app: jenkins
     spec:
-      nodeSelector:
-        role: tools
-      tolerations:
-        - key: "dedicated"
-          operator: "Equal"
-          value: "tools"
-          effect: "NoSchedule"
       securityContext:
         fsGroup: 1000
         runAsUser: 1000

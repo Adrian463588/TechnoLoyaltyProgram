@@ -15,13 +15,6 @@ spec:
       labels:
         app: prometheus
     spec:
-      nodeSelector:
-        role: monitoring
-      tolerations:
-        - key: "dedicated"
-          operator: "Equal"
-          value: "monitoring"
-          effect: "NoSchedule"
       serviceAccountName: prometheus-sa
       securityContext:
         runAsNonRoot: true

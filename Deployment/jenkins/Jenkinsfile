@@ -1,8 +1,9 @@
 // ============================================================
 // LOYALTY PROGRAM — Jenkins CI/CD Pipeline (DevSecOps)
 // ============================================================
-// Flow: Checkout → Lint → SAST → Build → Scan → Push → GitOps
-// Jenkins handles CI. ArgoCD handles CD (pull-based GitOps).
+// Flow: Checkout → Lint → SAST → Build → Scan → SBOM → Push → Sign → Coolify
+// Jenkins handles CI and triggers Coolify application deploys.
+// ArgoCD manages K3s DevOps tooling only.
 // ============================================================
 
 pipeline {
@@ -14,9 +15,6 @@ pipeline {
         REGISTRY         = "${REGION}-docker.pkg.dev/${PROJECT_ID}/loyalty-program-repo"
         BACKEND_IMAGE    = "${REGISTRY}/backend"
         FRONTEND_IMAGE   = "${REGISTRY}/frontend"
-        GIT_REPO         = 'https://github.com/Adrian463588/TechnoLoyaltyProgram'
-        DEPLOY_BRANCH    = 'main'
-        KUSTOMIZE_PATH   = 'Deployment/kubernetes/overlays/prod'
     }
 
     options {
@@ -108,7 +106,7 @@ pipeline {
                 sh '''
                     docker run --rm \
                       -v "$(pwd):/repo" \
-                      trufflesecurity/trufflehog:latest \
+                      trufflesecurity/trufflehog:3.88.25 \
                       filesystem /repo \
                       --exclude-paths=.trufflehog-ignore \
                       --fail
@@ -125,7 +123,6 @@ pipeline {
                         sh """
                             docker build \
                               -t ${BACKEND_IMAGE}:${IMAGE_TAG} \
-                              -t ${BACKEND_IMAGE}:latest \
                               -f Backend/Dockerfile \
                               Backend/
                         """
@@ -136,7 +133,6 @@ pipeline {
                         sh """
                             docker build \
                               -t ${FRONTEND_IMAGE}:${IMAGE_TAG} \
-                              -t ${FRONTEND_IMAGE}:latest \
                               -f Frontend/Dockerfile \
                               Frontend/
                         """
@@ -156,7 +152,7 @@ pipeline {
                             docker run --rm \
                               -v /var/run/docker.sock:/var/run/docker.sock \
                               -v ~/.cache/trivy:/root/.cache/trivy \
-                              aquasec/trivy:latest image \
+                              aquasec/trivy:0.51.1 image \
                               --exit-code 1 \
                               --severity CRITICAL \
                               --no-progress \
@@ -170,7 +166,7 @@ pipeline {
                             docker run --rm \
                               -v /var/run/docker.sock:/var/run/docker.sock \
                               -v ~/.cache/trivy:/root/.cache/trivy \
-                              aquasec/trivy:latest image \
+                              aquasec/trivy:0.51.1 image \
                               --exit-code 1 \
                               --severity CRITICAL \
                               --no-progress \
@@ -189,10 +185,10 @@ pipeline {
                 sh """
                     docker run --rm \
                       -v /var/run/docker.sock:/var/run/docker.sock \
-                      anchore/syft:latest packages ${BACKEND_IMAGE}:${IMAGE_TAG} -o spdx-json > backend-sbom.json
+                      anchore/syft:v1.4.1 packages ${BACKEND_IMAGE}:${IMAGE_TAG} -o spdx-json > backend-sbom.json
                     docker run --rm \
                       -v /var/run/docker.sock:/var/run/docker.sock \
-                      anchore/syft:latest packages ${FRONTEND_IMAGE}:${IMAGE_TAG} -o spdx-json > frontend-sbom.json
+                      anchore/syft:v1.4.1 packages ${FRONTEND_IMAGE}:${IMAGE_TAG} -o spdx-json > frontend-sbom.json
                 """
                 archiveArtifacts artifacts: '*-sbom.json', fingerprint: true
             }
@@ -209,37 +205,39 @@ pipeline {
                     '''
                 }
                 sh "docker push ${BACKEND_IMAGE}:${IMAGE_TAG}"
-                sh "docker push ${BACKEND_IMAGE}:latest"
                 sh "docker push ${FRONTEND_IMAGE}:${IMAGE_TAG}"
-                sh "docker push ${FRONTEND_IMAGE}:latest"
             }
         }
 
         // ----------------------------------------------------------
-        stage('Update GitOps Manifests') {
+        stage('Sign Images — Cosign') {
         // ----------------------------------------------------------
-            // DevSecOps: Commit pinned image tag, not :latest, so ArgoCD
-            // deploys a deterministic artifact.
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'github-token',
-                    usernameVariable: 'GIT_USER',
-                    passwordVariable: 'GIT_TOKEN'
-                )]) {
-                    sh """
-                        git config user.email "ci@loyalty.internal"
-                        git config user.name "Jenkins CI"
+                withCredentials([
+                    file(credentialsId: 'cosign-key', variable: 'COSIGN_KEY'),
+                    string(credentialsId: 'cosign-password', variable: 'COSIGN_PASSWORD')
+                ]) {
+                    sh '''
+                        cosign sign --yes --key "$COSIGN_KEY" ${BACKEND_IMAGE}:${IMAGE_TAG}
+                        cosign sign --yes --key "$COSIGN_KEY" ${FRONTEND_IMAGE}:${IMAGE_TAG}
+                    '''
+                }
+            }
+        }
 
-                        cd ${KUSTOMIZE_PATH}
-                        kustomize edit set image \\
-                          ${BACKEND_IMAGE}=${BACKEND_IMAGE}:${IMAGE_TAG}
-                        kustomize edit set image \\
-                          ${FRONTEND_IMAGE}=${FRONTEND_IMAGE}:${IMAGE_TAG}
-
-                        git add kustomization.yaml
-                        git commit -m "ci: deploy backend/frontend ${IMAGE_TAG} [skip ci]"
-                        git push https://${GIT_USER}:${GIT_TOKEN}@github.com/Adrian463588/TechnoLoyaltyProgram ${DEPLOY_BRANCH}
-                    """
+        // ----------------------------------------------------------
+        stage('Trigger Coolify Deploy') {
+        // ----------------------------------------------------------
+            // App runtime is Coolify. ArgoCD manages K3s DevOps tooling only.
+            steps {
+                withCredentials([
+                    string(credentialsId: 'coolify-backend-webhook', variable: 'COOLIFY_BACKEND_WEBHOOK'),
+                    string(credentialsId: 'coolify-frontend-webhook', variable: 'COOLIFY_FRONTEND_WEBHOOK')
+                ]) {
+                    sh '''
+                        curl --fail --silent --show-error --request POST "$COOLIFY_BACKEND_WEBHOOK"
+                        curl --fail --silent --show-error --request POST "$COOLIFY_FRONTEND_WEBHOOK"
+                    '''
                 }
             }
         }
@@ -247,13 +245,18 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline succeeded. ArgoCD will sync the new image automatically."
+            echo "Pipeline succeeded. Coolify deploy hooks were triggered."
         }
         failure {
-            echo "❌ Pipeline failed. Check stages above."
-            sh """
-              curl -H "Content-Type: application/json" -d '{"content":"❌ Jenkins Pipeline Failed for loyalty-program build #${BUILD_NUMBER}"}' https://discord.com/api/webhooks/1503984048643772597/nKPvQEDZBVLF8EvnLUwS20Ng8o5rj2FEUa0ng4bYakDZ52ceMeleNmheAmmHv5i8mHuL
-            """
+            echo "Pipeline failed. Check stages above."
+            withCredentials([string(credentialsId: 'discord-webhook-url', variable: 'DISCORD_WEBHOOK_URL')]) {
+                sh '''
+                  curl --fail --silent --show-error \
+                    -H "Content-Type: application/json" \
+                    -d "{\"content\":\"Jenkins Pipeline Failed for loyalty-program build #${BUILD_NUMBER}\"}" \
+                    "$DISCORD_WEBHOOK_URL" || true
+                '''
+            }
         }
         always {
             // Cleanup local images to save disk space

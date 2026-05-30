@@ -15,7 +15,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: "http://localhost:4000",
+        url: "http://localhost:8080",
         description: "Development server",
       },
     ],
@@ -36,7 +36,7 @@ const options: swaggerJsdoc.Options = {
 let _spec: ReturnType<typeof swaggerJsdoc> | null = null;
 
 /** Returns the swagger spec, computing it once and caching in memory. */
-export function getSwaggerSpec() {
+export function getSwaggerSpec(): ReturnType<typeof swaggerJsdoc> {
   if (!_spec) _spec = swaggerJsdoc(options);
   return _spec;
 }

@@ -35,4 +35,4 @@ ENV PORT=3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD wget -qO- http://localhost:3000/health || exit 1
 
-CMD ["node", "dist/src/app.js"]
+CMD ["node", "--max-old-space-size=384", "dist/src/app.js"]

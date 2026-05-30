@@ -1,157 +1,159 @@
-# Deployment Guide — Loyalty Program
+# Deployment Guide - Loyalty Program
 
-> Comprehensive Deployment Documentation for GKE, DevOps, and Infrastructure Configurations.
+> Sprint 2.1 deployment strategy: fast Coolify application runtime with K3s-based DevSecOps tooling.
 
-This guide details the complete deployment architecture, tools used, configuration details, and step-by-step instructions to deploy the Loyalty Program platform on Google Kubernetes Engine (GKE) with best-practice DevOps standards.
+## 1. Target Architecture
 
----
+- **Application runtime**: Coolify.
+- **Backend service**: `loyalty-backend`, built from `Backend/Dockerfile`.
+- **Frontend service**: `loyalty-frontend`, built from `Frontend/Dockerfile`.
+- **Database**: Coolify managed PostgreSQL service `loyalty-postgres`.
+- **Cache**: Coolify managed Redis service `loyalty-redis`.
+- **DevOps cluster**: K3s on the Coolify VPS.
+- **GitOps**: ArgoCD manages DevOps and monitoring manifests only.
+- **CI/CD**: Jenkins builds, tests, scans, signs, pushes deterministic images, then triggers Coolify deploy.
+- **Monitoring**: Uptime Kuma, Prometheus, Grafana, and Alertmanager run on K3s.
+- **Legacy infrastructure**: Terraform-managed GKE is retired through the teardown runbook in `Deployment/runbooks/terraform-destroy.md`.
 
-## 1. Architecture & Tools
+Coolify is the source of truth for backend/frontend runtime configuration. `Deployment/kubernetes/` is the source of truth for K3s DevOps tooling, not production application pods.
 
-- **Cloud Provider**: Google Cloud Platform (GCP)
-- **Orchestrator**: Google Kubernetes Engine (GKE) (`loyalty-cluster-prod`)
-- **Namespace**: `loyalty-prod`
-- **Container Registry**: GCP Artifact Registry
-- **Database**: PostgreSQL (Stateful Deployment in Kubernetes via PVC)
-- **Cache**: Redis (Deployment in Kubernetes)
-- **Backend**: Node.js + Express + Prisma ORM
-- **Frontend**: Next.js (App Router) + NextAuth.js v5
-- **Ingress Controller**: NGINX Ingress Controller
-- **TLS / SSL**: Cert-Manager (Let's Encrypt Prod)
-- **DNS Pattern**: `nip.io` wildcard DNS (e.g., `loyaltyprogramberijalan.34.50.82.124.nip.io`)
+## 2. Coolify Application Design
 
----
+Create one Coolify project for the Loyalty Program:
 
-## 2. Infrastructure Configurations & Best Practices
+- `loyalty-postgres`: managed PostgreSQL, private network only.
+- `loyalty-redis`: managed Redis, private network only.
+- `loyalty-backend`: Docker image or Git build from `Backend/Dockerfile`.
+- `loyalty-frontend`: Docker image or Git build from `Frontend/Dockerfile`.
 
-### A. NGINX Ingress & Rate Limiting (Anti Brute-Force)
-To protect the authentication endpoints and the server from brute-force and DDoS attacks, the Ingress is configured with rate-limiting annotations:
-- `nginx.ingress.kubernetes.io/limit-rps: "10"` (Maksimal 10 request per detik dari satu IP)
-- `nginx.ingress.kubernetes.io/limit-connections: "20"` (Maksimal 20 koneksi bersamaan dari satu IP)
-- Jika dilanggar, server akan mengembalikan error `503 Service Temporarily Unavailable`.
+Backend environment variables:
 
-### B. Ingress Routing (Menyelesaikan NextAuth Path Collision)
-Next.js (NextAuth) pada Frontend dan Express API pada Backend sama-sama menggunakan namespace path `/api/...`. Jika menggunakan konfigurasi standar, akan terjadi *path collision* di mana rute NextAuth frontend tertimpa oleh Backend.
-**Solusi Konfigurasi:**
-- Backend API diregistrasi **secara spesifik** di Ingress: `/api/employee`, `/api/admin`, `/api/leader`, `/api/auth/login`, `/api/auth/verify`, `/health`, dan `/api-docs`.
-- Frontend (Next.js) diregistrasi pada *root path* `/`. Rute ini bertindak sebagai *fallback* sehingga path internal NextAuth seperti `/api/auth/session` dan `/api/auth/error` otomatis diarahkan ke Frontend.
-
-### C. Persistent Storage untuk Database
-PostgreSQL menggunakan `PersistentVolumeClaim` (PVC) dengan spesifikasi `subPath: pgdata`. Ini adalah *best practice* di Kubernetes untuk mencegah kegagalan inisialisasi basis data apabila direktori pemasangan (mount) memiliki folder sistem tersembunyi (seperti `lost+found`).
-
-### D. SSL/TLS Certificates (HTTPS)
-Menggunakan `cert-manager` dengan `ClusterIssuer` yang terhubung ke **Let's Encrypt**. NGINX Ingress secara otomatis melakukan *provisioning*, verifikasi, dan perpanjangan sertifikat SSL, sehingga seluruh lalu lintas dienkripsi secara penuh (`https://`).
-
----
-
-## 3. Step-by-Step Implementation Guide
-
-Berikut adalah panduan langkah demi langkah bagi Developer atau DevOps untuk men-deploy keseluruhan proyek ini dari awal.
-
-### Persiapan (Prerequisites)
-1. Install alat CLI: `kubectl`, `gcloud`, `docker`, dan `node` (dengan npm/pnpm).
-2. Autentikasi ke GKE cluster di Google Cloud:
-   ```bash
-   gcloud container clusters get-credentials loyalty-cluster-prod --region asia-southeast2 --project <YOUR_PROJECT_ID>
-   ```
-3. Pastikan **NGINX Ingress Controller** dan **Cert-Manager** sudah ter-install secara global di klaster tersebut.
-
-### Langkah 1: Deploy Database dan Cache
-Lakukan deployment untuk PostgreSQL dan Redis beserta layanan dan volume persistennya ke dalam namespace `loyalty-prod`.
-```bash
-# Pastikan namespace ada
-kubectl create namespace loyalty-prod
-
-# Apply database dan cache
-kubectl apply -f Deployment/kubernetes/base/postgres.yaml
-kubectl apply -f Deployment/kubernetes/base/redis.yaml
+```txt
+DATABASE_URL
+REDIS_URL
+JWT_SECRET
+FRONTEND_ORIGIN
+NODE_ENV=production
 ```
 
-### Langkah 2: Konfigurasi Environment Variables (Secrets)
-Buat Kubernetes Secrets untuk menyimpan variabel lingkungan yang sensitif. 
+Frontend environment variables:
 
-> **PERHATIAN (Frontend Secret)**: Jangan menambahkan akhiran `/api` pada `BACKEND_URL` maupun `NEXT_PUBLIC_BACKEND_URL`, cukup domain utamanya saja. Jika ada `/api`, NextAuth akan melipatgandakan *path* menjadi `/api/api/auth/login` dan menyebabkan error 500/404.
-
-**Membuat Backend Secrets:**
-```bash
-kubectl create secret generic loyalty-backend-secrets -n loyalty-prod \
-  --from-literal=DATABASE_URL="postgresql://loyalty_admin:loyalty_secure_password_2024@loyalty-postgres:5432/loyalty_db?schema=public" \
-  --from-literal=REDIS_URL="redis://loyalty-redis:6379" \
-  --from-literal=JWT_SECRET="YOUR_SECURE_JWT_SECRET" \
-  --from-literal=FRONTEND_ORIGIN="https://loyaltyprogramberijalan.34.50.82.124.nip.io"
+```txt
+NEXTAUTH_SECRET
+NEXTAUTH_URL
+BACKEND_URL
+NEXT_PUBLIC_BACKEND_URL
+AUTH_TRUST_HOST=true
+NODE_ENV=production
 ```
 
-**Membuat Frontend Secrets:**
-```bash
-kubectl create secret generic loyalty-frontend-secrets -n loyalty-prod \
-  --from-literal=NEXTAUTH_SECRET="YOUR_NEXTAUTH_32_CHAR_SECRET_KEY" \
-  --from-literal=NEXTAUTH_URL="https://loyaltyprogramberijalan.34.50.82.124.nip.io" \
-  --from-literal=BACKEND_URL="https://loyaltyprogramberijalan.34.50.82.124.nip.io" \
-  --from-literal=NEXT_PUBLIC_BACKEND_URL="https://loyaltyprogramberijalan.34.50.82.124.nip.io" \
-  --from-literal=AUTH_TRUST_HOST="true"
+Do not add `/api` to `BACKEND_URL` or `NEXT_PUBLIC_BACKEND_URL`. Keep them as the backend origin so NextAuth does not produce double `/api/api/...` paths.
+
+Prefer private service networking from frontend to backend when available. If the backend must be public, protect it with Coolify/reverse-proxy rate limits and expose only required routes such as `/health`, `/api/auth/login`, `/api/auth/verify`, `/api/employee`, `/api/admin`, `/api/leader`, and `/api-docs`.
+
+## 3. K3s DevOps Stack
+
+K3s runs operational tooling only:
+
+- `devops` namespace: Jenkins.
+- `argocd` namespace: ArgoCD.
+- `monitoring` namespace: Prometheus, Grafana, Alertmanager, Uptime Kuma.
+
+HPA is allowed only for safe stateless workloads. Do not add HPA to Coolify app services, PostgreSQL, Redis, Grafana with PVC, Prometheus with PVC, or Jenkins controller.
+
+Bootstrap or refresh the K3s stack:
+
+```powershell
+.\Deployment\deploy-all.ps1
+kubectl apply -k Deployment
 ```
 
-### Langkah 3: Database Migration & Seeding
-Untuk menyiapkan struktur tabel di database GCP dan menyuntikkan data admin bawaan (HC PM):
-1. Buka *tunnel* (*port-forward*) dari klaster ke lokal:
-   ```bash
-   kubectl port-forward svc/loyalty-postgres 5432:5432 -n loyalty-prod
-   ```
-2. Di terminal baru, masuk ke direktori `Backend/`, sesuaikan `.env` lokal Anda menunjuk ke port lokal, lalu eksekusi Prisma:
-   ```bash
-   cd Backend
-   npx prisma db push
-   npx prisma db seed
-   ```
+ArgoCD application `loyalty-devops` syncs the root `Deployment` kustomization.
 
-### Langkah 4: Build, Push, dan Deploy Aplikasi
-Pastikan *image* Docker Frontend dan Backend sudah di-*build* dan di-*push* ke GCP Artifact Registry. Kemudian jalankan:
-```bash
-kubectl apply -f Deployment/kubernetes/base/backend.yaml
-kubectl apply -f Deployment/kubernetes/base/frontend.yaml
+## 4. CI/CD Release Flow
+
+Jenkins pipeline:
+
+1. Checkout source and create tag `BUILD_NUMBER-shortSha`.
+2. Run lint, typecheck, and unit tests.
+3. Run SAST and secret scan.
+4. Build backend/frontend Docker images.
+5. Run Trivy container scan and fail on `CRITICAL`.
+6. Generate SBOM with Syft.
+7. Sign images with Cosign.
+8. Push deterministic image tags to Artifact Registry.
+9. Trigger Coolify deploy hooks for backend and frontend.
+
+Jenkins must not commit Kubernetes app image tags anymore, because backend/frontend production runtime is Coolify.
+
+Required Jenkins credentials:
+
+```txt
+gcp-sa-key
+github-token
+cosign-key
+cosign-password
+coolify-backend-webhook
+coolify-frontend-webhook
+discord-webhook-url
 ```
-*(Anda dapat memantau status Pod menggunakan perintah `kubectl get pods -n loyalty-prod -w`)*
 
-### Langkah 5: Ekspose Aplikasi via Ingress (TLS & Routing Khusus)
-Terapkan sertifikat TLS dan atur *routing* lalu lintas internet ke Pod yang sesuai.
+## 5. Two-Day Cutover Runbook
+
+Day 1:
+
+- Inventory Terraform/GKE resources, DNS, secrets, registry, and current app URLs.
+- Backup Terraform state and old database if production data must be retained.
+- Provision VPS with Docker, Coolify, K3s, kubectl, and Helm.
+- Create Coolify services for PostgreSQL, Redis, backend, and frontend.
+- Configure Coolify secrets and deploy backend/frontend.
+- Run Prisma migration/seed through a controlled Coolify job or backend release command.
+- Validate `/health`, login, PostgreSQL connectivity, and Redis connectivity.
+
+Day 2:
+
+- Deploy Jenkins, ArgoCD, Prometheus, Grafana, Alertmanager, and Uptime Kuma on K3s.
+- Apply safe HPA and network policies for DevOps tooling.
+- Wire Jenkins to build, scan, sign, push, and trigger Coolify.
+- Wire ArgoCD to sync DevOps/monitoring manifests.
+- Cut DNS to Coolify frontend.
+- Validate smoke tests, uptime checks, dashboards, and alerts.
+- Execute the Terraform destroy runbook only after Coolify is healthy.
+
+## 6. Validation
+
+Application:
+
 ```bash
-# Apply konfigurasi Let's Encrypt
-kubectl apply -f Deployment/terraform/environments/prod/cert-manager-clusterissuer.yaml
-
-# Apply Ingress NGINX
-kubectl apply -f Deployment/terraform/environments/prod/loyalty-ingress-tls.yaml
+curl -fsS https://<frontend-domain>/
+curl -fsS https://<backend-domain>/health
 ```
 
-### Langkah 6: Verifikasi Deployment Akhir
-1. Pastikan semua Pod berstatus `Running`:
-   ```bash
-   kubectl get pods -n loyalty-prod
-   ```
-2. Pastikan sertifikat SSL sukses di-*provisioning* (`READY: True`):
-   ```bash
-   kubectl get certificate -n loyalty-prod
-   ```
-3. Buka *browser* pada domain `https://loyaltyprogramberijalan.34.50.82.124.nip.io`.
-4. Coba *login* menggunakan NPK: `12345` dan Password: `password123`.
+K3s and GitOps:
 
----
-*Dokumen ini dibuat dan dikelola untuk memastikan implementasi best-practice di lingkungan cloud yang dapat direplikasi kapan saja.*
+```bash
+kubectl get pods -n devops
+kubectl get pods -n monitoring
+kubectl get pods -n argocd
+kubectl get hpa -A
+kubectl kustomize Deployment
+```
 
----
+Terraform teardown:
 
-## 4. Troubleshooting & Known Issues
+```bash
+cd Deployment/terraform/environments/prod
+terraform init
+terraform state list
+terraform plan -destroy -out destroy.tfplan
+terraform apply destroy.tfplan
+```
 
-### A. NextAuth Login Selalu "Invalid Credentials" di Production
-**Gejala:** Saat mencoba login di Frontend, UI selalu menampilkan *Invalid credentials* padahal NPK dan password sudah benar. Log pada Pod Frontend memunculkan error `UntrustedHost` atau gagal melakukan *fetch* ke backend.
+Do not run `terraform apply destroy.tfplan` until the Coolify deployment, database, monitoring, and rollback path are verified.
 
-**Penyebab & Solusi:**
-1. **Error `UntrustedHost` (NextAuth v5):**
-   - **Penyebab:** NextAuth versi terbaru akan memblokir request otentikasi yang di-*forward* dari *host* Ingress jika tidak secara eksplisit diizinkan.
-   - **Solusi:** Pastikan variabel lingkungan `AUTH_TRUST_HOST="true"` sudah ditambahkan di dalam Kubernetes Secret `loyalty-frontend-secrets`.
-2. **Error Fetch `.../api/api/auth/login` (Double Path):**
-   - **Penyebab:** Kesalahan pada penulisan URL backend. Jika `BACKEND_URL` atau `NEXT_PUBLIC_BACKEND_URL` memiliki akhiran `/api` (contoh: `https://loyaltyprogramberijalan.../api`), maka fungsi otentikasi internal NextAuth akan menggabungkannya dengan `/api/auth/login`, sehingga memicu rute yang salah (Double API route).
-   - **Solusi:** Hapus akhiran `/api`. URL yang benar di dalam *secrets* harus berupa domain murni (contoh: `https://loyaltyprogramberijalan...nip.io`).
-   
-> **Prosedur Fix:**
-> Lakukan update rahasia (Secret) via perintah `kubectl patch` atau apply ulang YAML rahasia, kemudian jalankan restart pod:
-> `kubectl rollout restart deployment loyalty-frontend -n loyalty-prod`
+## 7. Rollback
+
+- Application rollback: redeploy the previous deterministic image tag in Coolify.
+- DNS rollback: restore DNS to the previous endpoint while the old stack still exists.
+- Jenkins rollback: disable Coolify webhook trigger and restore the previous pipeline commit.
+- Terraform rollback: impossible after destructive apply without reprovisioning. Keep the GKE stack until Coolify health checks and business smoke tests pass.

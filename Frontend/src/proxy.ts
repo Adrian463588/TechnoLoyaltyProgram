@@ -14,10 +14,7 @@
  *   /login, /api/auth/*, /api/docs/*, /_next/*, /favicon.ico
  */
 
-import NextAuth from "next-auth";
-import { authConfig } from "@/lib/auth/auth.config";
-
-const { auth } = NextAuth(authConfig);
+import { auth } from "@/lib/auth";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Paths that require no authentication

@@ -9,8 +9,8 @@ data:
       scrape_interval: 15s
       evaluation_interval: 15s
       external_labels:
-        cluster: 'loyalty-cluster-prod'
-        project: 'project-654b743a-b24b-45ad-85e'
+        cluster: 'loyalty-k3s-devops'
+        runtime: 'coolify'
 
     rule_files:
       - /etc/prometheus/rules/*.yaml
@@ -26,7 +26,7 @@ data:
         static_configs:
           - targets: ['localhost:9090']
 
-      # Scrape GKE Node metrics (via node-exporter daemonset)
+      # Scrape K3s node metadata
       - job_name: 'kubernetes-nodes'
         kubernetes_sd_configs:
           - role: node
@@ -40,7 +40,9 @@ data:
           - role: pod
             namespaces:
               names:
-                - loyalty-prod
+                - devops
+                - monitoring
+                - argocd
         relabel_configs:
           - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
             action: keep
@@ -62,12 +64,6 @@ data:
           - source_labels: [__meta_kubernetes_pod_name]
             action: replace
             target_label: kubernetes_pod_name
-
-      # Scrape backend service
-      - job_name: 'loyalty-backend'
-        static_configs:
-          - targets: ['loyalty-backend.loyalty-prod.svc.cluster.local:80']
-        metrics_path: '/metrics'
 
       # Scrape kube-state-metrics
       - job_name: 'kube-state-metrics'
