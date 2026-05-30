@@ -13,7 +13,6 @@ resources:
   # Grafana stack
   - grafana/grafana-configmap.yaml
   - grafana/grafana-dashboards.yaml
-  - grafana/grafana-dashboard-loyalty.yaml
   - grafana/grafana-deployment.yaml
   - grafana/grafana-hpa.yaml
   # Uptime Kuma
