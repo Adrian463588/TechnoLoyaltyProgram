@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - kubernetes/overlays/devops/namespaces.yaml
+  - kubernetes/overlays/devops/network-policy.yaml
+  - kubernetes/overlays/devops/argocd-hpa.yaml
+  - jenkins/jenkins-pvc.yaml
+  - jenkins/jenkins-deployment.yaml
+  - jenkins/jenkins-service.yaml
+  - jenkins/jenkins-ingress.yaml
+  - monitoring/prometheus/prometheus-configmap.yaml
+  - monitoring/prometheus/prometheus-rules-configmap.yaml
+  - monitoring/prometheus/prometheus-rbac.yaml
+  - monitoring/prometheus/prometheus-deployment.yaml
+  - monitoring/grafana/grafana-configmap.yaml
+  - monitoring/grafana/grafana-dashboard-loyalty.yaml
+  - monitoring/grafana/grafana-deployment.yaml
+  - monitoring/alertmanager/alertmanager-configmap.yaml
+  - monitoring/alertmanager/alertmanager-deployment.yaml
+  - monitoring/uptime-kuma/uptime-kuma-deployment.yaml
+  - monitoring/monitoring-ingress.yaml
+  - argocd/argocd-ingress.yaml
+  - argocd/projects/loyalty-project.yaml
+  - argocd/applications/loyalty-devops.yaml
+
+labels:
+  - pairs:
+      managed-by: argocd
+      stack: loyalty-devops
+    includeSelectors: false

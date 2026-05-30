@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: monitoring
+
+resources:
+  # Prometheus stack
+  - prometheus/prometheus-rbac.yaml
+  - prometheus/prometheus-configmap.yaml
+  - prometheus/prometheus-rules-configmap.yaml
+  - prometheus/prometheus-deployment.yaml
+  - prometheus/prometheus-hpa.yaml
+  # Grafana stack
+  - grafana/grafana-configmap.yaml
+  - grafana/grafana-dashboards.yaml
+  - grafana/grafana-dashboard-loyalty.yaml
+  - grafana/grafana-deployment.yaml
+  - grafana/grafana-hpa.yaml
+  # Uptime Kuma
+  - uptime-kuma/uptime-kuma-deployment.yaml
+  # Ingress
+  - monitoring-ingress.yaml
