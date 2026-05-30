@@ -97,7 +97,7 @@ Map each header to the best matching canonical field. If a header does not match
       return {
         mapping: cleanMapping,
         unmappedColumns: parsed.unmappedColumns || [],
-        division: parsed.division
+        ...(parsed.division !== undefined ? { division: parsed.division } : {}),
       };
 
     } catch (error) {

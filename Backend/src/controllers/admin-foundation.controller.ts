@@ -219,7 +219,9 @@ export const AdminFoundationController = {
       let unmappedColumns: string[] = [];
 
       if (rows.length > 0) {
-        const headers = Object.keys(rows[0]);
+        const firstRow = rows[0];
+        if (!firstRow) return res.status(500).json({ error: "Internal error: row read failed" });
+        const headers = Object.keys(firstRow);
         // Call AI mapper
         const aiResult = await aiColumnMapperService.mapColumns(headers, division);
         columnMapping = aiResult.mapping;

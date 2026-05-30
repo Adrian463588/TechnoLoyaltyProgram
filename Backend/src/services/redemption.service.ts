@@ -305,8 +305,8 @@ export class RedemptionService {
             eventType: TokenEventType.MANUAL_ADJUSTMENT,
             amount: Math.abs(d.amount),
             referenceId: requestId,
-            earnedYear: d.earnedYear ?? undefined,
-            expiresAt: d.expiresAt ?? undefined,
+            ...(d.earnedYear != null ? { earnedYear: d.earnedYear } : {}),
+            ...(d.expiresAt != null ? { expiresAt: d.expiresAt } : {}),
             performedBy: actorId,
             reason: `Refund: Redemption ${newStatus.toLowerCase()} (${request.rewardItem.name}) - Restoring cohort ${d.earnedYear || 'Unknown'}`,
           }, tx);

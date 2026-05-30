@@ -62,7 +62,9 @@ export class ManualAdjustmentService {
           performedBy,
           reason,
         }, tx);
-        entry = entries[entries.length - 1]; // Use last snapshot as representative entry
+        const lastEntry = entries[entries.length - 1];
+        if (!lastEntry) throw new Error("FIFO deduction produced no ledger entries");
+        entry = lastEntry; // Use last snapshot as representative entry
       } else {
         // 1. Calculate earnedYear for positive adjustments
         const earnedYear = new Date().getFullYear();
