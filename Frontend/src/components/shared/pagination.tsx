@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ export function Pagination({ currentPage, totalPages, totalResults }: Pagination
       
       <div className="flex items-center gap-1">
         <Link 
-          href={createPageURL(currentPage - 1)}
+          href={createPageURL(currentPage - 1) as Route}
           className={cn(
             "flex items-center justify-center h-10 px-4 rounded-lg border border-slate-200 text-sm font-bold text-slate-500 hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100 transition-all",
             currentPage <= 1 && "pointer-events-none opacity-30 bg-slate-50"
@@ -49,7 +50,7 @@ export function Pagination({ currentPage, totalPages, totalResults }: Pagination
         </div>
 
         <Link 
-          href={createPageURL(currentPage + 1)}
+          href={createPageURL(currentPage + 1) as Route}
           className={cn(
             "flex items-center justify-center h-10 px-4 rounded-lg border border-slate-200 text-sm font-bold text-slate-500 hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100 transition-all",
             currentPage >= totalPages && "pointer-events-none opacity-30 bg-slate-50"

@@ -45,7 +45,7 @@ export default async function AdminDashboardPage() {
     // Helper to format MM-DD to MMM DD
     const formatDateStr = (mmdd: string) => {
       const [m, d] = mmdd.split("-");
-      const date = new Date(2000, parseInt(m) - 1, parseInt(d));
+      const date = new Date(2000, parseInt(m ?? "1") - 1, parseInt(d ?? "1"));
       return date.toLocaleString('en-GB', { month: 'short', day: 'numeric' });
     };
 
@@ -232,7 +232,7 @@ export default async function AdminDashboardPage() {
                 </Link>
                 
                 <Link
-                  href="/admin/adjustments"
+                  href={"/admin/adjustments" as import("next").Route}
                   className="group relative p-6 rounded-2xl border border-[--color-border-subtle] bg-[--color-surface-base] hover:bg-[--color-surface-elevated] hover:border-[--color-error] hover:shadow-lg transition-all duration-300 flex flex-col items-start gap-5 overflow-hidden"
                 >
                   <div className="h-12 w-12 rounded-2xl bg-[--color-error]/10 flex items-center justify-center border border-[--color-error]/20 text-[--color-error] group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500">
@@ -250,7 +250,7 @@ export default async function AdminDashboardPage() {
                 </Link>
 
                 <Link
-                  href="/admin/mitra-validation"
+                  href={"/admin/mitra-validation" as import("next").Route}
                   className="group relative p-6 rounded-2xl border border-[--color-border-subtle] bg-[--color-surface-base] hover:bg-[--color-surface-elevated] hover:border-[--color-info] hover:shadow-lg transition-all duration-300 flex flex-col items-start gap-5 overflow-hidden"
                 >
                   <div className="h-12 w-12 rounded-2xl bg-[--color-info]/10 flex items-center justify-center border border-[--color-info]/20 text-[--color-info] group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">

@@ -19,10 +19,6 @@ export default async function TeamLeaderPage() {
       <div className="px-4 md:px-6">
         <Breadcrumb 
           className="py-4"
-          items={[
-            { label: "Dashboard", href: "/employee/dashboard" },
-            { label: "Team Overview" }
-          ]} 
         />
       </div>
       <main className="flex-1 p-4 md:p-6">
