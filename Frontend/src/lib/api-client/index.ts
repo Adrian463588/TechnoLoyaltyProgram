@@ -406,6 +406,17 @@ export const leaderApi = {
   },
 };
 
+// ── Chatbot API ────────────────────────────────────────────────────────────
+
+export const chatbotApi = {
+  executeTool: (token: string, toolName: string, args?: any) =>
+    apiFetch<any>("/api/chatbot/execute-tool", {
+      method: "POST",
+      headers: withAuth(token),
+      body: JSON.stringify({ toolName, args }),
+    }),
+};
+
 // ── Response types (Frontend-safe DTOs — no Prisma) ───────────────────────
 
 export interface LeaderDashboardResponse {
