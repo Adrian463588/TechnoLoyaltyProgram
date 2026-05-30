@@ -18,7 +18,7 @@ import { DemoAccountDock } from "@/components/auth/demo-account-dock";
 
 const ROLE_REDIRECT: Record<string, string> = {
   MITRA:       "/employee/dashboard",
-  TEAM_LEADER: "/employee/dashboard",
+  TEAM_LEADER: "/leader/dashboard",
   HC_PM:       "/admin/dashboard",
 };
 

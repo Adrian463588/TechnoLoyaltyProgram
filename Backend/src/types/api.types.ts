@@ -13,12 +13,12 @@ import type { Request } from "express";
 export type UserRole = "MITRA" | "TEAM_LEADER" | "HC_PM";
 
 export interface SessionUser {
-  id:          string;
-  npk:         string;
-  name:        string;
-  email:       string;
-  role:        UserRole;
-  divisionId?: string;
+  id:        string;
+  npk:       string;
+  name:      string;
+  email:     string;
+  role:      UserRole;
+  division?: string;
 }
 
 // ── Authenticated request extension ───────────────────────────────────────

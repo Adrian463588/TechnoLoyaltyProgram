@@ -20,8 +20,8 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
 };
 
 /**
- * Returns middleware that allows access only if the user's role level
- * is greater than or equal to the minimum required role.
+ * Returns middleware that allows access only if the user's role
+ * is explicitly included in the allowedRoles list.
  */
 export function authorize(...allowedRoles: UserRole[]): RequestHandler {
   return (req, res, next) => {
@@ -32,10 +32,7 @@ export function authorize(...allowedRoles: UserRole[]): RequestHandler {
       return;
     }
 
-    const userLevel     = ROLE_HIERARCHY[userRole] ?? 0;
-    const hasAccess     = allowedRoles.some(
-      (role) => ROLE_HIERARCHY[role] <= userLevel
-    );
+    const hasAccess = allowedRoles.includes(userRole);
 
     if (!hasAccess) {
       res.status(403).json({ error: "Forbidden: insufficient permissions" });

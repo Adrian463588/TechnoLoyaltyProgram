@@ -31,7 +31,7 @@ export async function getServerToken(): Promise<string> {
     name: session.user.name ?? "",
     email: session.user.email ?? "",
     role: session.user.role,
-    divisionId: session.user.divisionId,
+    division: (session.user as any).division,
     exp: Math.floor(Date.now() / 1000) + 5 * 60,
   }));
 

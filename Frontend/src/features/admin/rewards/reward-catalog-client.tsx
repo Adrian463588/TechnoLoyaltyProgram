@@ -92,7 +92,7 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
       <div className="bento-card p-6 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
         <div>
           <h1 className="text-card-heading text-2xl mb-1 flex items-center gap-3">
-            <Gift className="h-6 w-6 text-[--color-accent]" />
+            <Gift className="h-6 w-6 text-primary" />
             Reward Catalog
           </h1>
           <p className="text-[--color-text-secondary]">

@@ -6,20 +6,19 @@ import { DashboardContent } from "./dashboard-content";
 
 /**
  * Fetches dashboard data from the real backend.
- * Returns safe fallback values if the backend is unavailable (graceful degradation).
  */
 async function getDashboardData(token: string) {
   try {
     const [summary, settings] = await Promise.all([
       employeeApi.getDashboard(token),
-      adminApi.getSystemSettings(token), // Using adminApi as it holds the global config
+      adminApi.getSystemSettings(token).catch(() => null),
     ]);
 
     return {
       tokenBalance:      summary.tokenSummary.totalTokens,
       tier:              summary.user.membershipTier,
       eligibilityStatus: { eligible: summary.tokenSummary.isEligibleForReward },
-      period:            "—", // Will be calculated in client component for consistency
+      period:            "—",
       recentTransactions: summary.recentTransactions,
       settings:          settings,
     };

@@ -24,7 +24,7 @@ import {
 export const adminRoutes = Router();
 
 // ── Shared System Settings (Read-access for all authenticated users) ────────
-adminRoutes.get(  "/system-settings", authenticate, authorize("MITRA"), SystemSettingController.getSettings as RequestHandler);
+adminRoutes.get(  "/system-settings", authenticate, authorize("MITRA", "TEAM_LEADER", "HC_PM"), SystemSettingController.getSettings as RequestHandler);
 
 // ── Apply auth guards to all remaining admin routes ──────────────────────────
 adminRoutes.use(authenticate, authorize("HC_PM"));

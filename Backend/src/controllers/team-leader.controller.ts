@@ -18,7 +18,72 @@ import { NotFoundError, ValidationError, ForbiddenError } from "@/errors/index";
 import { CacheService } from "@/services/cache.service";
 import { CacheKeys } from "@/utils/cache/cache-key.registry";
 
+import { redemptionService } from "@/services/redemption.service";
+
 export const TeamLeaderController = {
+
+  /**
+   * GET /api/leader/dashboard
+   * Unified endpoint for TL dashboard summary.
+   */
+  getDashboard: (async (req, res, next) => {
+    try {
+      const { user } = req;
+      
+      // 1. Fetch Team Members
+      const members = await prisma.user.findMany({
+        where: {
+          teamLeadId:    user.id,
+          partnerStatus: { not: "RESIGNED" },
+        },
+        select: {
+          id:            true,
+          membershipTier: true,
+        },
+      });
+
+      // 2. Fetch Aggregated Metrics
+      const memberIds = members.map(m => m.id);
+      
+      const [tokenHistory, redemptionsRes] = await Promise.all([
+        // Get total tokens for all members
+        prisma.tokenLedger.aggregate({
+          where: { userId: { in: memberIds } },
+          _sum: { amount: true }
+        }),
+        // Get recent redemptions in division
+        user.division ? redemptionService.listByDivision(user.division, { limit: 5 }) : { requests: [], total: 0 }
+      ]);
+
+      // 3. Calculate Tier Distribution
+      const distribution = { SAPHIRE: 0, EMERALD: 0, RUBY: 0, DIAMOND: 0 };
+      members.forEach(m => {
+        const tier = m.membershipTier as keyof typeof distribution;
+        if (distribution[tier] !== undefined) distribution[tier]++;
+      });
+
+      res.json({
+        teamTotalTokens: tokenHistory._sum.amount || 0,
+        teamTierDistribution: distribution,
+        recentRedemptions: redemptionsRes.requests.map((r) => ({
+          id: r.id,
+          status: r.status,
+          createdAt: r.submittedAt.toISOString(),
+          mitra: {
+            name: r.mitra.name,
+            division: r.mitra.division,
+          },
+          item: {
+            name: r.rewardItem.name,
+            tokenCost: r.tokenCost,
+          },
+        })),
+        memberCount: members.length
+      });
+    } catch (err) {
+      next(err);
+    }
+  }) satisfies RequestHandler,
 
   /**
    * GET /api/leader/team
