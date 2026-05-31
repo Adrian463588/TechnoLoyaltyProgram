@@ -35,6 +35,6 @@ ENV HOSTNAME="0.0.0.0"
 
 # Health check for Kubernetes probes
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/next.svg || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:${PORT:-3000}/api/health || exit 1
 
 CMD ["node", "--max-old-space-size=512", "server.js"]
