@@ -189,14 +189,14 @@ jobs:
         run: |
           curl --fail --silent --show-error \
             --request POST \
-            --header "Authorization: Bearer your-coolify-api-token-here" \
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
             "${{ secrets.COOLIFY_BACKEND_WEBHOOK }}"
 
       - name: Deploy Frontend via Coolify Webhook
         run: |
           curl --fail --silent --show-error \
             --request POST \
-            --header "Authorization: Bearer your-coolify-api-token-here" \
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
             "${{ secrets.COOLIFY_FRONTEND_WEBHOOK }}"
 
       - name: Verify Backend health
