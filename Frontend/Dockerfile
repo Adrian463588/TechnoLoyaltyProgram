@@ -30,11 +30,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
 ENV NODE_ENV=production
+# Force port 3000 — do NOT allow Coolify to override this via its env vars
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Health check for Kubernetes probes
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:${PORT:-3000}/api/health || exit 1
+# Health check — always port 3000 (matches EXPOSE and CMD)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1
 
-CMD ["node", "--max-old-space-size=512", "server.js"]
+# Explicitly pass --port to node server to override any parent-scope PORT injection
+CMD ["node", "--max-old-space-size=512", "server.js", "--port", "3000"]
