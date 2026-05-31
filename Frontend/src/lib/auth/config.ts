@@ -12,7 +12,9 @@ import Credentials from "next-auth/providers/credentials";
 import { loginSchema } from "@/lib/validations";
 import { authConfig } from "./auth.config";
 
-const BACKEND_URL = process.env["BACKEND_URL"] ?? "http://localhost:8080";
+const RAW_BACKEND_URL = process.env["BACKEND_URL"] ?? "http://localhost:8080";
+// Safely strip trailing /api or slashes to prevent the /api/api routing bug
+const BACKEND_URL = RAW_BACKEND_URL.replace(/\/api\/?$/, "").replace(/\/$/, "");
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -36,7 +38,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             body: JSON.stringify({ npk, password }),
           });
 
-          if (!res.ok) return null;
+          if (!res.ok) {
+            console.error(`[NextAuth] Backend rejected login with status: ${res.status}`);
+            return null;
+          }
 
           const data = (await res.json()) as {
             user: {
@@ -61,7 +66,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             division:      data.user.division,
             partnerStatus: data.user.partnerStatus,
           };
-        } catch {
+        } catch (error) {
+          console.error("[NextAuth] Network or Server Error during authentication:", error);
           return null;
         }
       },

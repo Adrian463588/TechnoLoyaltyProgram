@@ -24,7 +24,11 @@ RUN addgroup --system --gid 1001 nodejs \
 
 COPY --from=deps --chown=nodeapp:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodeapp:nodejs /app/dist ./dist
-COPY package.json ./
+COPY --chown=nodeapp:nodejs package.json ./
+COPY --chown=nodeapp:nodejs prisma ./prisma
+COPY --chown=nodeapp:nodejs entrypoint.sh ./
+
+RUN chmod +x ./entrypoint.sh
 
 USER nodeapp
 EXPOSE 3000
@@ -35,4 +39,5 @@ ENV PORT=3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/health || exit 1
 
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "--max-old-space-size=384", "dist/src/app.js"]
