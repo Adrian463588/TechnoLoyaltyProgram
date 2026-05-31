@@ -87,10 +87,18 @@ export async function POST(req: NextRequest) {
     const toolsConfig = allowedTools.length > 0 ? [{ functionDeclarations: allowedTools }] : [];
 
     // 2. Build System Prompt based on Role
-    let systemInstruction = `Anda adalah asisten virtual bernama "LoyaltyBot" untuk program loyalitas karyawan. Jawablah dengan ramah, profesional, dan dalam bahasa Indonesia. Nama pengguna adalah ${userName}. `;
+    let systemInstruction = `Anda adalah asisten virtual bernama "LoyaltyBot" untuk program loyalitas karyawan. Jawablah dengan ramah, profesional, dan dalam bahasa Indonesia. Nama pengguna adalah ${userName}. 
+
+PERATURAN PENTING:
+1. Anda WAJIB menggunakan fungsi (tools) yang tersedia untuk menjawab pertanyaan tentang saldo token, riwayat, katalog hadiah, atau data tim. 
+2. JANGAN PERNAH menebak atau mengarang (halusinasi) angka saldo, tier, atau stok hadiah. Jika tidak tahu, panggil tool yang relevan.
+3. Selalu periksa tool 'get_my_token_summary' terlebih dahulu jika pengguna bertanya tentang rekomendasi atau apa yang bisa mereka ambil.
+4. Jika data dari tool tidak ditemukan, sampaikan bahwa data tidak tersedia di database.
+5. Gunakan data asli dari database sebagai satu-satunya sumber kebenaran.
+`;
     
     if (allowedTools.length > 0) {
-      systemInstruction += "Anda memiliki akses ke beberapa fungsi (tools) untuk mengambil data asli dari database program loyalitas secara real-time. Gunakan fungsi tersebut jika pengguna bertanya tentang data spesifik. ";
+      systemInstruction += "Anda memiliki akses ke fungsi (tools) real-time. Gunakan fungsi tersebut sekarang jika pertanyaan membutuhkan data spesifik. ";
     }
 
     if (userRole === "HC_PM") {
@@ -139,6 +147,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Start Chat
+    const startChatTime = Date.now();
     const chat = model.startChat({
       history: history,
       generationConfig: {
@@ -147,49 +156,55 @@ export async function POST(req: NextRequest) {
     });
 
     // --- Handling Function Calling ---
+    console.log("[Chatbot] Sending message to Gemini...");
     let response = await chat.sendMessage(latestMessageContent);
+    console.log(`[Chatbot] Gemini first response took: ${Date.now() - startChatTime}ms`);
+    
     let functionCalls = response.response.functionCalls();
 
     if (functionCalls && allowedTools.length > 0) {
-      const functionResponses = [];
+      const toolStartTime = Date.now();
       
-      for (const call of functionCalls) {
-        // Double check if AI is trying to call a tool it shouldn't have access to (Safety)
+      // Execute all tool calls in PARALLEL for maximum performance
+      const functionResponses = await Promise.all(functionCalls.map(async (call) => {
         const isAuthorized = ALL_TOOLS.find(t => t.name === call.name && (t as any).role.includes(userRole));
         
         if (!isAuthorized) {
-          console.warn(`[Chatbot] AI tried to call unauthorized tool: ${call.name} as ${userRole}`);
-          functionResponses.push({
+          console.warn(`[Chatbot] AI tried to call unauthorized tool: ${call.name}`);
+          return {
             functionResponse: {
               name: call.name,
-              response: { error: "Anda tidak memiliki otoritas untuk mengakses data ini." }
+              response: { error: "Unauthorized" }
             }
-          });
-          continue;
+          };
         }
 
-        console.log(`[Chatbot] Executing authorized tool: ${call.name}`, call.args);
-        
         try {
+          const apiCallStart = Date.now();
           const toolResult = await chatbotApi.executeTool(token, call.name, call.args);
-          functionResponses.push({
+          console.log(`[Chatbot] Parallel Tool ${call.name} took: ${Date.now() - apiCallStart}ms`);
+          
+          return {
             functionResponse: {
               name: call.name,
               response: { content: toolResult }
             }
-          });
+          };
         } catch (error) {
-          console.error(`[Chatbot] Tool execution failed: ${call.name}`, error);
-          functionResponses.push({
+          console.error(`[Chatbot] Tool ${call.name} failed`, error);
+          return {
             functionResponse: {
               name: call.name,
-              response: { error: "Gagal mengambil data dari database." }
+              response: { error: "Failed to fetch data" }
             }
-          });
+          };
         }
-      }
+      }));
 
+      console.log(`[Chatbot] All tools (${functionCalls.length}) finished in parallel: ${Date.now() - toolStartTime}ms`);
+      const streamStartTime = Date.now();
       const finalResult = await chat.sendMessageStream(functionResponses);
+      console.log(`[Chatbot] Final stream start took: ${Date.now() - streamStartTime}ms`);
       return createStreamResponse(finalResult);
     }
 

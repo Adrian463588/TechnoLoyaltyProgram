@@ -12,6 +12,8 @@ export const ChatbotController = {
       const { toolName, args } = req.body;
       const { user } = req; // Injected by authentication middleware
 
+      console.log(`[Chatbot Tool] Executing: ${toolName} for user: ${user.npk}`, args);
+
       let result: any = null;
 
       switch (toolName) {
