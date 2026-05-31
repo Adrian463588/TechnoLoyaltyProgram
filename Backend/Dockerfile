@@ -24,6 +24,9 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nodeapp
 
+# Ensure uploads directory exists and is writable by non-root user
+RUN mkdir -p /app/uploads/documents && chown -R nodeapp:nodejs /app/uploads
+
 COPY --from=deps --chown=nodeapp:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodeapp:nodejs /app/dist ./dist
 COPY --chown=nodeapp:nodejs package.json ./
