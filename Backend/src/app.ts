@@ -42,7 +42,16 @@ app.use((_req, res, next) => {
   next();
 });
 
-// ── Health check ──────────────────────────────────────────────────────────
+// ── Health & Root checks ──────────────────────────────────────────────────
+app.get("/", (_req, res) => {
+  res.json({
+    service: "Techno Loyalty Program API",
+    status: "online",
+    docs: "/api-docs",
+    health: "/health"
+  });
+});
+
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
