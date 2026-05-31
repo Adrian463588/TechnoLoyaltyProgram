@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
   experimental: {
     // Other experimental features would go here
     optimizePackageImports: ["lucide-react", "framer-motion"],
+    webpackMemoryOptimizations: true,
   },
 
   // ── Standalone output: ONLY in production builds ─────────────────────────
@@ -27,11 +28,6 @@ const nextConfig: NextConfig = {
   // ── Type-safe routing ────────────────────────────────────────────────────
   // Disable in dev if it's causing slow startup/HMR.
   typedRoutes: false,
-
-  // ── Memory optimization for dev mode (Webpack fallback) ──────────────────
-  experimental: {
-    webpackMemoryOptimizations: true,
-  },
 
   // ── Server-only env vars passed to client ───────────────────────────────
   env: {

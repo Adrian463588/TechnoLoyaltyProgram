@@ -9,10 +9,4 @@ export default defineConfig({
   datasource: {
     url: connectionString,
   },
-  migrate: {
-    adapter: () => {
-      const pool = new Pool({ connectionString });
-      return new PrismaPg(pool);
-    },
-  },
 });
