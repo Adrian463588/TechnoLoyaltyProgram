@@ -24,24 +24,24 @@ import {
 export const adminRoutes = Router();
 
 // ── Shared System Settings (Read-access for all authenticated users) ────────
-adminRoutes.get(  "/system-settings", authenticate, authorize("MITRA"), SystemSettingController.getSettings as RequestHandler);
+adminRoutes.get(  "/system-settings", authenticate, authorize("MITRA"), SystemSettingController.getSettings);
 
 // ── Apply auth guards to all remaining admin routes ──────────────────────────
 adminRoutes.use(authenticate, authorize("HC_PM"));
 
-adminRoutes.get("/users", AdminFoundationController.listUsers as RequestHandler);
-adminRoutes.post("/users/status", AdminFoundationController.updateUserStatus as RequestHandler);
-adminRoutes.get("/audit", AdminFoundationController.listAuditLogs as RequestHandler);
-adminRoutes.get("/uploads", AdminFoundationController.listUploads as RequestHandler);
+adminRoutes.get("/users", AdminFoundationController.listUsers);
+adminRoutes.post("/users/status", AdminFoundationController.updateUserStatus);
+adminRoutes.get("/audit", AdminFoundationController.listAuditLogs);
+adminRoutes.get("/uploads", AdminFoundationController.listUploads);
 adminRoutes.post(
   "/uploads/process",
   uploadProcessMiddleware,
-  AdminFoundationController.processUpload as RequestHandler,
+  AdminFoundationController.processUpload,
 );
-adminRoutes.post("/uploads/commit", AdminFoundationController.commitUpload as RequestHandler);
+adminRoutes.post("/uploads/commit", AdminFoundationController.commitUpload);
 
 // ── System Settings (Write-access for HC_PM only) ──────────────────────────
-adminRoutes.patch("/system-settings",                    SystemSettingController.updateSettings    as RequestHandler);
+adminRoutes.patch("/system-settings",                    SystemSettingController.updateSettings);
 
 // ── Redemptions ─────────────────────────────────────────────────────────────
 /**
@@ -55,7 +55,7 @@ adminRoutes.patch("/system-settings",                    SystemSettingController
  *       200:
  *         description: List of redemptions retrieved
  */
-adminRoutes.get(  "/redemptions",                        RedemptionController.listAll              as RequestHandler);
+adminRoutes.get(  "/redemptions",                        RedemptionController.listAll);
 
 /**
  * @openapi
@@ -75,7 +75,7 @@ adminRoutes.get(  "/redemptions",                        RedemptionController.li
  *       404:
  *         description: Redemption not found
  */
-adminRoutes.get(  "/redemptions/:id",                    RedemptionController.getById              as RequestHandler);
+adminRoutes.get(  "/redemptions/:id",                    RedemptionController.getById);
 
 /**
  * @openapi
@@ -103,7 +103,7 @@ adminRoutes.get(  "/redemptions/:id",                    RedemptionController.ge
  *       200:
  *         description: Status updated
  */
-adminRoutes.post( "/redemptions/:id/status",             RedemptionController.updateStatus         as RequestHandler);
+adminRoutes.post( "/redemptions/:id/status",             RedemptionController.updateStatus);
 
 /**
  * @openapi
@@ -121,7 +121,7 @@ adminRoutes.post( "/redemptions/:id/status",             RedemptionController.up
  *       200:
  *         description: Documents verified
  */
-adminRoutes.post( "/redemptions/:id/verify-documents",   RedemptionController.verifyDocuments      as RequestHandler);
+adminRoutes.post( "/redemptions/:id/verify-documents",   RedemptionController.verifyDocuments);
 
 // ── Manual Token Adjustments (HC-01) ────────────────────────────────────────
 /**
@@ -146,7 +146,7 @@ adminRoutes.post( "/redemptions/:id/verify-documents",   RedemptionController.ve
  *       201:
  *         description: Tokens adjusted successfully
  */
-adminRoutes.post( "/adjustments",                        ManualAdjustmentController.adjust         as RequestHandler);
+adminRoutes.post( "/adjustments",                        ManualAdjustmentController.adjust);
 
 // ── Reward Catalog Management (HC-02) ───────────────────────────────────────
 /**
@@ -180,8 +180,8 @@ adminRoutes.post( "/adjustments",                        ManualAdjustmentControl
  *       201:
  *         description: Reward created
  */
-adminRoutes.get(  "/rewards",                            RewardCatalogController.listAll           as RequestHandler);
-adminRoutes.post( "/rewards",                            RewardCatalogController.create            as RequestHandler);
+adminRoutes.get(  "/rewards",                            RewardCatalogController.listAll);
+adminRoutes.post( "/rewards",                            RewardCatalogController.create);
 
 /**
  * @openapi
@@ -222,9 +222,9 @@ adminRoutes.post( "/rewards",                            RewardCatalogController
  *       200:
  *         description: Reward deactivated
  */
-adminRoutes.patch("/rewards/:id",                        RewardCatalogController.update            as RequestHandler);
-adminRoutes.delete("/rewards/:id",                       RewardCatalogController.delete            as RequestHandler);
-adminRoutes.post("/rewards/:id/toggle-status",           RewardCatalogController.toggleStatus      as RequestHandler);
+adminRoutes.patch("/rewards/:id",                        RewardCatalogController.update);
+adminRoutes.delete("/rewards/:id",                       RewardCatalogController.delete);
+adminRoutes.post("/rewards/:id/toggle-status",           RewardCatalogController.toggleStatus);
 
 // ── Partner Status Confirmations (HC-06) ─────────────────────────────────────
 /**
@@ -255,8 +255,8 @@ adminRoutes.post("/rewards/:id/toggle-status",           RewardCatalogController
  *       201:
  *         description: Request created
  */
-adminRoutes.get(  "/partner-confirmations",              PartnerStatusConfirmationController.listForHC        as RequestHandler);
-adminRoutes.post( "/partner-confirmations",              PartnerStatusConfirmationController.requestConfirmation as RequestHandler);
+adminRoutes.get(  "/partner-confirmations",              PartnerStatusConfirmationController.listForHC);
+adminRoutes.post( "/partner-confirmations",              PartnerStatusConfirmationController.requestConfirmation);
 
 /**
  * @openapi
@@ -274,5 +274,5 @@ adminRoutes.post( "/partner-confirmations",              PartnerStatusConfirmati
  *       200:
  *         description: Request cancelled
  */
-adminRoutes.post( "/partner-confirmations/:id/cancel",   PartnerStatusConfirmationController.cancel          as RequestHandler);
+adminRoutes.post( "/partner-confirmations/:id/cancel",   PartnerStatusConfirmationController.cancel);
 
