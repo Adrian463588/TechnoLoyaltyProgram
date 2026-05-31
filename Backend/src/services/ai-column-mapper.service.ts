@@ -35,14 +35,28 @@ export class AiColumnMapperService {
       return this.fallbackMapping(headers, divisionHint);
     }
 
-    try {
-      const response = await this.ai.models.generateContent({
-        model: this.modelName,
-        contents: [
-          {
-            role: "user",
-            parts: [{
-              text: `You are an AI column mapper for an HR Loyalty Program bulk upload system.
+    const modelsToTry = [
+      this.modelName,
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite",
+      "gemini-1.5-flash"
+    ].filter(Boolean) as string[];
+
+    const uniqueModels = Array.from(new Set(modelsToTry));
+    let response = null;
+    let lastError = null;
+
+    for (const modelName of uniqueModels) {
+      try {
+        console.warn(`[AI_MAPPER] Attempting column mapping with model: ${modelName}`);
+        response = await this.ai.models.generateContent({
+          model: modelName,
+          contents: [
+            {
+              role: "user",
+              parts: [{
+                text: `You are an AI column mapper for an HR Loyalty Program bulk upload system.
 Your task is to map the provided CSV/Excel headers to our system's canonical fields.
 
 Canonical fields available: ${CANONICAL_FIELDS.join(", ")}
@@ -52,37 +66,47 @@ Headers to map:
 ${headers.map((h, i) => `${i + 1}. "${h}"`).join("\n")}
 
 Map each header to the best matching canonical field. If a header does not match any canonical field, do not include it in the mapping. Return unmapped columns in the unmappedColumns array. If division can be detected from the headers (e.g., 'sprint' implies TECHNO, 'slot' implies OPCENT/TELE), return it.`
-            }]
-          }
-        ],
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              mapping: {
-                type: Type.OBJECT,
-                description: "Map from original header string to canonical field string",
-                additionalProperties: { type: Type.STRING }
+              }]
+            }
+          ],
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                mapping: {
+                  type: Type.OBJECT,
+                  description: "Map from original header string to canonical field string",
+                  additionalProperties: { type: Type.STRING }
+                },
+                unmappedColumns: {
+                  type: Type.ARRAY,
+                  description: "List of original headers that could not be mapped to any canonical field",
+                  items: { type: Type.STRING }
+                },
+                division: {
+                  type: Type.STRING,
+                  description: "Detected division based on headers (OPCENT, TELE, TECHNO)",
+                  enum: ["OPCENT", "TELE", "TECHNO"]
+                }
               },
-              unmappedColumns: {
-                type: Type.ARRAY,
-                description: "List of original headers that could not be mapped to any canonical field",
-                items: { type: Type.STRING }
-              },
-              division: {
-                type: Type.STRING,
-                description: "Detected division based on headers (OPCENT, TELE, TECHNO)",
-                enum: ["OPCENT", "TELE", "TECHNO"]
-              }
+              required: ["mapping", "unmappedColumns"]
             },
-            required: ["mapping", "unmappedColumns"]
-          },
-          temperature: 0.1, // Low temperature for deterministic output
-        }
-      });
+            temperature: 0.1, // Low temperature for deterministic output
+          }
+        });
+        console.warn(`[AI_MAPPER] Successfully mapped columns with model: ${modelName}`);
+        break;
+      } catch (err: any) {
+        lastError = err;
+        console.error(`[AI_MAPPER] Model ${modelName} failed:`, err.message || err);
+      }
+    }
 
-      if (!response.text) throw new Error("Empty response from AI");
+    try {
+      if (!response || !response.text) {
+        throw lastError || new Error("All Gemini models failed to map columns.");
+      }
       
       const parsed = JSON.parse(response.text) as ColumnMappingResult;
       

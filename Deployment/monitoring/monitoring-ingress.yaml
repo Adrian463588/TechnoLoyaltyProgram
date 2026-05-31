@@ -8,14 +8,11 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection "Upgrade";
 spec:
   # ingressClassName menggantikan annotation kubernetes.io/ingress.class yang deprecated
   ingressClassName: nginx
   rules:
-    - host: grafana.34.50.82.124.nip.io
+    - host: grafana.34.101.163.231.nip.io
       http:
         paths:
           - path: /
@@ -25,7 +22,7 @@ spec:
                 name: grafana
                 port:
                   number: 80
-    - host: uptime.34.50.82.124.nip.io
+    - host: uptime.34.101.163.231.nip.io
       http:
         paths:
           - path: /

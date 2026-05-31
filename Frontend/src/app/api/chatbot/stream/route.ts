@@ -50,15 +50,41 @@ export async function POST(req: NextRequest) {
       parts: [{ text: m.content }]
     }));
 
-    // 4. Call Gemini API with Streaming
-    const responseStream = await ai.models.generateContentStream({
-      model: process.env.GEMINI_MODEL || "gemini-2.0-flash",
-      contents: formattedContents,
-      config: {
-        systemInstruction: systemInstruction,
-        temperature: 0.7,
+    // 4. Call Gemini API with Streaming (using a robust multi-model fallback)
+    const modelsToTry = [
+      process.env.GEMINI_MODEL,
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite",
+      "gemini-1.5-flash"
+    ].filter(Boolean) as string[];
+
+    const uniqueModels = Array.from(new Set(modelsToTry));
+    let responseStream = null;
+    let lastError = null;
+
+    for (const modelName of uniqueModels) {
+      try {
+        console.warn(`[Chatbot] Attempting to generate stream with model: ${modelName}`);
+        responseStream = await ai.models.generateContentStream({
+          model: modelName,
+          contents: formattedContents,
+          config: {
+            systemInstruction: systemInstruction,
+            temperature: 0.7,
+          }
+        });
+        console.warn(`[Chatbot] Successfully initialized stream with model: ${modelName}`);
+        break;
+      } catch (err: any) {
+        lastError = err;
+        console.error(`[Chatbot] Model ${modelName} failed:`, err.message || err);
       }
-    });
+    }
+
+    if (!responseStream) {
+      throw lastError || new Error("All Gemini models failed to initialize.");
+    }
 
     // 5. Create a TransformStream to convert Gemini chunks to Server-Sent Events (SSE)
     const stream = new TransformStream();
