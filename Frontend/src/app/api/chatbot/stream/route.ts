@@ -6,12 +6,11 @@ import { GoogleGenAI } from "@google/genai";
 // to pass the conversation history in the request payload for this demo.
 // A production app would store this securely on the server.
 
-const ai = new GoogleGenAI({ 
-  apiKey: process.env.GEMINI_API_KEY
-});
-
 export async function POST(req: NextRequest) {
   try {
+    const ai = new GoogleGenAI({ 
+      apiKey: process.env.GEMINI_API_KEY || "missing"
+    });
     // 1. Verify Authentication
     const token = await getServerToken();
     if (!token) {
