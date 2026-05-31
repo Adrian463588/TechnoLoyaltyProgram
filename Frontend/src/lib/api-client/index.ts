@@ -8,13 +8,7 @@
  * DRY: one fetch helper, one error-handling pattern, reused everywhere.
  */
 
-const RAW_BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL ??
-  process.env.BACKEND_URL ??
-  "http://localhost:8080";
-
-// Safely strip trailing /api or slashes to prevent the /api/api routing bug
-const BACKEND_URL = RAW_BACKEND_URL.replace(/\/api\/?$/, "").replace(/\/$/, "");
+import { PUBLIC_BACKEND_URL as BACKEND_URL } from "@/lib/backend-url";
 
 // ── Base fetch helper ──────────────────────────────────────────────────────
 
