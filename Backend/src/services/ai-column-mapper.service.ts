@@ -41,7 +41,7 @@ export class AiColumnMapperService {
       "gemini-2.0-flash",
       "gemini-2.0-flash-lite",
       "gemini-1.5-flash"
-    ].filter(Boolean) as string[];
+    ].filter(Boolean);
 
     const uniqueModels = Array.from(new Set(modelsToTry));
     let response = null;
