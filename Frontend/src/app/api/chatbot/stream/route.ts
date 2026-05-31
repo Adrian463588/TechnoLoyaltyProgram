@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     // 4. Call Gemini API with Streaming
     const responseStream = await ai.models.generateContentStream({
-      model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
+      model: process.env.GEMINI_MODEL || "gemini-2.0-flash",
       contents: formattedContents,
       config: {
         systemInstruction: systemInstruction,
