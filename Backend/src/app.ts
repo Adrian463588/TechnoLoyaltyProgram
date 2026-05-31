@@ -31,11 +31,17 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps, curl, or server-to-server) 
-      // or if the origin is explicitly in our allowed list.
-      if (!origin || allowedOrigins.includes(origin)) {
+      // or if the origin is explicitly in our allowed list, or ends with our dynamic deployment domains.
+      const isAllowed = !origin || 
+        allowedOrigins.includes(origin) || 
+        origin.endsWith(".sslip.io") || 
+        origin.endsWith(".nip.io");
+
+      if (isAllowed) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        // Use callback(null, false) instead of throwing an Error to prevent 500 Internal Server Errors
+        callback(null, false);
       }
     },
     credentials: true,
