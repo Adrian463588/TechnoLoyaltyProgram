@@ -8,6 +8,7 @@
     "dev": "cross-env NODE_OPTIONS=\"--max-old-space-size=384 --expose-gc\" tsx watch --tsconfig tsconfig.json src/app.ts",
     "build": "tsc --project tsconfig.json && npx tsc-alias -p tsconfig.json",
     "start": "node dist/app.js",
+    "seed": "node dist/prisma/seed.js",
     "lint": "eslint \"src/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "typecheck": "tsc --noEmit",

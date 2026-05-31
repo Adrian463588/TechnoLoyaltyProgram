@@ -12,7 +12,11 @@ echo "=> Running Prisma migrations..."
 npx prisma migrate deploy
 
 echo "=> Running database seeds..."
-npm run seed
+if ! npm run seed; then
+  echo "[WARNING] Database seeding failed or exited with a non-zero status."
+  echo "[WARNING] This is often expected if the database is already populated."
+  echo "[WARNING] Continuing application startup gracefully..."
+fi
 
 echo "=> Starting application..."
 exec "$@"
