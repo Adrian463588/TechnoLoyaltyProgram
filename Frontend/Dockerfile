@@ -34,9 +34,9 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Health check — always port 3000 (matches EXPOSE and CMD)
+# Health check — use node directly to avoid wget following HTTP redirects
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
-  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1
+  CMD node -e "require('http').get({host:'127.0.0.1',port:3000,path:'/api/health',timeout:8000},(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1)).on('timeout',()=>process.exit(1))"
 
 # Explicitly pass --port to node server to override any parent-scope PORT injection
 CMD ["node", "--max-old-space-size=512", "server.js", "--port", "3000"]
