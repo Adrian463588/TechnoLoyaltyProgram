@@ -2,6 +2,7 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+COPY prisma.config.ts ./
 COPY prisma ./prisma
 RUN npm install --omit=dev && npx prisma generate
 
@@ -9,6 +10,7 @@ RUN npm install --omit=dev && npx prisma generate
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
+COPY prisma.config.ts ./
 COPY prisma ./prisma
 RUN npm install --include=dev && npx prisma generate
 COPY . .
@@ -25,6 +27,7 @@ RUN addgroup --system --gid 1001 nodejs \
 COPY --from=deps --chown=nodeapp:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodeapp:nodejs /app/dist ./dist
 COPY --chown=nodeapp:nodejs package.json ./
+COPY --chown=nodeapp:nodejs prisma.config.ts ./
 COPY --chown=nodeapp:nodejs prisma ./prisma
 COPY --chown=nodeapp:nodejs entrypoint.sh ./
 
