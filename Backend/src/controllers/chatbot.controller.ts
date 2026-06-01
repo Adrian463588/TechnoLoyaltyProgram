@@ -35,6 +35,15 @@ export const ChatbotController = {
           }
           result = await chatbotService.getTeamOverview(user.division);
           break;
+        case "get_token_leaderboard":
+          if (user.role !== "TEAM_LEADER" && user.role !== "HC_PM") {
+            return res.status(403).json({ error: "Unauthorized role for this tool" });
+          }
+          // Team Leader can only see their own division leaderboard if specified, 
+          // or we default to their division if they don't specify and aren't HC_PM.
+          const divisionFilter = user.role === "TEAM_LEADER" ? user.division : args?.division;
+          result = await chatbotService.getTokenLeaderboard(args?.limit, divisionFilter);
+          break;
         case "get_global_pending_actions":
           if (user.role !== "HC_PM") {
             return res.status(403).json({ error: "Unauthorized role for this tool" });

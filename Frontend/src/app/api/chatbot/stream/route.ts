@@ -54,6 +54,18 @@ const ALL_TOOLS = [
     role: ["TEAM_LEADER", "HC_PM"]
   },
   {
+    name: "get_token_leaderboard",
+    description: "Melihat daftar peringkat mitra dengan saldo token terbanyak. Bisa difilter berdasarkan divisi.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        limit: { type: "NUMBER", description: "Jumlah peringkat yang ingin ditampilkan (default 10)." },
+        division: { type: "STRING", description: "Filter berdasarkan nama divisi tertentu." }
+      }
+    },
+    role: ["TEAM_LEADER", "HC_PM"]
+  },
+  {
     name: "get_global_pending_actions",
     description: "Sebagai Admin HC, melihat jumlah tugas penukaran atau klaim yang menunggu persetujuan secara global.",
     role: ["HC_PM"]

@@ -127,15 +127,71 @@ export function ChatbotWidget() {
   const renderMessage = (content: string) => {
     if (!content) return null;
     
-    // Split by bold markers **text**
-    const parts = content.split(/(\*\*.*?\*\*)/g);
-    
-    return parts.map((part, index) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={index} className="font-bold">{part.slice(2, -2)}</strong>;
+    const lines = content.split("\n");
+    let currentList: { type: "ul" | "ol"; items: React.ReactNode[] } | null = null;
+    const result: React.ReactNode[] = [];
+
+    const processText = (text: string) => {
+      // Handle bold **text** and italic *text* or _text_
+      const parts = text.split(/(\*\*.*?\*\*|\*.*?\*|__.*?__|_.*?_)/g);
+      return parts.map((part, i) => {
+        if ((part.startsWith("**") && part.endsWith("**")) || (part.startsWith("__") && part.endsWith("__"))) {
+          return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
+        }
+        if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("_") && part.endsWith("_"))) {
+          return <em key={i} className="italic">{part.slice(1, -1)}</em>;
+        }
+        return part;
+      });
+    };
+
+    const flushList = (key: number) => {
+      if (currentList) {
+        const ListTag = currentList.type;
+        result.push(
+          <ListTag key={`list-${key}`} className={cn(
+            "my-2 ml-4 space-y-1",
+            currentList.type === "ul" ? "list-disc" : "list-decimal"
+          )}>
+            {currentList.items.map((item, i) => (
+              <li key={i} className="pl-1">{item}</li>
+            ))}
+          </ListTag>
+        );
+        currentList = null;
       }
-      return part;
+    };
+
+    lines.forEach((line, index) => {
+      // Check for bullet point: * item or - item
+      const bulletMatch = line.match(/^(\s*)[\*\-]\s+(.*)/);
+      // Check for numbered list: 1. item
+      const numberMatch = line.match(/^(\s*)(\d+)\.\s+(.*)/);
+
+      if (bulletMatch) {
+        if (!currentList || currentList.type !== "ul") {
+          flushList(index);
+          currentList = { type: "ul", items: [] };
+        }
+        currentList.items.push(processText(bulletMatch[2]));
+      } else if (numberMatch) {
+        if (!currentList || currentList.type !== "ol") {
+          flushList(index);
+          currentList = { type: "ol", items: [] };
+        }
+        currentList.items.push(processText(numberMatch[3]));
+      } else {
+        flushList(index);
+        if (line.trim() === "") {
+          result.push(<div key={index} className="h-2" />);
+        } else {
+          result.push(<div key={index} className="mb-1">{processText(line)}</div>);
+        }
+      }
     });
+
+    flushList(lines.length);
+    return result;
   };
 
   // Only render if session exists (user is logged in)
@@ -203,11 +259,11 @@ export function ChatbotWidget() {
                     "px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm",
                     msg.role === "user" 
                       ? "bg-[var(--color-primary)] text-white rounded-tr-sm" 
-                      : "bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] rounded-tl-sm whitespace-pre-wrap"
+                      : "bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] rounded-tl-sm"
                   )}>
                     {renderMessage(msg.content)}
                     {msg.content === "" && msg.role === "assistant" && (
-                       <span className="flex items-center gap-1 h-5">
+                       <span className="flex items-center gap-1 h-5 mt-1">
                          <span className="w-1.5 h-1.5 bg-[var(--color-text-muted)] rounded-full animate-bounce [animation-delay:-0.3s]" />
                          <span className="w-1.5 h-1.5 bg-[var(--color-text-muted)] rounded-full animate-bounce [animation-delay:-0.15s]" />
                          <span className="w-1.5 h-1.5 bg-[var(--color-text-muted)] rounded-full animate-bounce" />
