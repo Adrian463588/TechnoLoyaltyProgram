@@ -228,7 +228,7 @@ export function DashboardContent({ data, userName }: { data: DashboardData; user
       {/* Welcome Banner Card */}
       <motion.div
         variants={itemVariants}
-        className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-start justify-between"
+        className="bento-span-12 bento-card p-8 flex flex-col md:flex-row md:items-start justify-between animate-fade-up-in"
       >
         <div className="flex flex-col">
           <motion.h1
@@ -241,7 +241,7 @@ export function DashboardContent({ data, userName }: { data: DashboardData; user
             Dashboard
           </motion.h1>
           <motion.p
-            className="text-sm text-slate-400 font-medium leading-none"
+            className="text-sm text-[--color-text-secondary] font-medium leading-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}

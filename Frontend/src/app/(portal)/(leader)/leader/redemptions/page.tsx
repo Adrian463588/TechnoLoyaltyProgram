@@ -61,21 +61,21 @@ export default async function LeaderRedemptionsPage(props: {
       <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto">
         <div className="flex flex-col gap-6">
           {/* Header Card */}
-          <BentoCard className="p-6 bg-white border-[var(--color-border-subtle)] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-sm shrink-0"> 
+          <div className="bento-card p-8 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
+            <div className="flex items-center gap-5">
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-sm shadow-primary/5 shrink-0"> 
                 <ShoppingBag size={28} />
               </div>
-              <div>
-                <h1 className="text-2xl font-black text-foreground leading-tight">Team Redemptions</h1>
-                <p className="text-sm text-muted-foreground">Monitor reward redemptions from your division members.</p>     
+              <div className="space-y-1">
+                <h1 className="text-2xl font-extrabold text-[--color-text-secondary] leading-none">Reward Catalog</h1>
+                <p className="text-sm text-[--color-text-secondary]">Monitor reward redemptions from your division members.</p>     
               </div>
             </div>
-          </BentoCard>
+          </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <BentoCard className="p-4 flex items-center gap-4 bg-white border-[var(--color-border-subtle)] shadow-sm">
+            <BentoCard className="p-4 flex items-center gap-4 bg-white border-[var(--color-border-subtle)] shadow-sm animate-fade-up-in stagger-1">
               <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
                 <ShoppingBag size={20} />
               </div>
@@ -85,7 +85,7 @@ export default async function LeaderRedemptionsPage(props: {
               </div>
             </BentoCard>
             
-            <BentoCard className="p-4 flex items-center gap-4 bg-white border-[var(--color-border-subtle)] shadow-sm">
+            <BentoCard className="p-4 flex items-center gap-4 bg-white border-[var(--color-border-subtle)] shadow-sm animate-fade-up-in stagger-2">
               <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
                 <Clock size={20} />
               </div>
@@ -95,7 +95,7 @@ export default async function LeaderRedemptionsPage(props: {
               </div>
             </BentoCard>
 
-            <BentoCard className="p-4 flex items-center gap-4 bg-white border-[var(--color-border-subtle)] shadow-sm">
+            <BentoCard className="p-4 flex items-center gap-4 bg-white border-[var(--color-border-subtle)] shadow-sm animate-fade-up-in stagger-3">
               <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
                 <CheckCircle2 size={20} />
               </div>
@@ -105,7 +105,7 @@ export default async function LeaderRedemptionsPage(props: {
               </div>
             </BentoCard>
 
-            <BentoCard className="p-4 flex items-center gap-4 bg-white border-[var(--color-border-subtle)] shadow-sm">
+            <BentoCard className="p-4 flex items-center gap-4 bg-white border-[var(--color-border-subtle)] shadow-sm animate-fade-up-in stagger-4">
               <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
                 <Coins size={20} />
               </div>
@@ -116,7 +116,7 @@ export default async function LeaderRedemptionsPage(props: {
             </BentoCard>
           </div>
 
-          <div className="min-h-[400px]">
+          <div className="h-[500px] min-h-[500px] animate-fade-up-in stagger-5">
             <TeamRedemptionsTable 
               requests={teamRedemptions} 
               currentPage={currentPage}

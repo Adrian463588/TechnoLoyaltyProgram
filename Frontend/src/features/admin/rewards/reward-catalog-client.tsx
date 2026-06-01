@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Gift } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Gift, Search } from "lucide-react";
 import type { RewardCatalogItem } from "@/lib/api-client";
 import { RewardCard } from "./reward-card";
 import { RewardFormModal } from "./reward-form-modal";
@@ -16,6 +16,7 @@ interface RewardCatalogClientProps {
 
 export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps) {
   const [rewards, setRewards] = useState<RewardCatalogItem[]>(initialRewards);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReward, setEditingReward] = useState<RewardCatalogItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -24,6 +25,17 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
     rewardId: null,
     rewardName: "",
   });
+
+  const filteredRewards = useMemo(() => {
+    if (!searchQuery) return rewards;
+    const lowerQuery = searchQuery.toLowerCase();
+    return rewards.filter(
+      (r) => 
+        r.name.toLowerCase().includes(lowerQuery) || 
+        (r.description && r.description.toLowerCase().includes(lowerQuery)) ||
+        (r.category && r.category.toLowerCase().includes(lowerQuery))
+    );
+  }, [rewards, searchQuery]);
 
   const handleCreateNew = () => {
     setEditingReward(null);
@@ -89,17 +101,18 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bento-card p-6 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
-        <div>
-          <h1 className="text-card-heading text-2xl mb-1 flex items-center gap-3">
-            <Gift className="h-6 w-6 text-primary" />
-            Reward Catalog
-          </h1>
-          <p className="text-[--color-text-secondary]">
-            Manage the list of rewards available for Mitra to redeem. Add items, update costs, and track stock.
-          </p>
+      <div className="bento-card p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 animate-fade-up-in">
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-tertiary)]" />
+          <input
+            type="text"
+            placeholder="Search rewards by name, category..."
+            className="w-full pl-10 pr-4 py-2.5 bg-[var(--color-surface-base)] border border-[var(--color-border-subtle)] rounded-xl text-sm text-[var(--color-text-primary)] placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 transition-all shadow-sm"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-        <div className="mt-4 md:mt-0">
+        <div className="mt-6 md:mt-0">
           <button
             onClick={handleCreateNew}
             className="btn-primary inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl transition-all shadow-lg"
@@ -111,17 +124,35 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
       </div>
 
       {/* Grid */}
-      {rewards.length === 0 ? (
+      {filteredRewards.length === 0 ? (
         <div className="bento-card p-12 text-center animate-fade-up-in" style={{ animationDelay: "100ms" }}>
-          <Gift className="w-12 h-12 text-[var(--color-text-tertiary)] mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">No rewards yet</h3>
-          <p className="text-[var(--color-text-secondary)] max-w-sm mx-auto">
-            Click the Add Reward button to create the first item in your catalog.
-          </p>
+          {searchQuery ? (
+             <>
+               <Search className="w-12 h-12 text-[var(--color-text-tertiary)] mx-auto mb-4" />
+               <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">No results found</h3>
+               <p className="text-[var(--color-text-secondary)] max-w-sm mx-auto">
+                 We couldn't find any rewards matching "{searchQuery}".
+               </p>
+               <button 
+                 onClick={() => setSearchQuery("")}
+                 className="mt-4 text-sm font-bold text-primary hover:underline"
+               >
+                 Clear search
+               </button>
+             </>
+          ) : (
+            <>
+              <Gift className="w-12 h-12 text-[var(--color-text-tertiary)] mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">No rewards yet</h3>
+              <p className="text-[var(--color-text-secondary)] max-w-sm mx-auto">
+                Click the Add Reward button to create the first item in your catalog.
+              </p>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-fade-up-in" style={{ animationDelay: "100ms" }}>
-          {rewards.map((reward) => (
+          {filteredRewards.map((reward) => (
             <RewardCard
               key={reward.id}
               reward={reward}

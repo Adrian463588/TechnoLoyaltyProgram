@@ -222,7 +222,7 @@ export default function RedemptionsClient({
                     key={req.id}
                     className="group border-b border-[var(--color-border-subtle)] transition-all duration-200 hover:bg-[var(--color-accent)]/[0.05] cursor-default"
                   >
-                    <TableCell className="py-4 px-6 text-xs text-[var(--color-text-secondary)]">
+                    <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)]">
                       {req.userNpk}
                     </TableCell>
                     <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] transition-colors">
