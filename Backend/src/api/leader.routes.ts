@@ -31,7 +31,7 @@ leaderRoutes.use(authenticate, authorize("TEAM_LEADER", "HC_PM"));
  *       200:
  *         description: Dashboard summary retrieved
  */
-leaderRoutes.get(  "/dashboard",                          TeamLeaderController.getDashboard                as RequestHandler);
+leaderRoutes.get(  "/dashboard",                          TeamLeaderController.getDashboard);
 
 // ── Redemptions ─────────────────────────────────────────────────────────────
 /**
@@ -45,7 +45,7 @@ leaderRoutes.get(  "/dashboard",                          TeamLeaderController.g
  *       200:
  *         description: List retrieved
  */
-leaderRoutes.get(  "/redemptions",                         RedemptionController.listForLeader               as RequestHandler);
+leaderRoutes.get(  "/redemptions",                         RedemptionController.listForLeader);
 
 // ── Partner Status Confirmations (TL-01) ─────────────────────────────────────
 /**

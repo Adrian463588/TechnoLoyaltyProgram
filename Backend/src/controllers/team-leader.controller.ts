@@ -57,7 +57,7 @@ export const TeamLeaderController = {
       // 3. Calculate Tier Distribution
       const distribution = { SAPHIRE: 0, EMERALD: 0, RUBY: 0, DIAMOND: 0 };
       members.forEach(m => {
-        const tier = m.membershipTier as keyof typeof distribution;
+        const tier = m.membershipTier;
         if (distribution[tier] !== undefined) distribution[tier]++;
       });
 

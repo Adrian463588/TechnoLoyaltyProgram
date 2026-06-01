@@ -30,7 +30,7 @@ export class UploadProcessingService {
       processedCount++;
 
       await prisma.$transaction(async (tx) => {
-        let tokensToCredit = 0;
+        const tokensToCredit = 0;
 
         if (division === DivisionType.OPCENT || division === DivisionType.TELE) {
           // Parse slots

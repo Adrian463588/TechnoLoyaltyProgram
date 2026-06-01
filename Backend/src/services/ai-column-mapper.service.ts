@@ -26,10 +26,10 @@ export class AiColumnMapperService {
     }
   }
 
-  async mapColumns(headers: string[], divisionHint?: string): Promise<ColumnMappingResult> {
+  mapColumns(headers: string[], divisionHint?: string): Promise<ColumnMappingResult> {
     // We bypass AI and use strict mapping to satisfy the user's requirement
     // "pastikan kolom yang diambil kolom yang sudah saya mention sebelumnya"
-    return this.fallbackMapping(headers, divisionHint);
+    return Promise.resolve(this.fallbackMapping(headers, divisionHint));
   }
 
   private fallbackMapping(headers: string[], divisionHint?: string): ColumnMappingResult {
