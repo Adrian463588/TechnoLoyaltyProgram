@@ -1,11 +1,12 @@
 import React from "react";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
-import { FileUp, Users, ShoppingBag, Coins, ChevronRight, UserCheck, Zap } from "lucide-react";
+import { FileUp, Users, Inbox, Coins, ChevronRight, UserCheck, Zap, LayoutDashboard } from "lucide-react";
 import { RedemptionQueueTable } from "@/features/admin/redemption-queue-table";
 import { DashboardClock } from "@/components/dashboard/dashboard-clock";
 import { auth, getServerToken } from "@/lib/auth";
 import { adminApi } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 export default async function AdminDashboardPage() {
   const session = await auth();
@@ -143,6 +144,15 @@ export default async function AdminDashboardPage() {
   const activePartnersCount = users.filter(u => u.partnerStatus === "ACTIVE").length;
   const totalTokensIssued = users.reduce((sum, u) => sum + (u.tokens ?? 0), 0);
 
+  // Calculate Tier Distribution
+  const tierDistribution = users.reduce((acc, user) => {
+    const tier = (user.membershipTier || "SAPHIRE").toUpperCase() as keyof typeof acc;
+    if (acc[tier] !== undefined) acc[tier]++;
+    return acc;
+  }, { SAPHIRE: 0, EMERALD: 0, RUBY: 0, DIAMOND: 0 });
+
+  const totalUsersWithTier = Object.values(tierDistribution).reduce((a, b) => a + b, 0);
+
   // Format tokens (e.g., 14200 -> 14.2k)
   const formatTokens = (val: number) => {
     if (val >= 1000) return (val / 1000).toFixed(1) + 'k';
@@ -158,12 +168,17 @@ export default async function AdminDashboardPage() {
       <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto">
         <div className="bento-grid">
           {/* Active Period Banner */}
-          <div className="bento-span-12 bento-card p-6 flex flex-col md:flex-row md:items-start justify-between animate-fade-up-in">
-            <div className="flex flex-col">
-              <h1 className="text-2xl font-extrabold text-[--color-text-secondary] leading-none mb-3">HC Admin Dashboard</h1>
-              <p className="text-sm text-slate-400 font-medium leading-none">
-                Welcome back, <span className="font-bold">{userName}</span>! Monitor and manage rewards below.
-              </p>
+          <div className="bento-span-12 bento-card p-8 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
+            <div className="flex items-center gap-5">
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-sm shadow-primary/5 shrink-0"> 
+                <LayoutDashboard size={28} />
+              </div>
+              <div className="space-y-1">
+                <h1 className="text-2xl font-extrabold text-[--color-text-secondary] leading-none">HC Admin Dashboard</h1>
+                <p className="text-sm text-[--color-text-secondary] font-medium leading-none">
+                  Welcome back, <span className="font-bold">{userName}</span>! Monitor and manage rewards below.
+                </p>
+              </div>
             </div>
             <div className="mt-4 md:mt-0">
               <DashboardClock />
@@ -171,36 +186,103 @@ export default async function AdminDashboardPage() {
           </div>
 
           {/* KPI Cards */}
-          <div className="bento-span-12 md:bento-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-1">
-            <h3 className="text-label flex items-center gap-2 mb-4">
-              <FileUp className="h-[14px] w-[14px] text-[--color-text-secondary]" />
-              Uploads This Month
-            </h3>
-            <p className="text-metric-hero text-[--color-text-primary]">4</p>
+          {/* Employee Tier Distribution */}
+          <div className="bento-span-12 md:bento-span-4 bento-card p-6 flex flex-col bg-gradient-to-br from-[--color-surface-elevated] to-[--color-surface-base] relative overflow-hidden group min-h-[220px] shadow-sm animate-fade-up-in stagger-1">
+            <div className="relative z-10 flex flex-col h-full">
+              <h3 className="text-[10px] font-black tracking-[0.2em] uppercase mb-6 opacity-60 text-[--color-text-secondary]">
+                Employee Tier Distribution
+              </h3>
+              
+              <div className="flex-1 flex flex-col justify-center gap-3">
+                {[
+                  { label: "Saphire", key: "SAPHIRE", color: "bg-blue-500", text: "text-blue-500" },
+                  { label: "Emerald", key: "EMERALD", color: "bg-emerald-500", text: "text-emerald-500" },
+                  { label: "Ruby",    key: "RUBY",    color: "bg-red-500",     text: "text-red-500" },
+                  { label: "Diamond", key: "DIAMOND", color: "bg-purple-500",  text: "text-purple-500" },
+                ].map((tier) => {
+                  const count = tierDistribution[tier.key as keyof typeof tierDistribution] || 0;
+                  const percentage = totalUsersWithTier > 0 ? (count / totalUsersWithTier) * 100 : 0;
+
+                  return (
+                    <div key={tier.key} className="space-y-1">
+                      <div className="flex justify-between items-end">
+                        <span className={cn("text-[10px] font-bold uppercase tracking-wider", tier.text)}>{tier.label}</span>
+                        <span className="text-[10px] font-black text-[--color-text-primary]">{count}</span>
+                      </div>
+                      <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className={cn("h-full rounded-full transition-all duration-1000", tier.color)}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="absolute -bottom-6 -right-6 opacity-[0.03] group-hover:scale-110 transition-all duration-1000 pointer-events-none">
+              <Users size={180} />
+            </div>
           </div>
 
-          <div className="bento-span-12 md:bento-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-2">
-            <h3 className="text-label flex items-center gap-2 mb-4">
-              <ShoppingBag className="h-[14px] w-[14px] text-[--color-warning]" />
-              Requested Redeem
-            </h3>
-            <p className="text-metric-hero text-[--color-warning]">{requestedCount}</p>
+          <div className="bento-span-12 md:bento-span-4 bento-card p-6 flex flex-col bg-gradient-to-br from-[--color-surface-elevated] to-[--color-surface-base] relative overflow-hidden group min-h-[220px] shadow-sm animate-fade-up-in stagger-2">
+            <div className="relative z-10 flex flex-col h-full justify-between">
+              {/* Top Section: Requested Redeem */}
+              <div className="flex items-center justify-between pb-4">
+                <div className="space-y-1">
+                  <h3 className="text-[10px] font-black tracking-[0.2em] uppercase opacity-60 text-[--color-text-secondary]">
+                    Requested Redeem
+                  </h3>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-5xl font-black text-amber-500 font-display tracking-tighter leading-none">{requestedCount}</p>
+                    <span className="text-[10px] font-bold text-amber-500/60 uppercase">Pending</span>
+                  </div>
+                </div>
+                <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20 shadow-sm shadow-amber-500/5">
+                  <Inbox size={22} />
+                </div>
+              </div>
+
+              {/* Dedicated Horizontal Divider */}
+              <div className="h-[2px] w-full bg-slate-200 my-2" />
+
+              {/* Bottom Section: Active Partners */}
+              <div className="flex items-center justify-between pt-4">
+                <div className="space-y-1">
+                  <h3 className="text-[10px] font-black tracking-[0.2em] uppercase opacity-60 text-[--color-text-secondary]">
+                    Active Partners
+                  </h3>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-5xl font-black text-emerald-500 font-display tracking-tighter leading-none">{activePartnersCount}</p>
+                    <span className="text-[10px] font-bold text-emerald-500/60 uppercase">Verified</span>
+                  </div>
+                </div>
+                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20 shadow-sm shadow-emerald-500/5">
+                  <Users size={22} />
+                </div>
+              </div>
+            </div>
+            
+            <div className="absolute -bottom-6 -right-6 opacity-[0.03] group-hover:scale-110 transition-all duration-1000 pointer-events-none">
+              <Zap size={180} />
+            </div>
           </div>
 
-          <div className="bento-span-12 md:bento-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-3">
-            <h3 className="text-label flex items-center gap-2 mb-4">
-              <Users className="h-[14px] w-[14px] text-[--color-info]" />
-              Active Partners
-            </h3>
-            <p className="text-metric-hero text-[--color-info]">{activePartnersCount}</p>
-          </div>
-
-          <div className="bento-span-12 md:bento-span-3 bento-card p-6 flex flex-col justify-between animate-fade-up-in stagger-4">
-            <h3 className="text-label flex items-center gap-2 mb-4">
-              <Coins className="h-[14px] w-[14px] text-[--color-accent]" />
-              Tokens Issued
-            </h3>
-            <p className="text-metric-hero text-[--color-accent]">{formatTokens(totalTokensIssued)}</p>
+          <div className="bento-span-12 md:bento-span-4 bento-card p-6 flex flex-col bg-gradient-to-br from-[--color-surface-elevated] to-[--color-surface-base] relative overflow-hidden group min-h-[220px] shadow-sm animate-fade-up-in stagger-3">
+            <div className="absolute -bottom-10 -right-10 opacity-[0.04] group-hover:scale-110 group-hover:opacity-[0.07] transition-all duration-1000 pointer-events-none text-blue-900">
+              <Coins size={240} />
+            </div>
+            <div className="relative z-10 flex flex-col h-full">
+              <h3 className="text-[10px] font-black tracking-[0.2em] uppercase mb-4 opacity-60 text-[--color-text-secondary]">
+                Tokens Issued
+              </h3>
+              <div className="flex-1 flex flex-col justify-center mb-6">
+                <p className="text-7xl font-black text-blue-500 font-display tracking-tighter leading-none">{formatTokens(totalTokensIssued)}</p>
+              </div>
+              <div className="mt-auto pt-4">
+                <div className="text-[10px] font-black uppercase tracking-wider text-[--color-text-secondary]">Total Distribution</div>
+              </div>
+            </div>
           </div>
 
           {/* Action Center */}
