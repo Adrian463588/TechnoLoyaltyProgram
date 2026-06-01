@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonthlyUpload } from "@/types";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +13,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SuccessAnimation } from "@/components/shared/success-animation";
-import { TableRowSkeleton } from "@/components/shared/skeleton-card";
 import {
   UploadCloud,
   CheckCircle,
@@ -22,10 +20,16 @@ import {
   FileSpreadsheet,
   AlertTriangle,
   Info,
-  History,
 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
+import { ClientPagination } from "@/components/shared/client-pagination";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { cn } from "@/lib/utils";
 import {
@@ -76,13 +80,7 @@ const DIVISION_LABELS: Record<string, string> = {
   TECHNO: "Techno (Sprint-based)",
 };
 
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleString("id-ID", {
-    day: "2-digit", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  });
-
-export default function UploadsClient({ history }: { history: MonthlyUpload[] }) {
+export default function UploadsClient() {
 
   const [files,         setFiles        ] = useState<File[]>([]);
   const [division,      setDivision     ] = useState<string>("");
@@ -90,8 +88,11 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
   const [parseResult,   setParseResult  ] = useState<ProcessResponse | null>(null);
   const [errorRows,     setErrorRows    ] = useState<number[]>([]);
   const [shakeRows,     setShakeRows    ] = useState<number[]>([]);
-  const [localHistory,  setLocalHistory ] = useState(history);
   const [apiError,      setApiError     ] = useState<string | null>(null);
+  const [currentPage,   setCurrentPage  ] = useState<number>(1);
+  const [showInvalidModal, setShowInvalidModal] = useState<boolean>(false);
+  const itemsPerPage = 10;
+
   // Ref tracks latest division value; updated via effect to avoid render-phase mutation
   const divisionRef = useRef(division);
   useEffect(() => {
@@ -108,13 +109,14 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
     setParseResult(null);
     setApiError(null);
     setErrorRows([]);
+    setCurrentPage(1);
 
     try {
       const fd = new FormData();
       fd.append("file", file);
       if (divisionRef.current) fd.append("division", divisionRef.current);
 
-      const res = await fetch("/api/admin/uploads/process", {
+      const res = await fetch(`/api/admin/uploads/process?t=${Date.now()}`, {
         method: "POST",
         body:   fd,
       });
@@ -166,7 +168,13 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
 
   // ── Commit ──────────────────────────────────────────────────
   const handleCommit = useCallback(async () => {
-    if (!parseResult?.summary.canCommit) return;
+    if (!parseResult) return;
+
+    if (parseResult.summary.hasErrors) {
+      setShowInvalidModal(true);
+      return;
+    }
+
     setUploadStatus("committing");
 
     try {
@@ -185,16 +193,6 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
         throw new Error(data.error ?? `Server error ${res.status}`);
       }
 
-      const newEntry: MonthlyUpload = {
-        id:         crypto.randomUUID(),
-        filename:   files[0]?.name ?? "upload.xlsx",
-        uploadedAt: new Date().toISOString(),
-        status:     "Completed",
-        validRows:  data.created ?? parseResult.summary.validRows,
-        errorRows:  parseResult.summary.errorRows,
-        issues:     [],
-      };
-      setLocalHistory((h) => [newEntry, ...h]);
       setUploadStatus("success");
       toast.success(
         `Berhasil commit ${String(data.created ?? parseResult.summary.validRows)} baris ke ledger`,
@@ -212,15 +210,23 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
     setParseResult(null);
     setApiError(null);
     setErrorRows([]);
+    setCurrentPage(1);
   }, []);
 
   // ── Render helpers ───────────────────────────────────────────
   const detectedDiv = parseResult?.division ?? division;
+  
+  // Pagination logic
+  const paginatedRows = parseResult?.rows.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  ) || [];
+  const totalPages = parseResult ? Math.ceil(parseResult.rows.length / itemsPerPage) : 0;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full items-start">
-      {/* ── LEFT COLUMN (UPLOAD & PREVIEW) ── */}
-      <div className="col-span-1 lg:col-span-7 space-y-6">
+    <div className="w-full">
+      {/* ── UPLOAD & PREVIEW ── */}
+      <div className="space-y-6">
 
           {/* Division selector */}
           <BentoCard className="p-5 border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/20 shadow-sm animate-fade-up-in">
@@ -239,86 +245,70 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                   <SelectValue placeholder="Auto-detect template" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-[var(--color-border-subtle)] shadow-xl">
-                  <SelectItem value="OPTEL">Optel (Slot-based)</SelectItem>
-                  <SelectItem value="TECHNO">Techno (Sprint-based)</SelectItem>
+                  <SelectItem value="OPCENT">Operation Center (OPCENT)</SelectItem>
+                  <SelectItem value="TELE">Telephony Center (TELE)</SelectItem>
+                  <SelectItem value="TECHNO">Techno (TECHNO)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </BentoCard>
 
-          {/* Drop zone */}
-          {uploadStatus === "idle" && (
-            <div
-              {...getRootProps()}
-              data-testid="upload-dropzone"
-              className={cn(
-                "relative flex flex-col items-center justify-center gap-6 rounded-3xl border-2 border-dashed p-20 cursor-pointer transition-all duration-300 animate-fade-up-in shadow-inner",
-                isDragActive
-                  ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 scale-[1.02] ring-4 ring-[var(--color-accent)]/5"
-                  : "border-slate-300 bg-slate-100 hover:border-[var(--color-accent)]/50 hover:bg-slate-200"
-              )}
-              style={{ animationDelay: "50ms" }}
-            >
-              <input {...getInputProps()} data-testid="file-input" />
-              <div className={cn(
-                "flex h-24 w-24 items-center justify-center rounded-2xl transition-all duration-300 shadow-sm",
-                isDragActive
-                  ? "bg-[var(--color-accent)] text-white rotate-12 scale-110"
-                  : "bg-white border border-slate-200 text-slate-400 group-hover:text-slate-600"
-              )}>
-                <UploadCloud size={40} className={cn("transition-transform duration-500", isDragActive && "animate-bounce")} />
-              </div>
-
-              {isDragActive ? (
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-[var(--color-accent)]">Drop it here!</p>
-                  <p className="text-slate-600 font-medium mt-1">Release to start processing</p>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <p className="text-xl font-bold text-slate-700">Drag & drop your Excel file</p>
-                  <p className="text-slate-500 mt-2 font-medium">
-                    or <span className="text-[var(--color-accent)] underline underline-offset-4 decoration-2">browse your computer</span>
-                  </p>
-                  
-                  <div className="flex gap-3 justify-center mt-8">
-                    {['.xlsx', '.xls', '.csv'].map(ext => (
-                      <span key={ext} className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-white text-slate-500 border border-slate-200 shadow-sm">
-                        {ext}
-                      </span>
-                    ))}
+          {/* Drop zone & Validating State */}
+          {(uploadStatus === "idle" || uploadStatus === "validating" || uploadStatus === "preview") && (
+            <div className="space-y-6 animate-fade-up-in">
+              <div
+                {...getRootProps()}
+                data-testid="upload-dropzone"
+                className={cn(
+                  "relative flex flex-col items-center justify-center gap-6 rounded-3xl border-2 border-dashed p-20 cursor-pointer transition-all duration-300 shadow-inner",
+                  isDragActive
+                    ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 scale-[1.02] ring-4 ring-[var(--color-accent)]/5"
+                    : uploadStatus === "validating"
+                    ? "border-[var(--color-accent)]/30 bg-slate-50 cursor-not-allowed"
+                    : "border-slate-300 bg-slate-100 hover:border-[var(--color-accent)]/50 hover:bg-slate-200"
+                )}
+              >
+                <input {...getInputProps()} data-testid="file-input" disabled={uploadStatus === "validating"} />
+                
+                {uploadStatus === "validating" ? (
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative h-16 w-16">
+                      <div className="absolute inset-0 rounded-full border-4 border-[var(--color-accent)]/20" />
+                      <div className="absolute inset-0 rounded-full border-4 border-[var(--color-accent)] border-t-transparent animate-spin" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xl font-bold text-slate-700">Memproses File...</p>
+                      <p className="text-slate-500 mt-1 font-medium">Mohon tunggu sebentar</p>
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {/* Decorative corner accents */}
-              {!isDragActive && (
-                <div className="absolute inset-0 pointer-events-none opacity-20">
-                   <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-slate-400 rounded-tl-lg" />
-                   <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-slate-400 rounded-tr-lg" />
-                   <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-slate-400 rounded-bl-lg" />
-                   <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-slate-400 rounded-br-lg" />
-                </div>
-              )}
-            </div>
-          )}
+                ) : (
+                  <>
+                    <div className={cn(
+                      "flex h-24 w-24 items-center justify-center rounded-2xl transition-all duration-300 shadow-sm",
+                      isDragActive
+                        ? "bg-[var(--color-accent)] text-white rotate-12 scale-110"
+                        : "bg-white border border-slate-200 text-slate-400 group-hover:text-slate-600"
+                    )}>
+                      <UploadCloud size={40} className={cn("transition-transform duration-500", isDragActive && "animate-bounce")} />
+                    </div>
 
-          {/* Validating skeleton */}
-          {uploadStatus === "validating" && (
-            <BentoCard className="p-8 space-y-6 animate-pulse border-[var(--color-border-subtle)]">
-              <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-xl bg-[var(--color-surface-elevated)]" />
-                <div className="space-y-2">
-                  <div className="h-4 w-48 rounded bg-[var(--color-surface-elevated)]" />
-                  <div className="h-3 w-32 rounded bg-[var(--color-surface-elevated)]/60" />
-                </div>
+                    {isDragActive ? (
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-[var(--color-accent)]">Drop it here!</p>
+                        <p className="text-slate-600 font-medium mt-1">Release to start processing</p>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <p className="text-xl font-bold text-slate-700">Drag & drop your Excel file</p>
+                        <p className="text-slate-500 mt-2 font-medium">
+                          or <span className="text-[var(--color-accent)] underline underline-offset-4 decoration-2">browse your computer</span>
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-              <div className="space-y-3">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="h-12 w-full rounded-lg bg-[var(--color-surface-elevated)]/40" />
-                ))}
-              </div>
-            </BentoCard>
+            </div>
           )}
 
           {/* Error state */}
@@ -376,7 +366,6 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                   <div className="flex gap-3 w-full sm:w-auto">
                     <Button variant="outline" className="flex-1 sm:flex-none rounded-xl" onClick={handleReset}>Cancel</Button>
                     <Button
-                      disabled={!parseResult.summary.canCommit}
                       onClick={handleCommit}
                       className="flex-1 sm:flex-none btn-primary rounded-xl"
                       data-testid="commit-btn"
@@ -467,7 +456,9 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                     <Info className="h-4 w-4 text-[var(--color-text-tertiary)]" />
                     <p className="text-sm font-bold text-[var(--color-text-primary)]">Data Preview</p>
                   </div>
-                  <p className="text-xs text-[var(--color-text-tertiary)] font-medium">Top 20 rows</p>
+                  <Badge variant="outline" className="font-mono bg-[var(--color-surface-base)] text-[var(--color-text-secondary)]">
+                    {parseResult.rows.length} Rows
+                  </Badge>
                 </div>
                 <div className="overflow-x-auto hide-scrollbar">
                   <Table className="min-w-[800px]">
@@ -476,13 +467,15 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                         <TableHead className="w-16 py-4 px-6 text-center">#</TableHead>
                         <TableHead className="py-4 px-6">NPK</TableHead>
                         <TableHead className="py-4 px-6">Name</TableHead>
-                        <TableHead className="py-4 px-6">Partnership</TableHead>
-                        <TableHead className="py-4 px-6 text-right">Tokens/Slots</TableHead>
+                        <TableHead className="py-4 px-6">Fungsi</TableHead>
+                        <TableHead className="py-4 px-6">Division</TableHead>
+                        <TableHead className="py-4 px-6">Tier</TableHead>
+                        <TableHead className="py-4 px-6 text-right">Token</TableHead>
                         <TableHead className="py-4 px-6 text-center">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {parseResult.rows.slice(0, 20).map((row) => {
+                      {paginatedRows.map((row) => {
                         const hasError = errorRows.includes(row.rowNumber);
                         const isShaking = shakeRows.includes(row.rowNumber);
                         return (
@@ -494,32 +487,26 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                               isShaking && "animate-shake"
                             )}
                           >
-                            <TableCell className="py-4 px-6 text-center text-[var(--color-text-tertiary)] font-mono text-xs">{row.rowNumber}</TableCell>
-                            <TableCell className="py-4 px-6 font-mono text-xs text-[var(--color-text-secondary)]">{row.npk}</TableCell>
-                            <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] font-medium group-hover:text-[var(--color-text-primary)]">{row.name}</TableCell>
+                            <TableCell className="py-4 px-6 text-center text-[var(--color-text-tertiary)] text-sm font-normal">{row.rowNumber}</TableCell>
+                            <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] font-normal">{row.npk}</TableCell>
+                            <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] font-normal group-hover:text-[var(--color-text-primary)] transition-colors">{row.name}</TableCell>
+                            <TableCell className="py-4 px-6 text-sm text-[var(--color-text-tertiary)]">{(row as any).fungsi || "-"}</TableCell>
+                            <TableCell className="py-4 px-6 text-sm font-bold text-[var(--color-text-secondary)] uppercase tracking-tight">{(row as any).division || "-"}</TableCell>
                             <TableCell className="py-4 px-6">
-                              <Badge 
-                                variant="outline" 
-                                className={cn(
-                                  "font-bold text-[9px] tracking-widest px-2 py-0.5 rounded-md",
-                                  row.partnershipStatus === "ACTIVE" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-blue-50 text-blue-600 border-blue-100"
-                                )}
-                              >
-                                {String(row.partnershipStatus ?? "-")}
-                              </Badge>
+                              <span className="font-bold text-sm tracking-wider uppercase px-2.5 py-0.5 rounded-full border shadow-sm flex items-center w-fit gap-1.5 bg-blue-500/10 text-blue-600 border-blue-200">
+                                {String((row as any).tier || "-")}
+                              </span>
                             </TableCell>
-                            <TableCell className="py-4 px-6 text-right font-mono font-bold text-[var(--color-accent)]">
-                              {typeof row.totalSlots === "number"
-                                ? row.totalSlots.toLocaleString()
-                                : typeof row.totalSprintPerPeriod === "number"
-                                ? row.totalSprintPerPeriod.toLocaleString()
+                            <TableCell className="py-4 px-6 text-right text-sm text-[var(--color-text-tertiary)] font-normal">
+                              {typeof (row as any).token === "number"
+                                ? (row as any).token.toLocaleString()
                                 : "-"}
                             </TableCell>
                             <TableCell className="py-4 px-6 text-center">
-                              {row.isResigned ? (
+                              {(row as any).isResigned ? (
                                 <Badge variant="destructive" className="text-[9px] font-bold rounded-md">Resigned</Badge>
                               ) : hasError ? (
-                                <Badge variant="destructive" className="text-[9px] font-bold rounded-md">Error</Badge>
+                                <Badge variant="destructive" className="text-[9px] font-bold rounded-md">Invalid</Badge>
                               ) : (
                                 <Badge className="bg-emerald-500 text-white hover:bg-emerald-500 text-[9px] font-bold rounded-md">Valid</Badge>
                               )}
@@ -530,6 +517,12 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
                     </TableBody>
                   </Table>
                 </div>
+                <ClientPagination 
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalResults={parseResult.rows.length}
+                  onPageChange={setCurrentPage}
+                />
               </BentoCard>
             </div>
           )}
@@ -565,76 +558,32 @@ export default function UploadsClient({ history }: { history: MonthlyUpload[] })
           )}
       </div>
 
-      {/* ── RIGHT COLUMN (HISTORY) ── */}
-      <div className="col-span-1 lg:col-span-5 space-y-5 lg:sticky lg:top-6 animate-fade-up-in" style={{ animationDelay: "150ms" }}>
-        <div className="flex items-center justify-between px-2">
-          <div className="flex items-center gap-2">
-            <History className="h-4 w-4 text-[var(--color-text-tertiary)]" />
-            <h3 className="text-sm font-bold text-[var(--color-text-primary)] uppercase tracking-wider">Recent Activity</h3>
+      {/* Invalid Data Modal */}
+      <Dialog open={showInvalidModal} onOpenChange={setShowInvalidModal}>
+        <DialogContent className="rounded-[32px] border-none shadow-2xl overflow-hidden p-0 max-w-sm gap-0 ring-0">
+          <div className="p-8 text-center bg-red-50 border-b border-red-100">
+             <div className="h-16 w-16 bg-white rounded-2xl flex items-center justify-center text-red-600 mx-auto shadow-sm border border-red-100 mb-4">
+                <AlertTriangle size={32} />
+             </div>
+             <DialogTitle className="text-xl font-black text-red-900 tracking-tight">Data Tidak Valid</DialogTitle>
+             <DialogDescription className="text-red-700/70 font-bold text-[11px] uppercase tracking-widest mt-1">
+               Terdapat baris data yang belum lengkap
+             </DialogDescription>
           </div>
-          {localHistory.length > 0 && (
-            <Badge variant="outline" className="rounded-full px-2 py-0 font-mono text-[var(--color-text-tertiary)] bg-[var(--color-surface-base)]">
-              {localHistory.length}
-            </Badge>
-          )}
-        </div>
-        <BentoCard className="overflow-hidden p-0 shadow-sm border-[var(--color-border-subtle)]">
-            {localHistory.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 text-center opacity-40">
-                <FileSpreadsheet className="h-12 w-12 text-[var(--color-text-tertiary)] mb-4 stroke-[1.5]" />
-                <p className="text-sm font-medium text-[var(--color-text-secondary)]">Activity log is empty</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto custom-scrollbar overflow-y-auto max-h-[calc(100vh-16rem)]">
-                <Table>
-                  <TableHeader className="bg-[var(--color-surface-elevated)]/50 sticky top-0 z-10">
-                    <TableRow className="border-[var(--color-border-subtle)] hover:bg-transparent">
-                      <TableHead className="py-3 px-4 font-semibold text-[var(--color-text-tertiary)] text-[10px] uppercase">File Details</TableHead>
-                      <TableHead className="py-3 px-4 font-semibold text-[var(--color-text-tertiary)] text-[10px] uppercase text-right">Rows</TableHead>
-                      <TableHead className="py-3 px-4 font-semibold text-[var(--color-text-tertiary)] text-[10px] uppercase text-center">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {localHistory.map((upload) => (
-                      <TableRow key={upload.id} className="group hover:bg-[var(--color-accent)]/[0.03] transition-all border-[var(--color-border-subtle)]">
-                        <TableCell className="py-4 px-4">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-sm font-medium text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] truncate max-w-[160px]" title={upload.filename}>
-                              {upload.filename}
-                            </span>
-                            <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono whitespace-nowrap">
-                              {formatDate(upload.uploadedAt)}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-4 px-4 text-right">
-                          <span className="font-mono text-xs font-bold text-[var(--color-text-secondary)]">
-                            {upload.validRows.toLocaleString()}
-                          </span>
-                        </TableCell>
-                        <TableCell className="py-4 px-4 text-center">
-                          <Badge 
-                            variant="outline" 
-                            className={cn(
-                              "text-[9px] font-bold px-2 py-0.5 rounded-md",
-                              upload.status === "Completed" 
-                                ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
-                                : upload.status === "Failed" 
-                                  ? "bg-red-50 text-red-600 border-red-100" 
-                                  : "bg-orange-50 text-orange-600 border-orange-100"
-                            )}
-                          >
-                            {upload.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-        </BentoCard>
-      </div>
+          <div className="p-8 space-y-6 bg-white">
+            <p className="text-sm text-slate-600 leading-relaxed text-center">
+              Maaf, Anda tidak dapat melanjutkan proses commit karena terdapat <strong>{parseResult?.summary.errorRows} baris</strong> yang memiliki data kosong pada kolom wajib (NPK, Nama, Fungsi, Token, atau Tier).
+            </p>
+            <Button
+              onClick={() => setShowInvalidModal(false)}
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 font-black shadow-lg"
+            >
+              Tutup & Periksa Data
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
