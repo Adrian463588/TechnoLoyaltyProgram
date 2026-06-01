@@ -129,9 +129,9 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
              <>
                <Search className="w-12 h-12 text-[var(--color-text-tertiary)] mx-auto mb-4" />
                <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">No results found</h3>
-               <p className="text-[var(--color-text-secondary)] max-w-sm mx-auto">
-                 We couldn't find any rewards matching "{searchQuery}".
-               </p>
+                <p className="text-[var(--color-text-secondary)] max-w-sm mx-auto">
+                  We couldn&apos;t find any rewards matching &quot;{searchQuery}&quot;.
+                </p>
                <button 
                  onClick={() => setSearchQuery("")}
                  className="mt-4 text-sm font-bold text-primary hover:underline"

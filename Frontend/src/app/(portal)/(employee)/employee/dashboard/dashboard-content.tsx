@@ -251,7 +251,7 @@ export function DashboardContent({ data, userName, welcomeMessage }: { data: Das
               transition={{ delay: 0.3 }}
             >
               {welcomeMessage ? welcomeMessage : (
-                <>Welcome back, <span className="font-bold">{userName}</span>! Here's an overview of your loyalty status.</>
+                <>Welcome back, <span className="font-bold">{userName}</span>! Here&apos;s an overview of your loyalty status.</>
               )}
             </motion.p>
           </div>
