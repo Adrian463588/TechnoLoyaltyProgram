@@ -32,8 +32,7 @@ export function RewardCatalogClient({ initialRewards }: RewardCatalogClientProps
     return rewards.filter(
       (r) => 
         r.name.toLowerCase().includes(lowerQuery) || 
-        (r.description && r.description.toLowerCase().includes(lowerQuery)) ||
-        (r.category && r.category.toLowerCase().includes(lowerQuery))
+        (r.description && r.description.toLowerCase().includes(lowerQuery))
     );
   }, [rewards, searchQuery]);
 

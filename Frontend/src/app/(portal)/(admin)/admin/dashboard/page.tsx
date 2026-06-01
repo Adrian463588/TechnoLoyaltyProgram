@@ -121,7 +121,7 @@ export default async function AdminDashboardPage() {
 
   // ── Helper logic for countdowns ─────────────────────────────────────────
   const getDaysDiff = (targetMMDD: string) => {
-    const [m, d] = targetMMDD.split("-").map(Number);
+    const [m = 1, d = 1] = targetMMDD.split("-").map(Number);
     const targetDate = new Date(now.getFullYear(), m - 1, d);
     const diffTime = targetDate.getTime() - now.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));

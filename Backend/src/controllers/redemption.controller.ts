@@ -130,8 +130,7 @@ export const RedemptionController = {
   }),
 
   // GET /api/leader/redemptions — list for division/team
-  listForLeader: (async (req, res, next) => {
-    try {
+  listForLeader: asyncHandler(async (req, res) => {
       const { user } = req;
       const limit = Number(req.query["limit"]) || 100;
       const offset = Number(req.query["offset"]) || 0;
@@ -176,10 +175,7 @@ export const RedemptionController = {
         offset,
         requests: mapped
       });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   // POST /api/admin/redemptions/:id/status — HC_ADMIN: update status
   updateStatus: asyncHandler(async (req, res) => {

@@ -173,13 +173,13 @@ export function ChatbotWidget() {
           flushList(index);
           currentList = { type: "ul", items: [] };
         }
-        currentList.items.push(processText(bulletMatch[2]));
+        currentList.items.push(processText(bulletMatch[2] ?? ""));
       } else if (numberMatch) {
         if (!currentList || currentList.type !== "ol") {
           flushList(index);
           currentList = { type: "ol", items: [] };
         }
-        currentList.items.push(processText(numberMatch[3]));
+        currentList.items.push(processText(numberMatch[3] ?? ""));
       } else {
         flushList(index);
         if (line.trim() === "") {

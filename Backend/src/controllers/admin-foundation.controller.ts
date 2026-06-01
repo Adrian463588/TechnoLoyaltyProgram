@@ -72,7 +72,9 @@ function readRows(file: Express.Multer.File): UploadRow[] {
     }
 
     // Merge multi-line headers if the next row also looks like a header (e.g. contains months)
-    let headers = data[headerRowIndex].map(h => String(h).trim());
+    const headerRow = data[headerRowIndex];
+    if (!headerRow) return [];
+    let headers = headerRow.map(h => String(h).trim());
     const nextRow = data[headerRowIndex + 1];
     const monthKeywords = ["jan", "feb", "mar", "apr", "mei", "jun", "jul", "ags", "sep", "okt", "nov", "des"];
     if (nextRow && nextRow.some(cell => monthKeywords.some(m => String(cell).toLowerCase().includes(m)))) {
@@ -113,7 +115,9 @@ function readRows(file: Express.Multer.File): UploadRow[] {
   );
   if (headerLineIndex === -1) headerLineIndex = 0;
 
-  const headers = lines[headerLineIndex].split(delimiter).map(h => h.trim());
+  const headerLine = lines[headerLineIndex];
+  if (!headerLine) return [];
+  const headers = headerLine.split(delimiter).map(h => h.trim());
   const dataLines = lines.slice(headerLineIndex + 1);
 
   return dataLines.map((line) => {

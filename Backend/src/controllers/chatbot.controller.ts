@@ -33,7 +33,7 @@ export const ChatbotController = {
           if (user.role !== "TEAM_LEADER" && user.role !== "HC_PM") {
             return res.status(403).json({ error: "Unauthorized role for this tool" });
           }
-          result = await chatbotService.getTeamOverview(user.division);
+          result = await chatbotService.getTeamOverview(user.division ?? "");
           break;
         case "get_token_leaderboard":
           if (user.role !== "TEAM_LEADER" && user.role !== "HC_PM") {

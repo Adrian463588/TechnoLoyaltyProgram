@@ -26,8 +26,7 @@ export const TeamLeaderController = {
    * GET /api/leader/dashboard
    * Unified endpoint for TL dashboard summary.
    */
-  getDashboard: (async (req, res, next) => {
-    try {
+  getDashboard: asyncHandler(async (req, res) => {
       const { user } = req;
       
       // 1. Fetch Team Members
@@ -80,10 +79,7 @@ export const TeamLeaderController = {
         })),
         memberCount: members.length
       });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   /**
    * GET /api/leader/team

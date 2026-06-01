@@ -1,10 +1,7 @@
 import { NextRequest } from "next/server";
 import { getServerToken } from "@/lib/auth";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { chatbotApi } from "@/lib/api-client";
-
-// Initialize the Gemini API with the stable SDK
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy_key");
+import { GoogleGenAI } from "@google/genai";
 
 // --- Tool Definitions for Gemini ---
 const ALL_TOOLS = [
@@ -122,12 +119,9 @@ PERATURAN PENTING:
 
     systemInstruction += "\n\nBatasan: Jangan memberikan informasi sensitif user lain. Jika data tidak ditemukan, sampaikan dengan sopan.";
 
-    // 3. Initialize Model
-    const model = genAI.getGenerativeModel({ 
-      model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
-      systemInstruction: systemInstruction,
-      tools: toolsConfig as any,
-    });
+    // 3. Initialize Model using the new @google/genai SDK
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 
     // 4. Robust cleaning for Gemini API: Diet Context (Last 4 messages)
     const MAX_HISTORY = 4;
@@ -160,28 +154,31 @@ PERATURAN PENTING:
       latestMessageContent = lastUserMsg.parts[0].text + "\n" + latestMessageContent;
     }
 
-    // 5. Start Chat with Retry Logic for 503
-    const chat = model.startChat({
-      history: history,
-      generationConfig: {
-        temperature: 0.1,
-        topP: 0.8,
-        topK: 16,
-      },
-    });
-
-    // --- Handling Function Calling with RETRY LOGIC ---
-    let response;
+    // 5. Send message with retry logic using new SDK
+    let response: any;
     let retries = 0;
     const MAX_RETRIES = 2;
+
+    const formattedContents = [
+      ...history,
+      { role: "user", parts: [{ text: latestMessageContent }] }
+    ];
 
     while (retries <= MAX_RETRIES) {
       try {
         console.log(`[Chatbot] Sending message to Gemini (Attempt ${retries + 1})...`);
         const startCall = Date.now();
-        response = await chat.sendMessage(latestMessageContent);
+        response = await ai.models.generateContent({
+          model: modelName,
+          contents: formattedContents,
+          config: {
+            systemInstruction,
+            temperature: 0.1,
+            tools: toolsConfig.length > 0 ? toolsConfig as any : undefined,
+          },
+        });
         console.log(`[Chatbot] Gemini responded in: ${Date.now() - startCall}ms`);
-        break; // Success!
+        break;
       } catch (err: any) {
         const is503 = err?.status === 503 || err?.message?.includes("503") || err?.message?.includes("high demand");
         if (is503 && retries < MAX_RETRIES) {
@@ -191,13 +188,15 @@ PERATURAN PENTING:
           await new Promise(r => setTimeout(r, delay));
           continue;
         }
-        throw err; // Re-throw if not 503 or max retries reached
+        throw err;
       }
     }
 
-    let functionCalls = response.response.functionCalls();
+    const functionCalls = response?.candidates?.[0]?.content?.parts
+      ?.filter((p: any) => p.functionCall)
+      .map((p: any) => p.functionCall) ?? [];
 
-    if (functionCalls && allowedTools.length > 0) {
+    if (functionCalls.length > 0 && allowedTools.length > 0) {
       const toolStartTime = Date.now();
       
       // Execute all tool calls in PARALLEL for maximum performance
@@ -237,13 +236,26 @@ PERATURAN PENTING:
       }));
 
       console.log(`[Chatbot] All tools (${functionCalls.length}) finished in parallel: ${Date.now() - toolStartTime}ms`);
+
+      // Send function responses back to Gemini for final answer
+      const followUpContents = [
+        ...formattedContents,
+        { role: "model", parts: response.candidates[0].content.parts },
+        { role: "user", parts: functionResponses.map((fr: any) => ({ functionResponse: fr.functionResponse })) },
+      ];
+
       const streamStartTime = Date.now();
-      const finalResult = await chat.sendMessageStream(functionResponses);
+      const finalResponse = await ai.models.generateContentStream({
+        model: modelName,
+        contents: followUpContents,
+        config: { systemInstruction, temperature: 0.1 },
+      });
       console.log(`[Chatbot] Final stream start took: ${Date.now() - streamStartTime}ms`);
-      return createStreamResponse(finalResult);
+      return createStreamResponse(finalResponse);
     }
 
-    return mockStreamResponse(response.response.text());
+    const textResponse = response?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    return mockStreamResponse(textResponse);
 
   } catch (error: any) {
     console.error("[Chatbot Route Error]:", error);
