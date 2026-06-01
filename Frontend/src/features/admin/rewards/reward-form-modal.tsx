@@ -166,7 +166,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
                   <input
                     {...register("imageUrl")}
                     type="text"
-                    className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all text-sm shadow-sm"
+                    className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-sm shadow-sm"
                     placeholder="Enter image URL (e.g. https://...)"
                   />
                   {errors.imageUrl && <p className="mt-1.5 text-sm text-red-500">{errors.imageUrl.message}</p>}
@@ -185,7 +185,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
               <input
                 {...register("name")}
                 type="text"
-                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all shadow-sm"
+                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-sm"
                 placeholder="e.g., E-Voucher Tokopedia 100k"
               />
               {errors.name && <p className="mt-1.5 text-sm text-red-500">{errors.name.message}</p>}
@@ -199,7 +199,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
               <textarea
                 {...register("description")}
                 rows={3}
-                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all resize-none shadow-sm"
+                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none shadow-sm"
                 placeholder="Details about this reward..."
               />
               {errors.description && <p className="mt-1.5 text-sm text-red-500">{errors.description.message}</p>}
@@ -214,7 +214,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
                 {...register("tokenCost", { valueAsNumber: true })}
                 type="number"
                 min={1}
-                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all shadow-sm"
+                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-sm"
               />
               {errors.tokenCost && <p className="mt-1.5 text-sm text-red-500">{errors.tokenCost.message}</p>}
             </div>
@@ -232,7 +232,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
                     onValueChange={field.onChange}
                     value={field.value}
                   >
-                    <SelectTrigger className="h-11 w-full bg-white border border-neutral-300 rounded-xl text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all shadow-sm">
+                    <SelectTrigger className="h-11 w-full bg-white border border-neutral-300 rounded-xl text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-sm">
                       <SelectValue placeholder="Select tier" />
                     </SelectTrigger>
                     <SelectContent>
@@ -259,7 +259,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
                   {...register("stockEnabled")}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
               </label>
             </div>
 
@@ -273,7 +273,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
                   {...register("stock", { valueAsNumber: true })}
                   type="number"
                   min={0}
-                  className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all font-mono shadow-sm"
+                  className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all font-mono shadow-sm"
                 />
                 {errors.stock && <p className="mt-1.5 text-sm text-red-500">{errors.stock.message}</p>}
               </div>
@@ -326,7 +326,7 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
               type="submit"
               form="reward-form"
               disabled={isSubmitting}
-              className="flex items-center justify-center min-w-[120px] px-5 py-2.5 text-sm font-semibold text-black bg-accent hover:bg-accent/90 rounded-xl transition-all shadow-md shadow-accent/20 disabled:opacity-50 disabled:shadow-none"
+              className="flex items-center justify-center min-w-[120px] px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-xl transition-all shadow-md shadow-primary/20 disabled:opacity-50 disabled:shadow-none"
             >
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : isEditing ? "Save Changes" : "Create Reward"}
             </button>

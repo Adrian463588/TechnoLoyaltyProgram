@@ -11,6 +11,7 @@ import { authRoutes }     from "./api/auth.routes";
 import { employeeRoutes } from "./api/employee.routes";
 import { adminRoutes }    from "./api/admin.routes";
 import { leaderRoutes }   from "./api/leader.routes";
+import chatbotRoutes      from "./api/chatbot.routes";
 import { errorHandler }   from "./middleware/error-handler";
 import { metricsMiddleware, metricsHandler } from "./middleware/metrics";
 import { prisma }         from "./db/prisma";
@@ -94,6 +95,7 @@ app.use("/api/auth",     authRoutes);
 app.use("/api/employee", employeeRoutes);
 app.use("/api/admin",    adminRoutes);
 app.use("/api/leader",   leaderRoutes);
+app.use("/api/chatbot",  chatbotRoutes);
 
 // ── Global error handler (must be last) ──────────────────────────────────
 app.use(errorHandler);

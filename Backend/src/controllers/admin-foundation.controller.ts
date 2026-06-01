@@ -11,7 +11,7 @@ import { DivisionType } from "@prisma/client";
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 25 * 1024 * 1024 },
   fileFilter: (_req, file, cb: FileFilterCallback) => {
     const allowed = new Set([
       "text/csv",
@@ -34,27 +34,96 @@ function normalizeHeader(value: string): string {
 }
 
 function readRows(file: Express.Multer.File): UploadRow[] {
-  if (file.mimetype === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
+  const isExcel = [
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel",
+    "application/vnd.ms-excel.sheet.macroEnabled.12",
+  ].includes(file.mimetype) || 
+  file.originalname.toLowerCase().endsWith(".xlsx") || 
+  file.originalname.toLowerCase().endsWith(".xls");
+
+  if (isExcel) {
     const workbook = XLSX.read(file.buffer, { type: "buffer" });
     const firstSheetName = workbook.SheetNames[0];
     if (!firstSheetName) return [];
     const sheet = workbook.Sheets[firstSheetName];
     if (!sheet) return [];
-    return XLSX.utils.sheet_to_json<UploadRow>(sheet, { defval: null });
+    
+    // Convert to array of arrays to find the header row dynamically
+    const data = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, defval: "" });
+    
+    console.log(`[DEBUG_UPLOAD] Total rows in sheet AoA: ${data.length}`);
+
+    // Find the row index that contains "NPK" or common variants
+    const npkKeywords = ["npk", "no. induk", "no induk", "employee id", "nip", "no_induk", "nomor induk", "no.induk"];
+    let headerRowIndex = data.findIndex((row, idx) => {
+      const hasNpk = row.some((cell: any) => {
+        const val = String(cell).toLowerCase().trim();
+        return npkKeywords.some(k => val === k || val.includes(k));
+      });
+      if (hasNpk) console.log(`[DEBUG_UPLOAD] Found potential primary header at row index: ${idx}`);
+      return hasNpk;
+    });
+    
+    // Fallback to row 0 if NPK not found
+    if (headerRowIndex === -1) {
+      console.warn("[DEBUG_UPLOAD] NPK-like header NOT found, falling back to index 0");
+      headerRowIndex = 0;
+    }
+
+    // Merge multi-line headers if the next row also looks like a header (e.g. contains months)
+    let headers = data[headerRowIndex].map(h => String(h).trim());
+    const nextRow = data[headerRowIndex + 1];
+    const monthKeywords = ["jan", "feb", "mar", "apr", "mei", "jun", "jul", "ags", "sep", "okt", "nov", "des"];
+    if (nextRow && nextRow.some(cell => monthKeywords.some(m => String(cell).toLowerCase().includes(m)))) {
+      console.log(`[DEBUG_UPLOAD] Found secondary header (months) at row index: ${headerRowIndex + 1}`);
+      headers = headers.map((h, i) => {
+        const secondary = String(nextRow[i] || "").trim();
+        if (!h) return secondary;
+        if (!secondary) return h;
+        return `${h}_${secondary}`;
+      });
+      headerRowIndex++; // Skip the secondary header row too
+    }
+
+    const rows = data.slice(headerRowIndex + 1).map(row => {
+      const obj: UploadRow = {};
+      headers.forEach((h, i) => {
+        if (h) {
+          const val = row[i];
+          obj[h] = (val === undefined || val === "") ? null : val;
+        }
+      });
+      return obj;
+    });
+
+    console.log(`[DEBUG_UPLOAD] Raw rows extracted after header: ${rows.length}`);
+    return rows.filter(row => Object.values(row).some(v => v !== null && v !== ""));
   }
 
   const text = file.buffer.toString("utf8");
   const delimiter = text.includes("\t") ? "\t" : ",";
-  const [headerLine, ...lines] = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
-  if (!headerLine) return [];
-  const headers = headerLine.split(delimiter).map(normalizeHeader);
-  return lines.map((line) => {
+  const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
+  if (lines.length === 0) return [];
+
+  // Find header line index (containing npk or common variants)
+  const npkKeywords = ["npk", "no. induk", "no induk", "employee id", "nip", "no_induk", "nomor induk"];
+  let headerLineIndex = lines.findIndex(line => 
+    npkKeywords.some(k => line.toLowerCase().includes(k))
+  );
+  if (headerLineIndex === -1) headerLineIndex = 0;
+
+  const headers = lines[headerLineIndex].split(delimiter).map(h => h.trim());
+  const dataLines = lines.slice(headerLineIndex + 1);
+
+  return dataLines.map((line) => {
     const values = line.split(delimiter);
     return headers.reduce<UploadRow>((row, header, index) => {
-      row[header] = values[index]?.trim() ?? "";
+      const val = values[index]?.trim();
+      row[header] = (val === undefined || val === "") ? null : val;
       return row;
     }, {});
-  });
+  }).filter(row => Object.values(row).some(v => v !== null && v !== ""));
 }
 
 function validateRows(rows: UploadRow[]): Array<{
@@ -70,14 +139,44 @@ function validateRows(rows: UploadRow[]): Array<{
       issue: string;
       severity: "ERROR" | "WARNING";
     }> = [];
-    if (!row["npk"]) {
-      issues.push({ rowNumber: index + 2, column: "npk", issue: "NPK is required", severity: "ERROR" });
+
+    // Required fields: NPK, Nama, Fungsi, Token, Jenis Membership
+    const npk = row["npk"];
+    const name = row["name"] || row["nama"];
+    const fungsi = row["fungsi"];
+    const token = row["token"];
+    const tier = row["jenis_membership"];
+
+    if (!npk) {
+      issues.push({ rowNumber: index + 1, column: "NPK", issue: "NPK is required", severity: "ERROR" });
     }
-    if (!row["name"]) {
-      issues.push({ rowNumber: index + 2, column: "name", issue: "Name is required", severity: "ERROR" });
+    if (!name) {
+      issues.push({ rowNumber: index + 1, column: "Nama", issue: "Name is required", severity: "ERROR" });
     }
+    if (!fungsi) {
+      issues.push({ rowNumber: index + 1, column: "Fungsi", issue: "Fungsi is required", severity: "ERROR" });
+    }
+    if (token === null || token === undefined || token === "") {
+      issues.push({ rowNumber: index + 1, column: "Token", issue: "Token is required", severity: "ERROR" });
+    }
+    if (!tier) {
+      issues.push({ rowNumber: index + 1, column: "Jenis Membership", issue: "Jenis Membership is required", severity: "ERROR" });
+    }
+
     return issues;
   });
+}
+
+function getCurrentPeriod(): "P1" | "P2" {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const date = now.getDate();
+
+  // Period 1 (P1): Dec 16 - Jun 15
+  // Period 2 (P2): Jun 16 - Dec 15
+  
+  const isP2 = (month === 6 && date >= 16) || (month > 6 && month < 12) || (month === 12 && date <= 15);
+  return isP2 ? "P2" : "P1";
 }
 
 export const uploadProcessMiddleware = upload.single("file");
@@ -233,21 +332,75 @@ export const AdminFoundationController = {
         }
       }
 
+      // 1. Initial structural validation
       const issues = validateRows(rows);
+      
+      // 2. Database existence check
+      if (rows.length > 0) {
+        const npks = rows.map(r => String(r["npk"] ?? "")).filter(Boolean);
+        const existingUsers = await prisma.user.findMany({
+          where: { npk: { in: npks } },
+          select: { npk: true, division: true }
+        });
+        const existingNpks = new Set(existingUsers.map(u => u.npk));
+        const userDivisions = new Map(existingUsers.map(u => [u.npk, u.division]));
+
+        rows.forEach((row, index) => {
+          const npk = String(row["npk"] ?? "");
+          if (npk && !existingNpks.has(npk)) {
+            issues.push({
+              rowNumber: index + 1,
+              column: "NPK",
+              issue: `NPK '${npk}' not found in database. This row will be skipped.`,
+              severity: "ERROR"
+            });
+          } else if (npk && division && userDivisions.get(npk) !== division) {
+             issues.push({
+              rowNumber: index + 1,
+              column: "Division",
+              issue: `User belongs to ${userDivisions.get(npk)} but upload is for ${division}. This row will be skipped.`,
+              severity: "ERROR"
+            });
+          }
+        });
+      }
+
       const errorRows = new Set(issues.filter((issue) => issue.severity === "ERROR").map((issue) => issue.rowNumber));
       const warningRows = new Set(issues.filter((issue) => issue.severity === "WARNING").map((issue) => issue.rowNumber));
       
+      const currentPeriod = getCurrentPeriod();
+
       res.json({
         division,
         aiDetected,
         columnMapping,
         unmappedColumns,
-        rows: rows.map((row, index) => ({
-          rowNumber: index + 2,
-          npk: String(row["npk"] ?? ""),
-          name: String(row["name"] ?? ""),
-          ...row,
-        })),
+        rows: rows.map((row, index) => {
+          // EXTREMELY IMPORTANT: Use raw values from the row to prevent AI hallucinations
+          const rawName = row["nama"] || row["name"] || "";
+          const fungsi = String(row["fungsi"] || "").toUpperCase();
+          
+          // Division logic based on Fungsi
+          let derivedDivision = "-";
+          const opCenterKeywords = ["AAV", "RVO", "CC SK"];
+          const teleCenterKeywords = ["DELTA", "TEMA", "DESIRE", "GC", "SBPV"];
+
+          if (opCenterKeywords.some(k => fungsi.includes(k))) {
+            derivedDivision = "OPCENT";
+          } else if (teleCenterKeywords.some(k => fungsi.includes(k))) {
+            derivedDivision = "TELE";
+          }
+
+          return {
+            rowNumber: index + 1,
+            npk: String(row["npk"] ?? ""),
+            name: String(rawName),
+            fungsi: String(row["fungsi"] || ""),
+            division: derivedDivision,
+            token: Number(row["token"] || 0),
+            tier: String(row["jenis_membership"] || ""),
+          };
+        }),
         issues,
         summary: {
           totalRows: rows.length,

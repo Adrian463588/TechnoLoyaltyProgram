@@ -129,6 +129,58 @@ export const RedemptionController = {
       res.status(201).json(redemption);
   }),
 
+  // GET /api/leader/redemptions — list for division/team
+  listForLeader: (async (req, res, next) => {
+    try {
+      const { user } = req;
+      const limit = Number(req.query["limit"]) || 100;
+      const offset = Number(req.query["offset"]) || 0;
+      const status = req.query["status"] as any;
+
+      if (!user.division) {
+        res.status(400).json({ error: "User division not found in session." });
+        return;
+      }
+
+      const { requests, total } = await redemptionService.listByDivision(user.division, { status, limit, offset });
+      const mapped = requests.map((r) => {
+        return {
+          id: r.id,
+          status: r.status,
+          createdAt: r.submittedAt.toISOString(),
+          mitra: {
+            id: r.mitra.id,
+            name: r.mitra.name,
+            email: r.mitra.email,
+            npk: r.mitra.npk,
+            division: r.mitra.division,
+            documents: r.mitra.documents.map(d => ({
+              id: d.id,
+              type: d.type,
+              fileUrl: d.fileUrl
+            })),
+          },
+          item: {
+            id: r.rewardItem.id,
+            name: r.rewardItem.name,
+            tokenCost: r.tokenCost,
+          },
+          isRepresented: r.isRepresented,
+          powerOfAttorneyUrl: r.powerOfAttorneyUrl,
+          rejectReason: r.rejectionReason,
+        };
+      });
+      res.json({
+        total,
+        limit,
+        offset,
+        requests: mapped
+      });
+    } catch (err) {
+      next(err);
+    }
+  }) satisfies RequestHandler,
+
   // POST /api/admin/redemptions/:id/status — HC_ADMIN: update status
   updateStatus: asyncHandler(async (req, res) => {
       const { user } = req;

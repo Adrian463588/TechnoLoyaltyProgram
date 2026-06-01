@@ -10,6 +10,7 @@ import { Coins, Info, Sparkles, X, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 interface TokenHeroSectionProps {
   tokenBalance?: number;
@@ -25,6 +26,8 @@ export function TokenHeroSection({
   isLoading,
 }: TokenHeroSectionProps) {
   const [showInfo, setShowInfo] = useState(false);
+  const { data: session } = useSession();
+  const userRole = session?.user?.role;
 
   if (isLoading) {
     return <TokenCardSkeleton />;
@@ -38,6 +41,9 @@ export function TokenHeroSection({
     DIAMOND: { text: "text-purple-600" },
   }[tier.toUpperCase()] || { text: "text-slate-600" };
 
+  const canRedeem = userRole === "MITRA" || userRole === "HC_PM";
+  const isLeader = userRole === "TEAM_LEADER";
+
   return (
     <>
       <div className="bento-card flex flex-col p-6 w-full h-full bg-gradient-to-br from-[--color-surface-elevated] to-[--color-surface-base] relative overflow-hidden group min-h-[220px]">
@@ -49,7 +55,7 @@ export function TokenHeroSection({
         <div className="relative z-10 flex flex-col h-full">
           <div>
             <h3 className="text-[10px] font-black tracking-[0.2em] uppercase mb-4 opacity-60 text-[--color-text-secondary]">
-              Your Total Balance
+              {isLeader ? "Team Aggregate Balance" : "Your Total Balance"}
             </h3>
           </div>
           
@@ -62,20 +68,22 @@ export function TokenHeroSection({
           </div>
 
           {/* CTA Link - No divider */}
-          <div className="mt-auto pt-4">
-            <Link 
-              href="/employee/rewards" 
-              className="group/link inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-[--color-text-secondary] hover:text-[--color-accent] transition-colors"
-            >
-              Redeem Reward Now
-              <motion.span
-                animate={{ x: [0, 4, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          {canRedeem && (
+            <div className="mt-auto pt-4">
+              <Link 
+                href="/employee/rewards" 
+                className="group/link inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-[--color-text-secondary] hover:text-[--color-accent] transition-colors"
               >
-                <ChevronRight className="h-3 w-3" />
-              </motion.span>
-            </Link>
-          </div>
+                Redeem Reward Now
+                <motion.span
+                  animate={{ x: [0, 4, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <ChevronRight className="h-3 w-3" />
+                </motion.span>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 

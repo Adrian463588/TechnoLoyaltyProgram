@@ -22,6 +22,10 @@ const fontJetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Berijalan Employee Loyalty Program Portal",
   description: "Internal loyalty portal for Optel and Techno divisions",
+  icons: {
+    icon: "/LoyaltyProgram_Icon.png",
+    apple: "/LoyaltyProgram_Icon.png",
+  },
   openGraph: {
     title: "Berijalan Loyalty",
     description: "Employee Loyalty Program Portal",

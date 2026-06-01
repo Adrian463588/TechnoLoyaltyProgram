@@ -65,10 +65,11 @@ export function ChatbotWidget() {
       });
 
       if (!response.ok) {
-        let errorMsg = "Gagal menyambung ke chatbot";
+        let errorMsg = `Gagal menyambung ke chatbot (Status: ${response.status})`;
         try {
           const errData = await response.json();
-          if (errData?.details) errorMsg = errData.details;
+          if (errData?.error) errorMsg = errData.error;
+          else if (errData?.details) errorMsg = errData.details;
         } catch (e) {
           // ignore
         }
@@ -123,6 +124,76 @@ export function ChatbotWidget() {
     }
   };
 
+  const renderMessage = (content: string) => {
+    if (!content) return null;
+    
+    const lines = content.split("\n");
+    let currentList: { type: "ul" | "ol"; items: React.ReactNode[] } | null = null;
+    const result: React.ReactNode[] = [];
+
+    const processText = (text: string) => {
+      // Handle bold **text** and italic *text* or _text_
+      const parts = text.split(/(\*\*.*?\*\*|\*.*?\*|__.*?__|_.*?_)/g);
+      return parts.map((part, i) => {
+        if ((part.startsWith("**") && part.endsWith("**")) || (part.startsWith("__") && part.endsWith("__"))) {
+          return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
+        }
+        if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("_") && part.endsWith("_"))) {
+          return <em key={i} className="italic">{part.slice(1, -1)}</em>;
+        }
+        return part;
+      });
+    };
+
+    const flushList = (key: number) => {
+      if (currentList) {
+        const ListTag = currentList.type;
+        result.push(
+          <ListTag key={`list-${key}`} className={cn(
+            "my-2 ml-4 space-y-1",
+            currentList.type === "ul" ? "list-disc" : "list-decimal"
+          )}>
+            {currentList.items.map((item, i) => (
+              <li key={i} className="pl-1">{item}</li>
+            ))}
+          </ListTag>
+        );
+        currentList = null;
+      }
+    };
+
+    lines.forEach((line, index) => {
+      // Check for bullet point: * item or - item
+      const bulletMatch = line.match(/^(\s*)[\*\-]\s+(.*)/);
+      // Check for numbered list: 1. item
+      const numberMatch = line.match(/^(\s*)(\d+)\.\s+(.*)/);
+
+      if (bulletMatch) {
+        if (!currentList || currentList.type !== "ul") {
+          flushList(index);
+          currentList = { type: "ul", items: [] };
+        }
+        currentList.items.push(processText(bulletMatch[2]));
+      } else if (numberMatch) {
+        if (!currentList || currentList.type !== "ol") {
+          flushList(index);
+          currentList = { type: "ol", items: [] };
+        }
+        currentList.items.push(processText(numberMatch[3]));
+      } else {
+        flushList(index);
+        if (line.trim() === "") {
+          result.push(<div key={index} className="h-2" />);
+        } else {
+          result.push(<div key={index} className="mb-1">{processText(line)}</div>);
+        }
+      }
+    });
+
+    flushList(lines.length);
+    return result;
+  };
+
   // Only render if session exists (user is logged in)
   if (!session) return null;
 
@@ -138,10 +209,10 @@ export function ChatbotWidget() {
             className="pointer-events-auto bg-[var(--color-surface-base)] border border-[var(--color-border-subtle)] shadow-2xl rounded-2xl w-[380px] max-w-[calc(100vw-2rem)] h-[550px] max-h-[calc(100vh-8rem)] flex flex-col mb-4 overflow-hidden"
           >
             {/* Header */}
-            <div className="bg-[var(--color-surface-elevated)] px-4 py-3 border-b border-[var(--color-border-subtle)] flex items-center justify-between shadow-sm z-10">
+            <div className="bg-[var(--color-surface)] px-4 py-3 border-b border-[var(--color-border-subtle)] flex items-center justify-between shadow-sm z-10">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[var(--color-accent)]/10 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-[var(--color-accent)]" />
+                <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-[var(--color-primary)]" />
                 </div>
                 <div>
                   <h3 className="font-bold text-[var(--color-text-primary)] text-sm">LoyaltyBot</h3>
@@ -169,7 +240,7 @@ export function ChatbotWidget() {
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-slate-50/50">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-[var(--color-surface)]">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
@@ -180,22 +251,22 @@ export function ChatbotWidget() {
                 >
                   <div className={cn(
                     "w-7 h-7 shrink-0 rounded-full flex items-center justify-center",
-                    msg.role === "user" ? "bg-slate-200" : "bg-[var(--color-accent)]"
+                    msg.role === "user" ? "bg-[var(--color-bg-subtle)]" : "bg-[var(--color-primary)]"
                   )}>
-                    {msg.role === "user" ? <User className="w-4 h-4 text-slate-600" /> : <Bot className="w-4 h-4 text-white" />}
+                    {msg.role === "user" ? <User className="w-4 h-4 text-[var(--color-text-secondary)]" /> : <Bot className="w-4 h-4 text-white" />}
                   </div>
                   <div className={cn(
                     "px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed shadow-sm",
                     msg.role === "user" 
-                      ? "bg-[var(--color-accent)] text-white rounded-tr-sm" 
-                      : "bg-white border border-slate-200 text-slate-700 rounded-tl-sm whitespace-pre-wrap"
+                      ? "bg-[var(--color-primary)] text-white rounded-tr-sm" 
+                      : "bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] rounded-tl-sm"
                   )}>
-                    {msg.content}
+                    {renderMessage(msg.content)}
                     {msg.content === "" && msg.role === "assistant" && (
-                       <span className="flex items-center gap-1 h-5">
-                         <span className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                         <span className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                         <span className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" />
+                       <span className="flex items-center gap-1 h-5 mt-1">
+                         <span className="w-1.5 h-1.5 bg-[var(--color-text-muted)] rounded-full animate-bounce [animation-delay:-0.3s]" />
+                         <span className="w-1.5 h-1.5 bg-[var(--color-text-muted)] rounded-full animate-bounce [animation-delay:-0.15s]" />
+                         <span className="w-1.5 h-1.5 bg-[var(--color-text-muted)] rounded-full animate-bounce" />
                        </span>
                     )}
                   </div>
@@ -205,7 +276,7 @@ export function ChatbotWidget() {
             </div>
 
             {/* Input Area */}
-            <div className="p-3 bg-white border-t border-[var(--color-border-subtle)]">
+            <div className="p-3 bg-[var(--color-surface)] border-t border-[var(--color-border-subtle)]">
               <div className="relative flex items-center">
                 <input
                   ref={inputRef}
@@ -214,13 +285,13 @@ export function ChatbotWidget() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Ketik pesan Anda..."
-                  className="w-full pl-4 pr-12 py-3 bg-slate-100/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/20 focus:border-[var(--color-accent)]/40 transition-all placeholder:text-slate-400"
+                  className="w-full pl-4 pr-12 py-3 bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]/40 transition-all placeholder:text-[var(--color-text-muted)] text-[var(--color-text-primary)]"
                   disabled={isTyping}
                 />
                 <button
                   onClick={() => void sendMessage(input)}
                   disabled={!input.trim() || isTyping}
-                  className="absolute right-2 p-2 rounded-lg bg-[var(--color-accent)] text-white disabled:opacity-40 disabled:bg-slate-300 transition-colors"
+                  className="absolute right-2 p-2 rounded-lg bg-[var(--color-primary)] text-white disabled:opacity-40 disabled:bg-slate-300 transition-colors"
                 >
                   {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
@@ -234,7 +305,7 @@ export function ChatbotWidget() {
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "pointer-events-auto flex items-center justify-center w-14 h-14 rounded-full shadow-xl transition-all duration-300 hover:scale-105 active:scale-95",
-          isOpen ? "bg-slate-800 text-white" : "bg-[var(--color-accent)] text-white"
+          isOpen ? "bg-slate-800 text-white" : "bg-[var(--color-primary)] text-white"
         )}
       >
         {isOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}

@@ -18,7 +18,10 @@ import { DocumentController }       from "@/controllers/document.controller";
 export const employeeRoutes = Router();
 
 // ── Apply auth guards ─────────────────────────────────────────────────────
-employeeRoutes.use(authenticate, authorize("MITRA", "TEAM_LEADER", "HC_PM"));
+employeeRoutes.use(authenticate);
+
+const allowAll = authorize("MITRA", "TEAM_LEADER", "HC_PM");
+const allowMitraAndHC = authorize("MITRA", "HC_PM");
 
 /**
  * @openapi
@@ -33,7 +36,7 @@ employeeRoutes.use(authenticate, authorize("MITRA", "TEAM_LEADER", "HC_PM"));
  *       200:
  *         description: Dashboard data retrieved
  */
-employeeRoutes.get("/dashboard",     LoyaltyController.getEmployeeDashboard);
+employeeRoutes.get("/dashboard", allowAll, LoyaltyController.getEmployeeDashboard as RequestHandler);
 
 /**
  * @openapi
@@ -48,7 +51,7 @@ employeeRoutes.get("/dashboard",     LoyaltyController.getEmployeeDashboard);
  *       200:
  *         description: Token summary retrieved
  */
-employeeRoutes.get("/token-summary", LoyaltyController.getTokenSummary);
+employeeRoutes.get("/token-summary", allowAll, LoyaltyController.getTokenSummary as RequestHandler);
 
 /**
  * @openapi
@@ -83,9 +86,9 @@ employeeRoutes.get("/token-summary", LoyaltyController.getTokenSummary);
  *       201:
  *         description: Redemption request created
  */
-employeeRoutes.get( "/redemptions", RedemptionController.listMyRedemptions);
-employeeRoutes.post("/redemptions", DocumentController.uploadMiddleware, RedemptionController.createRequest);
-employeeRoutes.post("/redemptions/:id/cancel", RedemptionController.cancelRequest);
+employeeRoutes.get( "/redemptions", allowMitraAndHC, RedemptionController.listMyRedemptions as RequestHandler);
+employeeRoutes.post("/redemptions", allowMitraAndHC, DocumentController.uploadMiddleware, RedemptionController.createRequest      as RequestHandler);
+employeeRoutes.post("/redemptions/:id/cancel", allowMitraAndHC, RedemptionController.cancelRequest as RequestHandler);
 
 // ── Reward Catalog (read-only for employees) ───────────────────────────────
 /**
@@ -99,20 +102,20 @@ employeeRoutes.post("/redemptions/:id/cancel", RedemptionController.cancelReques
  *       200:
  *         description: List of active rewards retrieved
  */
-employeeRoutes.get( "/rewards",     RewardCatalogController.listActive);
+employeeRoutes.get( "/rewards", allowMitraAndHC, RewardCatalogController.listActive       as RequestHandler);
 
 // ── Token Ledger History ───────────────────────────────────────────────────
-employeeRoutes.get("/history",      LoyaltyController.getTokenHistory);
+employeeRoutes.get("/history", allowAll, LoyaltyController.getTokenHistory        as RequestHandler);
 
 // ── Documents ─────────────────────────────────────────────────────────────
-employeeRoutes.get(  "/documents",        DocumentController.listDocuments);
-employeeRoutes.post( "/documents/upload", DocumentController.uploadMiddleware, DocumentController.uploadDocument);
-employeeRoutes.delete("/documents/:type",   DocumentController.deleteDocument);
+employeeRoutes.get(  "/documents", allowMitraAndHC, DocumentController.listDocuments   as RequestHandler);
+employeeRoutes.post( "/documents/upload", allowMitraAndHC, DocumentController.uploadMiddleware, DocumentController.uploadDocument as RequestHandler);
+employeeRoutes.delete("/documents/:type", allowMitraAndHC, DocumentController.deleteDocument as RequestHandler);
 
 // ── Notifications (stub) ───────────────────────────────────────────────────
-employeeRoutes.get("/notifications", NotificationsController.list);
+employeeRoutes.get("/notifications", allowAll, NotificationsController.list             as RequestHandler);
 
 // ── Profile ────────────────────────────────────────────────────────────────
-employeeRoutes.get( "/profile",      ProfileController.get);
-employeeRoutes.patch("/profile",     ProfileController.update);
-employeeRoutes.post( "/profile/change-password", ProfileController.changePassword);
+employeeRoutes.get( "/profile", allowAll, ProfileController.get                    as RequestHandler);
+employeeRoutes.patch("/profile", allowAll, ProfileController.update                 as RequestHandler);
+employeeRoutes.post( "/profile/change-password", allowAll, ProfileController.changePassword as RequestHandler);

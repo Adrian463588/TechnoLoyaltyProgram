@@ -30,10 +30,12 @@ const PUBLIC_PREFIXES = [
 type Role = "MITRA" | "TEAM_LEADER" | "HC_PM";
 
 const ROUTE_ROLE_MAP: Array<{ prefix: string; roles: Role[] }> = [
-  { prefix: "/admin",       roles: ["HC_PM"] },
-  { prefix: "/api/admin",   roles: ["HC_PM"] },
-  { prefix: "/leader",      roles: ["TEAM_LEADER", "HC_PM"] },
-  { prefix: "/employee",    roles: ["MITRA", "TEAM_LEADER", "HC_PM"] },
+  { prefix: "/admin",              roles: ["HC_PM"] },
+  { prefix: "/api/admin",          roles: ["HC_PM"] },
+  { prefix: "/leader",             roles: ["TEAM_LEADER", "HC_PM"] },
+  { prefix: "/employee/rewards",   roles: ["MITRA", "HC_PM"] },
+  { prefix: "/employee/documents", roles: ["MITRA", "HC_PM"] },
+  { prefix: "/employee",           roles: ["MITRA", "TEAM_LEADER", "HC_PM"] },
 ];
 
 const ROLE_HIERARCHY: Record<Role, number> = {
@@ -59,16 +61,19 @@ export default auth((req) => {
   }
 
   const userRole = (session.user as { role?: string }).role as Role | undefined;
-  const userLevel = userRole ? (ROLE_HIERARCHY[userRole] ?? 0) : 0;
+
+  if (!userRole) {
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
 
   // Check role requirements for the matched route prefix
   for (const { prefix, roles } of ROUTE_ROLE_MAP) {
     if (pathname.startsWith(prefix)) {
-      const hasAccess = roles.some((r) => ROLE_HIERARCHY[r] <= userLevel);
+      const hasAccess = roles.includes(userRole);
       if (!hasAccess) {
         const fallback =
           userRole === "HC_PM"         ? "/admin/dashboard"
-          : userRole === "TEAM_LEADER" ? "/employee/dashboard"
+          : userRole === "TEAM_LEADER" ? "/leader/dashboard"
           : "/employee/dashboard";
         return NextResponse.redirect(new URL(fallback, req.url));
       }

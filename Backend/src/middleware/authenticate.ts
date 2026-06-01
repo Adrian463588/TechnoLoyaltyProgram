@@ -88,7 +88,7 @@ function buildSessionUser(input: {
   name: string;
   email: string;
   role: SessionUser["role"];
-  divisionId?: string;
+  division?: string;
 }): SessionUser {
   const user: SessionUser = {
     id: input.id,
@@ -97,8 +97,8 @@ function buildSessionUser(input: {
     email: input.email,
     role: input.role,
   };
-  if (input.divisionId) {
-    user.divisionId = input.divisionId;
+  if (input.division) {
+    user.division = input.division;
   }
   return user;
 }
@@ -132,14 +132,14 @@ function verifyInternalToken(token: string, secret: string): SessionUser | null 
     return null;
   }
 
-  const divisionId = toOptionalString((parsed as any).divisionId);
+  const division = toOptionalString((parsed as any).division);
   return buildSessionUser({
     id: (parsed as any).id,
     npk: (parsed as any).npk,
     name: (parsed as any).name,
     email: (parsed as any).email,
     role: (parsed as any).role,
-    ...(divisionId ? { divisionId } : {}),
+    ...(division ? { division } : {}),
   });
 }
 
@@ -189,14 +189,14 @@ export const authenticate: RequestHandler = async (req, res, next) => {
       return;
     }
 
-    const divisionId = toOptionalString(payload["divisionId"]);
+    const division = toOptionalString(payload["division"]);
     req.user = buildSessionUser({
       id: toRequiredString(payload["id"]),
       npk: toRequiredString(payload["npk"]),
       name: toRequiredString(payload["name"]),
       email: toRequiredString(payload["email"]),
       role,
-      ...(divisionId ? { divisionId } : {}),
+      ...(division ? { division } : {}),
     });
     next();
   } catch (err) {

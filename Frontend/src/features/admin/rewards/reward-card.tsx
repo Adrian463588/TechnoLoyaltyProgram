@@ -51,7 +51,7 @@ export function RewardCard({ reward, onEdit, onToggleStatus, onDelete }: RewardC
         <div className="absolute top-3 left-3 flex flex-col gap-2">
           <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border backdrop-blur-md shadow-sm
             ${reward.isActive 
-              ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-[var(--color-accent)]/20" 
+              ? "bg-primary/10 text-primary border-primary/20" 
               : "bg-neutral-900/10 text-neutral-600 border-neutral-200"}
           `}>
             {reward.isActive ? "Visible" : "Hidden"}
@@ -70,7 +70,7 @@ export function RewardCard({ reward, onEdit, onToggleStatus, onDelete }: RewardC
       <div className="p-6 flex flex-col flex-1">
         {/* Content */}
         <div className="flex-grow">
-          <h3 className="text-[var(--color-text-primary)] font-bold text-lg mb-1.5 line-clamp-1 group-hover:text-[var(--color-accent)] transition-colors" title={reward.name}>
+          <h3 className="text-[var(--color-text-primary)] font-bold text-lg mb-1.5 line-clamp-1 group-hover:text-primary transition-colors" title={reward.name}>
             {reward.name}
           </h3>
           <p className="text-[var(--color-text-secondary)] text-sm line-clamp-2 min-h-[40px] leading-relaxed">
@@ -87,7 +87,7 @@ export function RewardCard({ reward, onEdit, onToggleStatus, onDelete }: RewardC
                 <span className="text-base font-extrabold text-black leading-none">
                   {reward.tokenCost.toLocaleString()}
                 </span>
-                <Coins className="w-4 h-4 text-[var(--color-accent)]" />
+                <Coins className="w-4 h-4 text-primary" />
               </div>
             </div>
             <div className="flex flex-col items-end">
