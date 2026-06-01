@@ -5,12 +5,24 @@ import { ShoppingBag, Clock, CheckCircle2, Coins } from "lucide-react";
 import { TeamRedemptionsTable } from "@/components/dashboard/team-redemptions-table";
 import { BentoCard } from "@/components/ui/bento-card";
 
-export default async function LeaderRedemptionsPage() {
+export default async function LeaderRedemptionsPage(props: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const token = await getServerToken();
+  const searchParams = await props.searchParams;
+
+  const currentPage = Number(searchParams.page) || 1;
+  const itemsPerPage = 10;
+  const offset = (currentPage - 1) * itemsPerPage;
 
   let teamRedemptions: any[] = [];
+  let totalCount = 0;
+  let allRedemptionsForStats: any[] = [];
+
   try {
-    const res = await leaderApi.listRedemptions(token, { limit: 100 });
+    // Fetch paginated data for the table
+    const res = await leaderApi.listRedemptions(token, { limit: itemsPerPage, offset });
+    totalCount = res.total;
     teamRedemptions = res.requests.map((r: any) => ({
       id: r.id,
       mitraName: r.mitra?.name ?? "—",
@@ -21,17 +33,23 @@ export default async function LeaderRedemptionsPage() {
       submittedAt: r.createdAt,
       userNpk: r.mitra?.npk ?? "—",
     }));
+
+    // Fetch a larger set for stats (or ideally, use a dedicated summary API)
+    const statsRes = await leaderApi.listRedemptions(token, { limit: 1000 });
+    allRedemptionsForStats = statsRes.requests;
   } catch (error) {
     console.error("Failed to fetch team redemptions:", error);
   }
 
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+
   const stats = {
-    total: teamRedemptions.length,
-    pending: teamRedemptions.filter(r => r.status === "REQUESTED" || r.status === "REVIEWED").length,
-    approved: teamRedemptions.filter(r => r.status === "ACCEPTED").length,
-    totalTokens: teamRedemptions
+    total: totalCount,
+    pending: allRedemptionsForStats.filter(r => r.status === "REQUESTED" || r.status === "REVIEWED").length,
+    approved: allRedemptionsForStats.filter(r => r.status === "ACCEPTED").length,
+    totalTokens: allRedemptionsForStats
       .filter(r => r.status === "ACCEPTED")
-      .reduce((acc, r) => acc + (r.tokensSpent || 0), 0)
+      .reduce((acc, r) => acc + (r.item?.tokenCost || 0), 0)
   };
 
   return (
@@ -99,7 +117,12 @@ export default async function LeaderRedemptionsPage() {
           </div>
 
           <div className="min-h-[400px]">
-            <TeamRedemptionsTable requests={teamRedemptions} />
+            <TeamRedemptionsTable 
+              requests={teamRedemptions} 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalCount={totalCount}
+            />
           </div>
         </div>
       </main>
