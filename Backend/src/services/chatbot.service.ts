@@ -169,6 +169,42 @@ export class ChatbotService {
    */
 
   /**
+   * Mengambil peringkat token (Leaderboard)
+   * @param limit Jumlah user yang diambil
+   * @param division Filter berdasarkan divisi (opsional)
+   */
+  async getTokenLeaderboard(limit: number = 10, division?: string) {
+    const users = await prisma.user.findMany({
+      where: {
+        role: "MITRA",
+        ...(division ? { division: division as any } : {})
+      },
+      select: {
+        name: true,
+        npk: true,
+        division: true,
+        membershipTier: true,
+        tokenLedger: {
+          select: { amount: true }
+        }
+      }
+    });
+
+    // Calculate totals and sort
+    const leaderboard = users.map(u => ({
+      name: u.name,
+      npk: u.npk,
+      division: u.division,
+      tier: u.membershipTier,
+      totalTokens: u.tokenLedger.reduce((sum, entry) => sum + entry.amount, 0)
+    }))
+    .sort((a, b) => b.totalTokens - a.totalTokens)
+    .slice(0, limit);
+
+    return leaderboard;
+  }
+
+  /**
    * Menghitung aksi yang tertunda secara global
    */
   async getGlobalPendingActions() {
