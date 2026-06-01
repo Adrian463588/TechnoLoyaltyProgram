@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
-import { FileUp, Users, Inbox, Coins, ChevronRight, UserCheck, Zap, LayoutDashboard } from "lucide-react";
+import { FileUp, Users, Inbox, Coins, ChevronRight, UserCheck, Zap, LayoutDashboard, Clock, Gift, MapPin, Calendar } from "lucide-react";
 import { RedemptionQueueTable } from "@/features/admin/redemption-queue-table";
 import { DashboardClock } from "@/components/dashboard/dashboard-clock";
 import { auth, getServerToken } from "@/lib/auth";
@@ -117,6 +117,47 @@ export default async function AdminDashboardPage() {
     }
   }
 
+  // ── Helper logic for countdowns ─────────────────────────────────────────
+  const getDaysDiff = (targetMMDD: string) => {
+    const [m, d] = targetMMDD.split("-").map(Number);
+    const targetDate = new Date(now.getFullYear(), m - 1, d);
+    const diffTime = targetDate.getTime() - now.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  let earningStatusText = "Phase Finished";
+  let claimingStatusText = "Upcoming Phase";
+  let isClaimingActive = false;
+
+  if (settings) {
+    const { p1End, p2End, claimP1Start, claimP1End, claimP2Start, claimP2End } = settings;
+    
+    // Earning Countdown
+    const currentEarningEnd = activePeriodLabel === "P1" ? p1End : p2End;
+    const daysLeftEarning = getDaysDiff(currentEarningEnd);
+    if (daysLeftEarning > 0) {
+      earningStatusText = `${daysLeftEarning} days remaining`;
+    } else if (daysLeftEarning === 0) {
+      earningStatusText = "Last day to earn!";
+    }
+
+    // Claiming Countdown
+    const currentClaimStart = activeClaimLabel === "P1" ? claimP1Start : claimP2Start;
+    const currentClaimEnd   = activeClaimLabel === "P1" ? claimP1End   : claimP2End;
+    
+    const daysUntilClaim = getDaysDiff(currentClaimStart);
+    const daysLeftClaim  = getDaysDiff(currentClaimEnd);
+
+    if (daysUntilClaim > 0) {
+      claimingStatusText = `Starts in ${daysUntilClaim} days`;
+    } else if (daysLeftClaim >= 0) {
+      claimingStatusText = `${daysLeftClaim === 0 ? "Last day" : daysLeftClaim + " days"} remaining`;
+      isClaimingActive = true;
+    } else {
+      claimingStatusText = "Phase Finished";
+    }
+  }
+
   const requests = redemptionRes?.requests ?? [];
   const users = userRes?.users ?? [];
 
@@ -187,29 +228,31 @@ export default async function AdminDashboardPage() {
 
           {/* KPI Cards */}
           {/* Employee Tier Distribution */}
-          <div className="bento-span-12 md:bento-span-4 bento-card p-6 flex flex-col bg-gradient-to-br from-[--color-surface-elevated] to-[--color-surface-base] relative overflow-hidden group min-h-[220px] shadow-sm animate-fade-up-in stagger-1">
+          <div className="bento-span-12 md:bento-span-4 bento-card p-6 relative overflow-hidden bg-white border-[var(--color-border-subtle)] shadow-sm group animate-fade-up-in stagger-1">
             <div className="relative z-10 flex flex-col h-full">
-              <h3 className="text-[10px] font-black tracking-[0.2em] uppercase mb-6 opacity-60 text-[--color-text-secondary]">
-                Employee Tier Distribution
-              </h3>
+              <div className="flex items-baseline justify-between mb-4">
+                <h3 className="text-[10px] font-black tracking-[0.2em] uppercase opacity-60 text-slate-400">
+                  EMPLOYEE TIER DISTRIBUTION
+                </h3>
+              </div>
               
-              <div className="flex-1 flex flex-col justify-center gap-3">
+              <div className="flex-1 flex flex-col justify-center gap-4">
                 {[
-                  { label: "Saphire", key: "SAPHIRE", color: "bg-blue-500", text: "text-blue-500" },
-                  { label: "Emerald", key: "EMERALD", color: "bg-emerald-500", text: "text-emerald-500" },
-                  { label: "Ruby",    key: "RUBY",    color: "bg-red-500",     text: "text-red-500" },
-                  { label: "Diamond", key: "DIAMOND", color: "bg-purple-500",  text: "text-purple-500" },
+                  { label: "Saphire", key: "SAPHIRE", color: "bg-blue-500", text: "text-blue-600" },
+                  { label: "Emerald", key: "EMERALD", color: "bg-emerald-500", text: "text-emerald-600" },
+                  { label: "Ruby",    key: "RUBY",    color: "bg-red-500",     text: "text-red-600" },
+                  { label: "Diamond", key: "DIAMOND", color: "bg-purple-500",  text: "text-purple-600" },
                 ].map((tier) => {
                   const count = tierDistribution[tier.key as keyof typeof tierDistribution] || 0;
                   const percentage = totalUsersWithTier > 0 ? (count / totalUsersWithTier) * 100 : 0;
 
                   return (
-                    <div key={tier.key} className="space-y-1">
+                    <div key={tier.key} className="space-y-1.5">
                       <div className="flex justify-between items-end">
                         <span className={cn("text-[10px] font-bold uppercase tracking-wider", tier.text)}>{tier.label}</span>
-                        <span className="text-[10px] font-black text-[--color-text-primary]">{count}</span>
+                        <span className="text-xs font-black text-slate-700">{count} Members</span>
                       </div>
-                      <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                         <div
                           className={cn("h-full rounded-full transition-all duration-1000", tier.color)}
                           style={{ width: `${percentage}%` }}
@@ -220,8 +263,8 @@ export default async function AdminDashboardPage() {
                 })}
               </div>
             </div>
-            <div className="absolute -bottom-6 -right-6 opacity-[0.03] group-hover:scale-110 transition-all duration-1000 pointer-events-none">
-              <Users size={180} />
+            <div className="absolute -bottom-6 -right-6 opacity-[0.04] group-hover:scale-110 group-hover:opacity-[0.07] transition-all duration-1000 pointer-events-none text-slate-900">
+              <Users size={160} />
             </div>
           </div>
 
@@ -268,22 +311,61 @@ export default async function AdminDashboardPage() {
             </div>
           </div>
 
-          <div className="bento-span-12 md:bento-span-4 bento-card p-6 flex flex-col bg-gradient-to-br from-[--color-surface-elevated] to-[--color-surface-base] relative overflow-hidden group min-h-[220px] shadow-sm animate-fade-up-in stagger-3">
-            <div className="absolute -bottom-10 -right-10 opacity-[0.04] group-hover:scale-110 group-hover:opacity-[0.07] transition-all duration-1000 pointer-events-none text-blue-900">
-              <Coins size={240} />
-            </div>
+          {/* Current Cycle Info Card */}
+          <div className="bento-span-12 md:bento-span-4 bento-card p-6 relative overflow-hidden bg-white border-slate-200 group shadow-sm animate-fade-up-in stagger-3">
             <div className="relative z-10 flex flex-col h-full">
-              <h3 className="text-[10px] font-black tracking-[0.2em] uppercase mb-4 opacity-60 text-[--color-text-secondary]">
-                Tokens Issued
-              </h3>
-              <div className="flex-1 flex flex-col justify-center mb-6">
-                <p className="text-7xl font-black text-blue-500 font-display tracking-tighter leading-none">{formatTokens(totalTokensIssued)}</p>
+              <div className="flex items-baseline justify-between mb-4">
+                <h3 className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-400">
+                  CURRENT CYCLE : {activePeriodLabel}
+                </h3>
               </div>
-              <div className="mt-auto pt-4">
-                <div className="text-[10px] font-black uppercase tracking-wider text-[--color-text-secondary]">Total Distribution</div>
+
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                {/* Earning Phase */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Clock size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Earning</span>
+                  </div>
+                  <p className="text-sm font-black text-slate-600 leading-none">{activePeriodDates}</p>
+                  <p className="text-[10px] font-bold text-slate-400">{earningStatusText}</p>
+                </div>
+
+                {/* Claim Phase */}
+                <div className="space-y-2 border-l border-slate-100 pl-4">
+                  <div className={cn("flex items-center gap-2", isClaimingActive ? "text-primary" : "text-slate-400")}>
+                    <Gift size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Claiming</span>
+                  </div>
+                  <p className={cn("text-sm font-black leading-none", isClaimingActive ? "text-slate-900" : "text-slate-600")}>
+                    {activeClaimDates}
+                  </p>
+                  <p className={cn("text-[10px] font-bold", isClaimingActive ? "text-primary animate-pulse" : "text-slate-400")}>
+                    {claimingStatusText}
+                  </p>
+                </div>
               </div>
+
+              <div className="mt-auto pt-6 border-t border-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                    <MapPin size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pickup Point</p>
+                    <p className="text-xs font-bold text-slate-700">
+                      {settings?.rewardPickupLocation || "Contact HC for location"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="absolute -bottom-6 -right-6 opacity-[0.04] group-hover:scale-110 group-hover:opacity-[0.07] transition-all duration-1000 pointer-events-none text-slate-900">
+              <Calendar size={160} />
             </div>
           </div>
+
 
           {/* Action Center */}
           <div className="bento-span-12 animate-fade-up-in stagger-5">

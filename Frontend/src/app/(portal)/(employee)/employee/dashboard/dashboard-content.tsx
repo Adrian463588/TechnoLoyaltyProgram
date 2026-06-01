@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, TrendingUp, ChevronRight, ArrowUpRight, Clock, Gift, Zap, Coins, ShieldCheck, MapPin, Calendar, Users } from "lucide-react";
+import { ShoppingBag, TrendingUp, ChevronRight, ArrowUpRight, Clock, Gift, Zap, Coins, ShieldCheck, MapPin, Calendar, Users, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { TokenHeroSection } from "@/components/dashboard/token-hero-section";
 import { DashboardClock } from "@/components/dashboard/dashboard-clock";
@@ -84,7 +84,7 @@ const formatDate = (dateStr: string) => {
   }).format(new Date(dateStr));
 };
 
-export function DashboardContent({ data, userName }: { data: DashboardData; userName?: string }) {
+export function DashboardContent({ data, userName, welcomeMessage }: { data: DashboardData; userName?: string; welcomeMessage?: string }) {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const router = useRouter();
 
@@ -228,36 +228,24 @@ export function DashboardContent({ data, userName }: { data: DashboardData; user
       {/* Welcome Banner Card */}
       <motion.div
         variants={itemVariants}
-        className="bento-span-12 bento-card p-8 flex flex-col md:flex-row md:items-start justify-between animate-fade-up-in"
+        className="bento-span-12 bento-card p-8 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in"
       >
-        <div className="flex flex-col">
-          <motion.h1
-            data-testid="employee-dashboard-heading"
-            className="text-2xl font-extrabold text-[--color-text-secondary] leading-none mb-3"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            Dashboard
-          </motion.h1>
-          <motion.p
-            className="text-sm text-[--color-text-secondary] font-medium leading-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            Welcome back, <span className="font-bold">{userName}</span>! Here's an overview of your loyalty status.
-          </motion.p>
+        <div className="flex items-center gap-5">
+          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-sm shadow-primary/5 shrink-0"> 
+            <LayoutDashboard size={28} />
+          </div>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-extrabold text-[--color-text-secondary] leading-none">Dashboard</h1>
+            <p className="text-sm text-[--color-text-secondary] font-medium leading-none">
+              {welcomeMessage ? welcomeMessage : (
+                <>Welcome back, <span className="font-bold">{userName}</span>! Here's an overview of your loyalty status.</>
+              )}
+            </p>
+          </div>
         </div>
-        
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mt-4 md:mt-0"
-        >
+        <div className="mt-4 md:mt-0">
           <DashboardClock />
-        </motion.div>
+        </div>
       </motion.div>
 
       {/* Row 2: Stats Grid */}
