@@ -1,23 +1,8 @@
 import UploadsClient from "./uploads-client";
-import { adminApi } from "@/lib/api-client";
-import { getServerToken } from "@/lib/auth";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { FileUp } from "lucide-react";
 
 export default async function UploadsPage() {
-  const token = await getServerToken();
-  const uploads = await adminApi.listUploads(token).then((items) =>
-    items.map((item) => ({
-      id: item.id,
-      filename: item.filename,
-      status: item.status === "FAILED" ? "Failed" as const : item.status === "COMPLETED" ? "Completed" as const : "Processing" as const,
-      uploadedAt: item.createdAt,
-      validRows: item.validRows,
-      errorRows: item.errorRows,
-      issues: [],
-    })),
-  ).catch(() => []);
-
   return (
     <div className="flex flex-col min-h-screen">
       <div className="glass-nav px-6">
@@ -44,7 +29,7 @@ export default async function UploadsPage() {
           </div>
 
           <div className="bento-span-12">
-            <UploadsClient history={uploads} />
+            <UploadsClient />
           </div>
         </div>
       </main>
