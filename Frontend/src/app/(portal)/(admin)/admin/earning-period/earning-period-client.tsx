@@ -22,9 +22,18 @@ import {
   Loader2, 
   AlertCircle,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  CheckCircle2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface EarningPeriodClientProps {
   initialSettings: SystemSettingsResponse | null;
@@ -61,6 +70,7 @@ const getDays = (month: string) => {
 
 export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPeriodClientProps) {
   const [isSaving, setIsUpdating] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [settings, setSettings] = useState<Partial<SystemSettingsResponse>>(initialSettings || {
     p1Start: "06-16",
     p1End: "12-15",
@@ -90,6 +100,7 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
   };
 
   const onSave = async () => {
+    setShowConfirm(false);
     setIsUpdating(true);
     try {
       const { id, updatedAt, ...payload } = settings as any;
@@ -272,7 +283,7 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
           </div>
           
           <Button 
-            onClick={onSave}
+            onClick={() => setShowConfirm(true)}
             disabled={isSaving}
             className="w-full sm:w-auto h-14 px-10 bg-primary hover:bg-primary/90 text-white rounded-2xl text-sm transition-all active:scale-95 shadow-xl shadow-primary/30 flex items-center gap-3"
           >
@@ -287,6 +298,47 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
           </Button>
         </BentoCard>
       </div>
+
+      {/* Stylized Confirmation Dialog */}
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <DialogContent className="rounded-2xl bg-white border border-neutral-200 shadow-2xl max-w-md p-0 overflow-hidden">
+          <div className="p-8 text-center">
+            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-6 shadow-inner animate-pulse">
+              <CheckCircle2 size={32} />
+            </div>
+            
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight text-center">
+                Commit System Changes?
+              </DialogTitle>
+              <DialogDescription className="text-slate-500 text-sm leading-relaxed text-center px-2">
+                You are about to update the global loyalty cycles. This action will affect reward eligibility and redemption dates for all employees across the organization.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="mt-8 grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowConfirm(false)}
+                className="h-12 rounded-xl border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={onSave}
+                className="h-12 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <Save size={18} />
+                Save Updates
+              </Button>
+            </div>
+          </div>
+          
+          {/* Subtle Background Pattern */}
+          <div className="absolute inset-0 opacity-[0.02] pointer-events-none" 
+               style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

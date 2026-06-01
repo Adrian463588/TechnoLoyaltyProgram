@@ -7,6 +7,7 @@ import { DashboardContent } from "@/app/(portal)/(employee)/employee/dashboard/d
 export default async function LeaderDashboardPage() {
   const session = await auth();
   const token = await getServerToken();
+  const userName = session?.user?.name || "Leader";
 
   const [leaderData, settings] = await Promise.all([
     leaderApi.getDashboard(token),
@@ -41,7 +42,8 @@ export default async function LeaderDashboardPage() {
       <div className="flex-1 p-4 md:p-6 max-w-[1600px] w-full mx-auto">
         <DashboardContent 
           data={dashboardData as any} 
-          userName={session?.user?.name || "Leader"} 
+          userName={userName} 
+          welcomeMessage={`Welcome back, ${userName}! Here's an overview of your team's loyalty status.`}
         />
       </div>
     </div>
