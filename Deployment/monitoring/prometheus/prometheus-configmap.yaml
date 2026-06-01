@@ -6,8 +6,8 @@ metadata:
 data:
   prometheus.yml: |
     global:
-      scrape_interval: 15s
-      evaluation_interval: 15s
+      scrape_interval: 5s
+      evaluation_interval: 5s
       external_labels:
         cluster: 'loyalty-k3s-devops'
         runtime: 'coolify'
@@ -69,3 +69,12 @@ data:
       - job_name: 'kube-state-metrics'
         static_configs:
           - targets: ['kube-state-metrics.kube-system.svc.cluster.local:8080']
+
+      # Scrape Coolify Backend
+      - job_name: 'coolify-backend'
+        scheme: https
+        static_configs:
+          - targets: ['mhv74q5gor8464d8v6nc69vn.34.128.73.127.sslip.io']
+            labels:
+              namespace: 'devops'
+        metrics_path: '/metrics'

@@ -1,276 +1,164 @@
 apiVersion: v1
+data:
+  loyalty-program.json: "{\n  \"uid\": \"loyalty-devops\",\n  \"title\": \"Loyalty\
+    \ DevOps \\u2014 Overview\",\n  \"refresh\": \"5s\",\n  \"time\": {\n    \"from\"\
+    : \"now-15m\",\n    \"to\": \"now\"\n  },\n  \"templating\": {\n    \"list\":\
+    \ [\n      {\n        \"name\": \"namespace\",\n        \"type\": \"constant\"\
+    ,\n        \"current\": {\n          \"value\": \"devops|monitoring|argocd\"\n\
+    \        },\n        \"hide\": 2\n      }\n    ]\n  },\n  \"panels\": [\n    {\n\
+    \      \"id\": 1,\n      \"type\": \"stat\",\n      \"title\": \"Target Uptime\"\
+    ,\n      \"gridPos\": {\n        \"h\": 4,\n        \"w\": 6,\n        \"x\":\
+    \ 0,\n        \"y\": 0\n      },\n      \"options\": {\n        \"colorMode\"\
+    : \"background\",\n        \"graphMode\": \"none\",\n        \"reduceOptions\"\
+    : {\n          \"calcs\": [\n            \"lastNotNull\"\n          ]\n      \
+    \  }\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"\
+    color\": {\n            \"mode\": \"thresholds\"\n          },\n          \"thresholds\"\
+    : {\n            \"mode\": \"absolute\",\n            \"steps\": [\n         \
+    \     {\n                \"color\": \"red\",\n                \"value\": 0\n \
+    \             },\n              {\n                \"color\": \"green\",\n   \
+    \             \"value\": 1\n              }\n            ]\n          },\n   \
+    \       \"mappings\": [\n            {\n              \"type\": \"value\",\n \
+    \             \"options\": {\n                \"0\": {\n                  \"text\"\
+    : \"DOWN\"\n                },\n                \"1\": {\n                  \"\
+    text\": \"UP\"\n                }\n              }\n            }\n          ]\n\
+    \        }\n      },\n      \"targets\": [\n        {\n          \"expr\": \"\
+    up{job=\\\"coolify-backend\\\"}\",\n          \"refId\": \"A\",\n          \"\
+    datasource\": {\n            \"type\": \"prometheus\",\n            \"uid\": \"\
+    Prometheus\"\n          }\n        }\n      ],\n      \"datasource\": {\n    \
+    \    \"type\": \"prometheus\",\n        \"uid\": \"Prometheus\"\n      }\n   \
+    \ },\n    {\n      \"id\": 2,\n      \"type\": \"stat\",\n      \"title\": \"\
+    Request Rate (RPS)\",\n      \"gridPos\": {\n        \"h\": 4,\n        \"w\"\
+    : 6,\n        \"x\": 6,\n        \"y\": 0\n      },\n      \"options\": {\n  \
+    \      \"colorMode\": \"value\",\n        \"graphMode\": \"area\",\n        \"\
+    reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n    \
+    \      ]\n        }\n      },\n      \"fieldConfig\": {\n        \"defaults\"\
+    : {\n          \"unit\": \"reqps\",\n          \"color\": {\n            \"mode\"\
+    : \"continuous-GrYlRd\"\n          }\n        }\n      },\n      \"targets\":\
+    \ [\n        {\n          \"expr\": \"sum(rate(http_requests_total{namespace=~\\\
+    \"devops|monitoring\\\"}[1m]))\",\n          \"refId\": \"A\",\n          \"datasource\"\
+    : {\n            \"type\": \"prometheus\",\n            \"uid\": \"Prometheus\"\
+    \n          }\n        }\n      ],\n      \"datasource\": {\n        \"type\"\
+    : \"prometheus\",\n        \"uid\": \"Prometheus\"\n      }\n    },\n    {\n \
+    \     \"id\": 3,\n      \"type\": \"stat\",\n      \"title\": \"Error Rate (5xx/4xx)\"\
+    ,\n      \"gridPos\": {\n        \"h\": 4,\n        \"w\": 6,\n        \"x\":\
+    \ 12,\n        \"y\": 0\n      },\n      \"options\": {\n        \"colorMode\"\
+    : \"background\",\n        \"graphMode\": \"area\",\n        \"reduceOptions\"\
+    : {\n          \"calcs\": [\n            \"lastNotNull\"\n          ]\n      \
+    \  }\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"\
+    unit\": \"reqps\",\n          \"color\": {\n            \"mode\": \"thresholds\"\
+    \n          },\n          \"thresholds\": {\n            \"mode\": \"absolute\"\
+    ,\n            \"steps\": [\n              {\n                \"color\": \"green\"\
+    ,\n                \"value\": 0\n              },\n              {\n         \
+    \       \"color\": \"orange\",\n                \"value\": 1\n              },\n\
+    \              {\n                \"color\": \"red\",\n                \"value\"\
+    : 5\n              }\n            ]\n          }\n        }\n      },\n      \"\
+    targets\": [\n        {\n          \"expr\": \"sum(rate(http_requests_total{status=~\\\
+    \"5..|4..\\\", namespace=~\\\"devops|monitoring\\\"}[1m]))\",\n          \"refId\"\
+    : \"A\",\n          \"datasource\": {\n            \"type\": \"prometheus\",\n\
+    \            \"uid\": \"Prometheus\"\n          }\n        }\n      ],\n     \
+    \ \"datasource\": {\n        \"type\": \"prometheus\",\n        \"uid\": \"Prometheus\"\
+    \n      }\n    },\n    {\n      \"id\": 4,\n      \"type\": \"stat\",\n      \"\
+    title\": \"P95 Latency\",\n      \"gridPos\": {\n        \"h\": 4,\n        \"\
+    w\": 6,\n        \"x\": 18,\n        \"y\": 0\n      },\n      \"options\": {\n\
+    \        \"colorMode\": \"value\",\n        \"graphMode\": \"area\",\n       \
+    \ \"reduceOptions\": {\n          \"calcs\": [\n            \"lastNotNull\"\n\
+    \          ]\n        }\n      },\n      \"fieldConfig\": {\n        \"defaults\"\
+    : {\n          \"unit\": \"s\",\n          \"color\": {\n            \"mode\"\
+    : \"thresholds\"\n          },\n          \"thresholds\": {\n            \"mode\"\
+    : \"absolute\",\n            \"steps\": [\n              {\n                \"\
+    color\": \"green\",\n                \"value\": 0\n              },\n        \
+    \      {\n                \"color\": \"orange\",\n                \"value\": 0.2\n\
+    \              },\n              {\n                \"color\": \"red\",\n    \
+    \            \"value\": 0.5\n              }\n            ]\n          }\n   \
+    \     }\n      },\n      \"targets\": [\n        {\n          \"expr\": \"histogram_quantile(0.95,\
+    \ sum(rate(http_request_duration_seconds_bucket{namespace=~\\\"devops|monitoring\\\
+    \"}[1m])) by (le))\",\n          \"refId\": \"A\",\n          \"datasource\":\
+    \ {\n            \"type\": \"prometheus\",\n            \"uid\": \"Prometheus\"\
+    \n          }\n        }\n      ],\n      \"datasource\": {\n        \"type\"\
+    : \"prometheus\",\n        \"uid\": \"Prometheus\"\n      }\n    },\n    {\n \
+    \     \"id\": 5,\n      \"type\": \"timeseries\",\n      \"title\": \"HTTP Requests\
+    \ by Status Code\",\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 12,\n\
+    \        \"x\": 0,\n        \"y\": 4\n      },\n      \"options\": {\n       \
+    \ \"tooltip\": {\n          \"mode\": \"multi\"\n        },\n        \"legend\"\
+    : {\n          \"displayMode\": \"list\",\n          \"placement\": \"bottom\"\
+    \n        }\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n   \
+    \       \"unit\": \"reqps\",\n          \"custom\": {\n            \"fillOpacity\"\
+    : 70,\n            \"lineWidth\": 1,\n            \"stacking\": {\n          \
+    \    \"mode\": \"normal\",\n              \"group\": \"A\"\n            }\n  \
+    \        }\n        }\n      },\n      \"targets\": [\n        {\n          \"\
+    expr\": \"sum by (status) (rate(http_requests_total{namespace=~\\\"devops|monitoring\\\
+    \"}[1m]))\",\n          \"legendFormat\": \"HTTP {{status}}\",\n          \"refId\"\
+    : \"A\",\n          \"datasource\": {\n            \"type\": \"prometheus\",\n\
+    \            \"uid\": \"Prometheus\"\n          }\n        }\n      ],\n     \
+    \ \"datasource\": {\n        \"type\": \"prometheus\",\n        \"uid\": \"Prometheus\"\
+    \n      }\n    },\n    {\n      \"id\": 6,\n      \"type\": \"timeseries\",\n\
+    \      \"title\": \"API Latency\",\n      \"gridPos\": {\n        \"h\": 8,\n\
+    \        \"w\": 12,\n        \"x\": 12,\n        \"y\": 4\n      },\n      \"\
+    options\": {\n        \"tooltip\": {\n          \"mode\": \"multi\"\n        },\n\
+    \        \"legend\": {\n          \"displayMode\": \"list\",\n          \"placement\"\
+    : \"bottom\"\n        }\n      },\n      \"fieldConfig\": {\n        \"defaults\"\
+    : {\n          \"unit\": \"s\",\n          \"color\": {\n            \"mode\"\
+    : \"palette-classic\"\n          },\n          \"custom\": {\n            \"lineWidth\"\
+    : 2,\n            \"fillOpacity\": 10\n          }\n        }\n      },\n    \
+    \  \"targets\": [\n        {\n          \"expr\": \"histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=~\\\
+    \"devops|monitoring\\\"}[1m])) by (le))\",\n          \"legendFormat\": \"P50\"\
+    ,\n          \"refId\": \"A\",\n          \"datasource\": {\n            \"type\"\
+    : \"prometheus\",\n            \"uid\": \"Prometheus\"\n          }\n        },\n\
+    \        {\n          \"expr\": \"histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=~\\\
+    \"devops|monitoring\\\"}[1m])) by (le))\",\n          \"legendFormat\": \"P95\"\
+    ,\n          \"refId\": \"B\",\n          \"datasource\": {\n            \"type\"\
+    : \"prometheus\",\n            \"uid\": \"Prometheus\"\n          }\n        },\n\
+    \        {\n          \"expr\": \"histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=~\\\
+    \"devops|monitoring\\\"}[1m])) by (le))\",\n          \"legendFormat\": \"P99\"\
+    ,\n          \"refId\": \"C\",\n          \"datasource\": {\n            \"type\"\
+    : \"prometheus\",\n            \"uid\": \"Prometheus\"\n          }\n        }\n\
+    \      ],\n      \"datasource\": {\n        \"type\": \"prometheus\",\n      \
+    \  \"uid\": \"Prometheus\"\n      }\n    },\n    {\n      \"id\": 7,\n      \"\
+    type\": \"timeseries\",\n      \"title\": \"Container CPU Usage\",\n      \"gridPos\"\
+    : {\n        \"h\": 8,\n        \"w\": 8,\n        \"x\": 0,\n        \"y\": 12\n\
+    \      },\n      \"options\": {\n        \"tooltip\": {\n          \"mode\": \"\
+    multi\"\n        },\n        \"legend\": {\n          \"displayMode\": \"list\"\
+    ,\n          \"placement\": \"bottom\"\n        }\n      },\n      \"fieldConfig\"\
+    : {\n        \"defaults\": {\n          \"unit\": \"short\",\n          \"color\"\
+    : {\n            \"mode\": \"palette-classic\"\n          }\n        }\n     \
+    \ },\n      \"targets\": [\n        {\n          \"expr\": \"sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=~\\\
+    \"devops|monitoring\\\", container!=\\\"\\\"}[1m]))\",\n          \"legendFormat\"\
+    : \"{{pod}}\",\n          \"refId\": \"A\",\n          \"datasource\": {\n   \
+    \         \"type\": \"prometheus\",\n            \"uid\": \"Prometheus\"\n   \
+    \       }\n        }\n      ],\n      \"datasource\": {\n        \"type\": \"\
+    prometheus\",\n        \"uid\": \"Prometheus\"\n      }\n    },\n    {\n     \
+    \ \"id\": 8,\n      \"type\": \"timeseries\",\n      \"title\": \"Container Memory\
+    \ Usage\",\n      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 8,\n     \
+    \   \"x\": 8,\n        \"y\": 12\n      },\n      \"options\": {\n        \"tooltip\"\
+    : {\n          \"mode\": \"multi\"\n        },\n        \"legend\": {\n      \
+    \    \"displayMode\": \"list\",\n          \"placement\": \"bottom\"\n       \
+    \ }\n      },\n      \"fieldConfig\": {\n        \"defaults\": {\n          \"\
+    unit\": \"bytes\",\n          \"color\": {\n            \"mode\": \"palette-classic\"\
+    \n          }\n        }\n      },\n      \"targets\": [\n        {\n        \
+    \  \"expr\": \"sum by (pod) (container_memory_working_set_bytes{namespace=~\\\"\
+    devops|monitoring\\\", container!=\\\"\\\"})\",\n          \"legendFormat\": \"\
+    {{pod}}\",\n          \"refId\": \"A\",\n          \"datasource\": {\n       \
+    \     \"type\": \"prometheus\",\n            \"uid\": \"Prometheus\"\n       \
+    \   }\n        }\n      ],\n      \"datasource\": {\n        \"type\": \"prometheus\"\
+    ,\n        \"uid\": \"Prometheus\"\n      }\n    },\n    {\n      \"id\": 9,\n\
+    \      \"type\": \"table\",\n      \"title\": \"Pod Status (Health Check)\",\n\
+    \      \"gridPos\": {\n        \"h\": 8,\n        \"w\": 8,\n        \"x\": 16,\n\
+    \        \"y\": 12\n      },\n      \"options\": {\n        \"showHeader\": true,\n\
+    \        \"footer\": {\n          \"show\": false\n        }\n      },\n     \
+    \ \"targets\": [\n        {\n          \"expr\": \"kube_pod_status_phase{namespace=~\\\
+    \"devops|monitoring\\\"}\",\n          \"legendFormat\": \"{{pod}} \\u2014 {{phase}}\"\
+    ,\n          \"refId\": \"A\",\n          \"instant\": true,\n          \"datasource\"\
+    : {\n            \"type\": \"prometheus\",\n            \"uid\": \"Prometheus\"\
+    \n          }\n        }\n      ],\n      \"transformations\": [\n        {\n\
+    \          \"id\": \"labelsToFields\",\n          \"options\": {}\n        },\n\
+    \        {\n          \"id\": \"organize\",\n          \"options\": {\n      \
+    \      \"renameByName\": {\n              \"pod\": \"Pod\",\n              \"\
+    phase\": \"Phase\",\n              \"Value\": \"State\"\n            }\n     \
+    \     }\n        }\n      ],\n      \"datasource\": {\n        \"type\": \"prometheus\"\
+    ,\n        \"uid\": \"Prometheus\"\n      }\n    }\n  ]\n}"
 kind: ConfigMap
 metadata:
+  labels:
+    grafana_dashboard: '1'
   name: grafana-dashboards
   namespace: monitoring
-  labels:
-    grafana_dashboard: "1"
-data:
-  loyalty-program.json: |
-    {
-      "id": null,
-      "uid": "loyalty-program-v1",
-      "title": "Loyalty DevOps — Overview",
-      "description": "K3s DevOps stack, CI/CD tooling, and monitoring health for Loyalty Program",
-      "tags": ["loyalty", "production"],
-      "timezone": "Asia/Jakarta",
-      "schemaVersion": 38,
-      "version": 1,
-      "refresh": "30s",
-      "time": { "from": "now-6h", "to": "now" },
-      "templating": {
-        "list": [
-          {
-            "name": "namespace",
-            "type": "constant",
-            "current": { "value": "devops|monitoring|argocd" },
-            "hide": 2
-          }
-        ]
-      },
-      "panels": [
-        {
-          "id": 1,
-          "type": "stat",
-          "title": "Total Pods Running",
-          "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
-          "options": {
-            "colorMode": "background",
-            "graphMode": "none",
-            "reduceOptions": { "calcs": ["lastNotNull"] }
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": { "mode": "thresholds" },
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "red", "value": 0 },
-                  { "color": "yellow", "value": 1 },
-                  { "color": "green", "value": 2 }
-                ]
-              },
-              "unit": "short"
-            }
-          },
-          "targets": [
-            {
-              "expr": "count(kube_pod_status_phase{namespace=~\"devops|monitoring|argocd\", phase=\"Running\"})",
-              "legendFormat": "Running Pods",
-              "refId": "A"
-            }
-          ]
-        },
-        {
-          "id": 2,
-          "type": "stat",
-          "title": "API Request Rate (RPS)",
-          "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
-          "options": {
-            "colorMode": "background",
-            "graphMode": "area",
-            "reduceOptions": { "calcs": ["lastNotNull"] }
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": { "mode": "thresholds" },
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "blue", "value": 0 },
-                  { "color": "green", "value": 1 }
-                ]
-              },
-              "unit": "reqps"
-            }
-          },
-          "targets": [
-            {
-              "expr": "sum(rate(http_requests_total{namespace=~\"devops|monitoring|argocd\"}[5m]))",
-              "legendFormat": "RPS",
-              "refId": "A"
-            }
-          ]
-        },
-        {
-          "id": 3,
-          "type": "stat",
-          "title": "Error Rate (%)",
-          "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
-          "options": {
-            "colorMode": "background",
-            "graphMode": "area",
-            "reduceOptions": { "calcs": ["lastNotNull"] }
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": { "mode": "thresholds" },
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green", "value": 0 },
-                  { "color": "yellow", "value": 1 },
-                  { "color": "red", "value": 5 }
-                ]
-              },
-              "unit": "percent",
-              "decimals": 2
-            }
-          },
-          "targets": [
-            {
-              "expr": "100 * sum(rate(http_requests_total{namespace=~\"devops|monitoring|argocd\", status=~\"5..\"}[5m])) / sum(rate(http_requests_total{namespace=~\"devops|monitoring|argocd\"}[5m]))",
-              "legendFormat": "Error %",
-              "refId": "A"
-            }
-          ]
-        },
-        {
-          "id": 4,
-          "type": "stat",
-          "title": "Prometheus Targets Up",
-          "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
-          "options": {
-            "colorMode": "background",
-            "reduceOptions": { "calcs": ["lastNotNull"] }
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": { "mode": "thresholds" },
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "red", "value": 0 },
-                  { "color": "green", "value": 1 }
-                ]
-              },
-              "unit": "short"
-            }
-          },
-          "targets": [
-            {
-              "expr": "count(up == 1)",
-              "legendFormat": "Targets Up",
-              "refId": "A"
-            }
-          ]
-        },
-        {
-          "id": 5,
-          "type": "timeseries",
-          "title": "API Latency — P50 / P95 / P99",
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
-          "options": {
-            "tooltip": { "mode": "multi" },
-            "legend": { "displayMode": "list", "placement": "bottom" }
-          },
-          "fieldConfig": {
-            "defaults": { "unit": "s", "color": { "mode": "palette-classic" } }
-          },
-          "targets": [
-            {
-              "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=~\"devops|monitoring|argocd\"}[5m])) by (le))",
-              "legendFormat": "P50",
-              "refId": "A"
-            },
-            {
-              "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=~\"devops|monitoring|argocd\"}[5m])) by (le))",
-              "legendFormat": "P95",
-              "refId": "B"
-            },
-            {
-              "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=~\"devops|monitoring|argocd\"}[5m])) by (le))",
-              "legendFormat": "P99",
-              "refId": "C"
-            }
-          ]
-        },
-        {
-          "id": 6,
-          "type": "timeseries",
-          "title": "Container CPU Usage",
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
-          "options": {
-            "tooltip": { "mode": "multi" },
-            "legend": { "displayMode": "list", "placement": "bottom" }
-          },
-          "fieldConfig": {
-            "defaults": { "unit": "short", "color": { "mode": "palette-classic" } }
-          },
-          "targets": [
-            {
-              "expr": "sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"devops|monitoring|argocd\", container!=\"\"}[5m]))",
-              "legendFormat": "{{pod}}",
-              "refId": "A"
-            }
-          ]
-        },
-        {
-          "id": 7,
-          "type": "timeseries",
-          "title": "Container Memory Usage",
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
-          "options": {
-            "tooltip": { "mode": "multi" },
-            "legend": { "displayMode": "list", "placement": "bottom" }
-          },
-          "fieldConfig": {
-            "defaults": { "unit": "bytes", "color": { "mode": "palette-classic" } }
-          },
-          "targets": [
-            {
-              "expr": "sum by (namespace, pod) (container_memory_working_set_bytes{namespace=~\"devops|monitoring|argocd\", container!=\"\"})",
-              "legendFormat": "{{pod}}",
-              "refId": "A"
-            }
-          ]
-        },
-        {
-          "id": 8,
-          "type": "timeseries",
-          "title": "HTTP Request Rate by Status Code",
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
-          "options": {
-            "tooltip": { "mode": "multi" },
-            "legend": { "displayMode": "list", "placement": "bottom" }
-          },
-          "fieldConfig": {
-            "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" } }
-          },
-          "targets": [
-            {
-              "expr": "sum by (status) (rate(http_requests_total{namespace=~\"devops|monitoring|argocd\"}[5m]))",
-              "legendFormat": "{{status}}",
-              "refId": "A"
-            }
-          ]
-        },
-        {
-          "id": 9,
-          "type": "table",
-          "title": "Pod Status — DevOps Namespaces",
-          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
-          "options": {
-            "showHeader": true,
-            "footer": { "show": false }
-          },
-          "targets": [
-            {
-              "expr": "kube_pod_status_phase{namespace=~\"devops|monitoring|argocd\"}",
-              "legendFormat": "{{pod}} — {{phase}}",
-              "refId": "A",
-              "instant": true
-            }
-          ],
-          "transformations": [
-            { "id": "labelsToFields", "options": {} },
-            {
-              "id": "organize",
-              "options": {
-                "renameByName": { "pod": "Pod", "phase": "Phase", "Value": "State" }
-              }
-            }
-          ]
-        }
-      ]
-    }
