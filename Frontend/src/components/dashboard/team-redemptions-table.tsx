@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { ShoppingBag, Coins, Calendar, User, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RedemptionStatusChip, RedemptionStatus } from "@/components/shared/status-badge";
+import { Pagination } from "@/components/shared/pagination";
 
 type RedemptionRequest = {
   id: string;
@@ -29,9 +30,17 @@ type RedemptionRequest = {
 
 interface TeamRedemptionsTableProps {
   requests: RedemptionRequest[];
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
 }
 
-export function TeamRedemptionsTable({ requests }: TeamRedemptionsTableProps) {
+export function TeamRedemptionsTable({ 
+  requests,
+  currentPage,
+  totalPages,
+  totalCount
+}: TeamRedemptionsTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | RedemptionStatus>("All");
 
@@ -69,7 +78,7 @@ export function TeamRedemptionsTable({ requests }: TeamRedemptionsTableProps) {
                 placeholder="Search member, NPK, or reward..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ paddingLeft: '3rem' }}
+                style={{ paddingLeft: '3.5rem' }}
                 className="pr-10 h-10 text-xs bg-white/50 border-slate-200/60 focus:bg-white transition-all rounded-xl focus:ring-0 focus:border-primary/50 block w-full"
               />
               {searchQuery && (
@@ -100,8 +109,8 @@ export function TeamRedemptionsTable({ requests }: TeamRedemptionsTableProps) {
                 </button>
               ))}
             </div>
-            <Badge variant="outline" className="font-mono bg-white text-slate-500 border-slate-200 shrink-0">
-              {filteredRequests.length} Results
+            <Badge variant="outline" className="bg-white text-slate-500 border-slate-200 shrink-0">
+              {totalCount} Results
             </Badge>
           </div>
         </div>
@@ -111,6 +120,7 @@ export function TeamRedemptionsTable({ requests }: TeamRedemptionsTableProps) {
             <TableHeader className="bg-[var(--color-surface-elevated)]/50">
               <TableRow className="border-[var(--color-border-subtle)] hover:bg-transparent">
                 <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Member</TableHead>
+                <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">NPK</TableHead>
                 <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Reward</TableHead>
                 <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)] text-right">Cost</TableHead>
                 <TableHead className="py-4 px-6 font-semibold text-[var(--color-text-secondary)]">Date</TableHead>
@@ -120,7 +130,7 @@ export function TeamRedemptionsTable({ requests }: TeamRedemptionsTableProps) {
             <TableBody>
               {filteredRequests.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-40 text-center text-[var(--color-text-tertiary)]">
+                  <TableCell colSpan={6} className="h-40 text-center text-[var(--color-text-tertiary)]">
                     <div className="flex flex-col items-center gap-2">
                       <Search className="h-8 w-8 opacity-10" />
                       <p className="text-sm font-medium">No results found for your filters</p>
@@ -134,28 +144,21 @@ export function TeamRedemptionsTable({ requests }: TeamRedemptionsTableProps) {
                     className="group border-b border-[var(--color-border-subtle)] transition-all duration-200 hover:bg-[var(--color-accent)]/[0.05]"
                   >
                     <TableCell className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                          <User size={14} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-[var(--color-text-secondary)] leading-none">{req.mitraName}</p>
-                          <p className="text-[10px] text-slate-400 font-mono mt-1">{req.userNpk}</p>
-                        </div>
-                      </div>
+                      <p className="text-sm font-normal text-[var(--color-text-secondary)] leading-none">{req.mitraName}</p>
                     </TableCell>
                     <TableCell className="py-4 px-6">
-                      <p className="text-sm font-medium text-[var(--color-text-secondary)]">{req.rewardName}</p>
+                      <p className="text-sm text-slate-500 font-normal">{req.userNpk}</p>
+                    </TableCell>
+                    <TableCell className="py-4 px-6">
+                      <p className="text-sm font-normal text-[var(--color-text-secondary)]">{req.rewardName}</p>
                     </TableCell>
                     <TableCell className="py-4 px-6 text-right">
-                      <div className="flex items-center justify-end gap-1.5 text-sm font-bold text-slate-700">
+                      <div className="text-sm font-normal text-slate-700">
                         {req.tokenCost.toLocaleString()}
-                        <Coins size={12} className="text-primary/60" />
                       </div>
                     </TableCell>
                     <TableCell className="py-4 px-6">
-                      <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                        <Calendar size={12} className="opacity-40" />
+                      <div className="text-sm font-normal text-slate-500">
                         {formatDate(req.submittedAt)}
                       </div>
                     </TableCell>
@@ -168,6 +171,11 @@ export function TeamRedemptionsTable({ requests }: TeamRedemptionsTableProps) {
             </TableBody>
           </Table>
         </div>
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalResults={totalCount}
+        />
       </BentoCard>
     </div>
   );
