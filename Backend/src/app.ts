@@ -12,6 +12,7 @@ import { employeeRoutes } from "./api/employee.routes";
 import { adminRoutes }    from "./api/admin.routes";
 import { leaderRoutes }   from "./api/leader.routes";
 import { errorHandler }   from "./middleware/error-handler";
+import { metricsMiddleware, metricsHandler } from "./middleware/metrics";
 import { prisma }         from "./db/prisma";
 import { redisClient }    from "./utils/cache/redis-client";
 import path from "path";
@@ -57,6 +58,10 @@ app.use((_req, res, next) => {
   res.setHeader("Referrer-Policy",        "strict-origin-when-cross-origin");
   next();
 });
+
+// ── Prometheus Metrics ───────────────────────────────────────────────────
+app.use(metricsMiddleware);
+app.get("/metrics", metricsHandler);
 
 // ── Health & Root checks ──────────────────────────────────────────────────
 app.get("/", (_req, res) => {
