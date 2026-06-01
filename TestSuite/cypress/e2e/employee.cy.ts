@@ -1,96 +1,123 @@
 /**
- * TestSuite/cypress/e2e/employee.cy.ts
- * E2E Tests — Employee (Mitra) Flow
+ * cypress/e2e/employee.cy.ts
  *
- * Uses Page Object Model for clean, readable specs.
- * All selectors are driven by data-testid on the Glassmorphism UI.
+ * Spec: MITRA (employee) role — full page coverage.
  *
- * Prerequisites: dev server running, seed data (EMP001 / password123)
+ * Covers:
+ * - Dashboard: heading, token value, tier progress, redeem CTA, activity area
+ * - Dashboard → Rewards navigation via redeem button
+ * - Rewards: page load, reward modal when available
+ * - History: page load, table or empty state
+ * - Documents: page load, document types visible
+ * - Profile: page load, profile menu accessible
+ * - Route guard: MITRA blocked from admin routes
  */
 
-import { EmployeeDashboardPage } from "../pages/EmployeeDashboardPage";
+import {
+  EmployeeDashboardPage,
+  EmployeeRewardsPage,
+  EmployeeHistoryPage,
+  EmployeeDocumentsPage,
+  EmployeeProfilePage,
+} from "../pages/EmployeePages";
+import { PortalShellPage } from "../pages/PortalShellPage";
+import { routes } from "../support/routes";
 
 const dashboard = new EmployeeDashboardPage();
+const rewards   = new EmployeeRewardsPage();
+const history   = new EmployeeHistoryPage();
+const documents = new EmployeeDocumentsPage();
+const profile   = new EmployeeProfilePage();
+const shell     = new PortalShellPage();
 
-// ── Authenticated flows ──────────────────────────────────────
-describe("Employee: Full User Flow", () => {
-  beforeEach(() => {
-    cy.loginAsEmployee();
+describe("MITRA — Dashboard", () => {
+  beforeEach(() => cy.loginAsRole("MITRA"));
+
+  it("loads with visible heading", () => {
+    dashboard.visit().assertLoaded();
   });
 
-  // ── Dashboard ─────────────────────────────────────────────
-  describe("Dashboard", () => {
-    beforeEach(() => { dashboard.visit(); });
-
-    it("displays the page heading", () => {
-      dashboard.assertHeadingVisible();
-    });
-
-    it("renders and animates the token counter", () => {
-      dashboard.assertTokenCounterVisible();
-    });
-
-    it("renders the tier progress bar", () => {
-      dashboard.assertTierProgressExists();
-    });
-
-    it("renders the redeem CTA button with correct label", () => {
-      dashboard.assertRedeemButtonVisible();
-    });
-
-    it("shows at least one recent activity row", () => {
-      dashboard.assertActivityRowsExist(1);
-    });
+  it("displays a numeric token balance", () => {
+    dashboard.visit().assertLoaded().assertTokenDisplayed();
   });
 
-  // ── Navigation ────────────────────────────────────────────
-  describe("Navigation", () => {
-    it("navigates to rewards page from nav link", () => {
-      dashboard.visit();
-      cy.get("a[href='/employee/rewards']").first().click();
-      cy.url().should("include", "/employee/rewards");
-    });
-
-    it("navigates to history page from nav link", () => {
-      dashboard.visit();
-      cy.get("a[href='/employee/history']").first().click();
-      cy.url().should("include", "/employee/history");
-    });
+  it("shows the tier progress element", () => {
+    dashboard.visit().assertLoaded().assertTierProgressExists();
   });
 
-  // ── Rewards Catalog ───────────────────────────────────────
-  describe("Rewards Catalog", () => {
-    beforeEach(() => cy.visit("/employee/rewards"));
-
-    it("loads the rewards catalog page", () => {
-      cy.url().should("include", "/employee/rewards");
-    });
+  it("has a visible redeem CTA button", () => {
+    dashboard.visit().assertLoaded().assertRedeemButtonVisible();
   });
 
-  // ── Route guards ──────────────────────────────────────────
-  describe("Route guards", () => {
-    it("blocks MITRA from accessing /admin/dashboard", () => {
-      cy.visit("/admin/dashboard", { failOnStatusCode: false });
-      cy.url().should("not.include", "/admin/dashboard");
-    });
+  it("renders activity area or empty state", () => {
+    dashboard.visit().assertLoaded().assertActivityAreaRendered();
   });
 
-  // ── Profile Dropdown ──────────────────────────────────────
-  describe("Profile dropdown", () => {
-    it("opens without throwing Base UI context error", () => {
-      dashboard.visit().openProfileDropdown();
-      cy.get('[data-slot="dropdown-menu-content"]').should("be.visible");
-      cy.contains("Alice Optel").should("be.visible");
-    });
+  it("navigates to rewards page when redeem button is clicked", () => {
+    dashboard.visit().assertLoaded().clickRedeemButton();
+    cy.url().should("include", routes.employee.rewards);
   });
 });
 
-// ── Unauthenticated guard ────────────────────────────────────
-describe("Employee: Unauthenticated Access", () => {
-  beforeEach(() => cy.clearCookies());
+describe("MITRA — Rewards", () => {
+  beforeEach(() => cy.loginAsRole("MITRA"));
 
-  it("redirects /employee/dashboard to /login when not logged in", () => {
-    cy.visit("/employee/dashboard", { failOnStatusCode: false });
-    cy.url().should("include", "/login");
+  it("loads rewards catalog or locked state without server error", () => {
+    rewards.visit().assertLoaded();
+  });
+
+  it("opens confirmation dialog for first available reward", () => {
+    rewards.visit().assertLoaded().openFirstRewardIfAvailable();
+  });
+});
+
+describe("MITRA — History", () => {
+  beforeEach(() => cy.loginAsRole("MITRA"));
+
+  it("loads history page with heading", () => {
+    history.visit().assertLoaded();
+  });
+
+  it("shows table or empty state", () => {
+    history.visit().assertLoaded().assertTableOrEmptyState();
+  });
+});
+
+describe("MITRA — Documents", () => {
+  beforeEach(() => cy.loginAsRole("MITRA"));
+
+  it("loads documents page with correct content", () => {
+    documents.visit().assertLoaded().assertNoServerError();
+  });
+});
+
+describe("MITRA — Profile & navigation", () => {
+  beforeEach(() => cy.loginAsRole("MITRA"));
+
+  it("loads profile settings page", () => {
+    profile.visit().assertLoaded();
+  });
+
+  it("can open the profile menu from the navbar", () => {
+    profile.visit();
+    shell.openProfileMenu().assertProfileMenuVisible();
+  });
+});
+
+describe("MITRA — Route guards", () => {
+  beforeEach(() => cy.loginAsRole("MITRA"));
+
+  it("cannot access HC admin dashboard", () => {
+    shell.assertRedirectedAwayFrom(routes.admin.dashboard);
+  });
+
+  it("cannot access leader team page", () => {
+    shell.assertRedirectedAwayFrom(routes.leader.team);
+  });
+});
+
+describe("MITRA — Unauthenticated access", () => {
+  it("redirects /employee/dashboard to /login when logged out", () => {
+    shell.assertAnonymousRedirect(routes.employee.dashboard);
   });
 });

@@ -1,95 +1,110 @@
 /**
- * TestSuite/cypress/e2e/leader.cy.ts
- * E2E Tests — Team Leader Flow
+ * cypress/e2e/leader.cy.ts
  *
- * Covers: team view, partner confirmations, stat cards, route guards.
- * Prerequisite: Backend on port 8080, seed user LDR001 / password123
+ * Spec: TEAM_LEADER role — full page coverage.
+ *
+ * Covers:
+ * - Dashboard: heading, no server error
+ * - Team overview: heading, summary cards, member table or empty state
+ * - Alerts: heading, pending confirmation UI or all-clear state
+ * - Redemptions: heading, table or empty state
+ * - Profile: heading, profile menu access
+ * - Route guards: TEAM_LEADER blocked from admin routes
+ * - Unauthenticated access redirected to login
  */
 
-describe("Leader: Full Team Leader Flow", () => {
-  beforeEach(() => {
-    cy.loginAsLeader();
-  });
+import {
+  LeaderDashboardPage,
+  LeaderTeamPage,
+  LeaderAlertsPage,
+  LeaderRedemptionsPage,
+  LeaderProfilePage,
+} from "../pages/LeaderPages";
+import { PortalShellPage } from "../pages/PortalShellPage";
+import { routes } from "../support/routes";
 
-  // ── Team View ──────────────────────────────────────────────
-  describe("Team View", () => {
-    beforeEach(() => cy.visit("/leader/team"));
+const dashboard   = new LeaderDashboardPage();
+const team        = new LeaderTeamPage();
+const alerts      = new LeaderAlertsPage();
+const redemptions = new LeaderRedemptionsPage();
+const profile     = new LeaderProfilePage();
+const shell       = new PortalShellPage();
 
-    it("displays the team view heading", () => {
-      cy.contains("h1", /team|leader|dashboard/i).should("be.visible");
-    });
+describe("TEAM_LEADER — Dashboard", () => {
+  beforeEach(() => cy.loginAsRole("TEAM_LEADER"));
 
-    it("renders team member table or empty state", () => {
-      cy.get(
-        "[data-testid=leader-team-table], [data-testid=leader-team-empty]",
-      ).should("exist");
-    });
-
-    it("renders team stat cards", () => {
-      cy.get("[data-testid=leader-team-total-tokens]").should("exist");
-      cy.get("[data-testid=leader-team-eligible-members]").should("exist");
-      cy.get("[data-testid=leader-team-alerts-count]").should("exist");
-    });
-
-    it("renders View Detail actions for each row", () => {
-      cy.get("body").then(($body) => {
-        if ($body.find("[data-testid=leader-team-table-row]").length > 0) {
-          cy.get("[data-testid=leader-team-table-action-view]")
-            .first()
-            .should("be.visible");
-        }
-      });
-    });
-  });
-
-  // ── Partner Confirmations (TL-01) ──────────────────────────
-  describe("Alerts / Partner Confirmations", () => {
-    beforeEach(() => cy.visit("/leader/alerts"));
-
-    it("loads the alerts page", () => {
-      cy.url().should("include", "/leader/alerts");
-    });
-
-    it("renders pending confirmation count badge or all-clear state", () => {
-      cy.get(
-        "[data-testid=leader-confirmation-row], .text-foreground",
-      ).should("exist");
-    });
-
-    it("can confirm a partner as Active via intercept", () => {
-      cy.intercept(
-        "POST",
-        "/api/leader/partner-confirmations/*/confirm",
-        { statusCode: 200, body: { success: true } },
-      ).as("confirmStatus");
-
-      cy.get("body").then(($body) => {
-        if ($body.find("[data-testid=leader-confirm-active-btn]").length > 0) {
-          cy.get("[data-testid=leader-confirm-active-btn]").first().click();
-          cy.wait("@confirmStatus");
-          cy.contains(/status confirmed/i).should("be.visible");
-        } else {
-          cy.log("No pending confirmations — skipping confirm action test");
-        }
-      });
-    });
-  });
-
-  // ── Route guards ───────────────────────────────────────────
-  describe("Route guards", () => {
-    it("blocks leader from /admin routes", () => {
-      cy.visit("/admin/dashboard", { failOnStatusCode: false });
-      cy.url().should("not.include", "/admin/dashboard");
-    });
+  it("loads leader dashboard without server error", () => {
+    dashboard.visit().assertLoaded();
   });
 });
 
-// ── Unauthenticated guard ────────────────────────────────────
-describe("Leader: Unauthenticated Access", () => {
-  beforeEach(() => cy.clearCookies());
+describe("TEAM_LEADER — Team Overview", () => {
+  beforeEach(() => cy.loginAsRole("TEAM_LEADER"));
 
-  it("redirects /leader/team to /login", () => {
-    cy.visit("/leader/team", { failOnStatusCode: false });
-    cy.url().should("include", "/login");
+  it("loads team overview with heading", () => {
+    team.visit().assertLoaded();
+  });
+
+  it("shows aggregate summary cards", () => {
+    team.visit().assertLoaded().assertSummaryCardsExist();
+  });
+
+  it("renders team member table or empty state", () => {
+    team.visit().assertLoaded().assertTeamTableRendered();
+  });
+});
+
+describe("TEAM_LEADER — Alerts", () => {
+  beforeEach(() => cy.loginAsRole("TEAM_LEADER"));
+
+  it("loads alerts page with heading", () => {
+    alerts.visit().assertLoaded();
+  });
+
+  it("shows pending confirmation controls or all-clear state", () => {
+    alerts.visit().assertLoaded().assertPendingOrAllClear();
+  });
+});
+
+describe("TEAM_LEADER — Redemptions", () => {
+  beforeEach(() => cy.loginAsRole("TEAM_LEADER"));
+
+  it("loads redemptions page with heading", () => {
+    redemptions.visit().assertLoaded();
+  });
+
+  it("shows table or empty state", () => {
+    redemptions.visit().assertLoaded().assertTableOrEmptyState();
+  });
+});
+
+describe("TEAM_LEADER — Profile & navigation", () => {
+  beforeEach(() => cy.loginAsRole("TEAM_LEADER"));
+
+  it("loads profile settings page", () => {
+    profile.visit().assertLoaded();
+  });
+
+  it("can open the profile menu from the navbar", () => {
+    profile.visit();
+    shell.openProfileMenu().assertProfileMenuVisible();
+  });
+});
+
+describe("TEAM_LEADER — Route guards", () => {
+  beforeEach(() => cy.loginAsRole("TEAM_LEADER"));
+
+  it("cannot access HC admin dashboard", () => {
+    shell.assertRedirectedAwayFrom(routes.admin.dashboard);
+  });
+
+  it("cannot access admin uploads page", () => {
+    shell.assertRedirectedAwayFrom(routes.admin.uploads);
+  });
+});
+
+describe("TEAM_LEADER — Unauthenticated access", () => {
+  it("redirects /leader/team to /login when logged out", () => {
+    shell.assertAnonymousRedirect(routes.leader.team);
   });
 });

@@ -1,72 +1,79 @@
 /**
- * TestSuite/cypress/support/commands.ts
- * Cypress Custom Commands
+ * cypress/support/commands.ts
  *
- * cy.login(npk, password) — caches auth state via cy.session()
- * cy.loginAsAdmin()       — HC_ADMIN seed user   (12345 / password123)
- * cy.loginAsEmployee()    — MITRA seed user      (34567 / password123)
- * cy.loginAsLeader()      — TEAM_LEAD seed user   (23456 / password123)
+ * Custom Cypress commands.
+ *
+ * cy.login(npk, password)          — caches session via cy.session()
+ * cy.loginAsRole(role)             — typed role shorthand
+ * cy.loginAsAdmin()                — HC_PM seed account
+ * cy.loginAsLeader()               — TEAM_LEADER seed account
+ * cy.loginAsEmployee()             — MITRA seed account
+ * cy.assertNoServerError()         — assert page is not a 500
  */
 
 /// <reference types="cypress" />
 
-// ── Type declarations ─────────────────────────────────────────
+import { sel } from "./selectors";
+import { getTestUser, type TestRole } from "./users";
+
+// ── Type declarations ──────────────────────────────────────────────────────
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
     interface Chainable {
       login(npk: string, password: string): Chainable<void>;
+      loginAsRole(role: TestRole): Chainable<void>;
       loginAsAdmin(): Chainable<void>;
-      loginAsEmployee(): Chainable<void>;
       loginAsLeader(): Chainable<void>;
+      loginAsEmployee(): Chainable<void>;
+      assertNoServerError(): Chainable<void>;
     }
   }
 }
 
-// ── Login command ─────────────────────────────────────────────
+// ── login ──────────────────────────────────────────────────────────────────
 Cypress.Commands.add("login", (npk: string, password: string) => {
   cy.session(
-    ["login", npk],
+    ["auth", npk],
     () => {
       cy.visit("/login");
-      cy.get("[data-testid=login-npk]", { timeout: 8000 }).should("be.visible");
-      cy.get("[data-testid=login-npk]").clear();
-      cy.get("[data-testid=login-npk]").type(npk);
-      cy.get("[data-testid=login-password]").clear();
-      cy.get("[data-testid=login-password]").type(password);
-      cy.get("[data-testid=login-submit]").click();
-      cy.url({ timeout: 15_000 }).should("not.include", "/login");
+      cy.get(sel.auth.npkInput, { timeout: 10_000 }).should("be.visible");
+      cy.get(sel.auth.npkInput).clear();
+      cy.get(sel.auth.npkInput).type(npk);
+      cy.get(sel.auth.passwordInput).clear();
+      cy.get(sel.auth.passwordInput).type(password, { log: false });
+      cy.get(sel.auth.submitButton).click();
+      // Wait until we leave the login page
+      cy.url({ timeout: 20_000 }).should("not.include", "/login");
     },
     {
       validate() {
-        cy.request({ url: "/api/auth/session", failOnStatusCode: false }).then((resp) => {
-          expect(resp.status).to.eq(200);
-          expect(resp.body).to.have.property("user");
-        });
+        cy.request({ url: "/api/auth/session", failOnStatusCode: false }).then(
+          (resp) => {
+            expect(resp.status).to.eq(200);
+            expect(resp.body).to.have.property("user");
+          }
+        );
       },
     }
   );
 });
 
-Cypress.Commands.add("loginAsAdmin", () => {
-  cy.login(
-    Cypress.env("ADMIN_NPK")      ?? "12345",
-    Cypress.env("ADMIN_PASSWORD") ?? "password123"
-  );
+// ── loginAsRole ────────────────────────────────────────────────────────────
+Cypress.Commands.add("loginAsRole", (role: TestRole) => {
+  const user = getTestUser(role);
+  cy.login(user.npk, user.password);
 });
 
-Cypress.Commands.add("loginAsEmployee", () => {
-  cy.login(
-    Cypress.env("EMPLOYEE_NPK")      ?? "34567",
-    Cypress.env("EMPLOYEE_PASSWORD") ?? "password123"
-  );
-});
+// ── convenience wrappers ───────────────────────────────────────────────────
+Cypress.Commands.add("loginAsAdmin",    () => cy.loginAsRole("HC_PM"));
+Cypress.Commands.add("loginAsLeader",   () => cy.loginAsRole("TEAM_LEADER"));
+Cypress.Commands.add("loginAsEmployee", () => cy.loginAsRole("MITRA"));
 
-Cypress.Commands.add("loginAsLeader", () => {
-  cy.login(
-    Cypress.env("LEADER_NPK")      ?? "23456",
-    Cypress.env("LEADER_PASSWORD") ?? "password123"
-  );
+// ── assertNoServerError ────────────────────────────────────────────────────
+Cypress.Commands.add("assertNoServerError", () => {
+  cy.get(sel.common.body).should("not.contain.text", "500");
+  cy.get(sel.common.body).should("not.contain.text", "Internal Server Error");
 });
 
 export {};
