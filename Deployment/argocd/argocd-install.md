@@ -1,6 +1,6 @@
-# ArgoCD — Setup Guide (GKE)
+# ArgoCD — Setup Guide (K3s DevOps)
 
-> Cluster: `34.50.82.124` | Repo: `Adrian463588/TechnoLoyaltyProgram`
+> Runtime aplikasi ada di Coolify. ArgoCD hanya mengelola K3s DevOps stack dari root `Deployment` kustomization.
 
 ---
 
@@ -151,11 +151,13 @@ metadata:
   name: loyalty-program
   namespace: argocd
 spec:
-  description: Loyalty Program Production Project
+  description: Loyalty Program DevOps Project
   sourceRepos:
     - 'https://github.com/Adrian463588/TechnoLoyaltyProgram'
   destinations:
-    - namespace: loyalty-prod
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+    - namespace: devops
       server: https://kubernetes.default.svc
     - namespace: monitoring
       server: https://kubernetes.default.svc
@@ -169,20 +171,20 @@ spec:
 
 ---
 
-## 8. Deploy Aplikasi Loyalty Program
+## 8. Sync DevOps Stack
 
 ```bash
 # Apply Application manifest
-kubectl apply -f Deployment/argocd/applications/loyalty-prod.yaml
+kubectl apply -f Deployment/argocd/applications/loyalty-devops.yaml
 
 # Cek status sync
-argocd app get loyalty-program-prod
+argocd app get loyalty-devops
 
 # Manual sync jika perlu
-argocd app sync loyalty-program-prod
+argocd app sync loyalty-devops
 
 # Tunggu healthy
-argocd app wait loyalty-program-prod --health
+argocd app wait loyalty-devops --health
 ```
 
 ---
@@ -191,7 +193,7 @@ argocd app wait loyalty-program-prod --health
 
 1. Buka `http://argocd.34.50.82.124.nip.io`
 2. Login dengan `admin` + password dari Step 4
-3. Pastikan aplikasi `loyalty-program-prod` berstatus **Synced** dan **Healthy**
+3. Pastikan aplikasi `loyalty-devops` berstatus **Synced** dan **Healthy**
 4. Jika **OutOfSync** → klik **Sync** → centang semua resource → **Synchronize**
 
 ---
@@ -202,7 +204,7 @@ argocd app wait loyalty-program-prod --health
 |---|---|
 | Pod `argocd-server` CrashLoop | `kubectl logs deploy/argocd-server -n argocd` |
 | Repo connection failed | Pastikan PAT token masih valid, cek `argocd repo list` |
-| App stuck `Progressing` | Cek `argocd app events loyalty-program-prod` |
+| App stuck `Progressing` | Cek `argocd app events loyalty-devops` |
 | Ingress 502 | Pastikan `--insecure` flag ada dan port ingress sesuai (80 vs 443) |
 | Sync failed: namespace not found | Pastikan `CreateNamespace=true` ada di syncOptions |
 

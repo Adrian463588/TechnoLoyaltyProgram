@@ -33,7 +33,6 @@ export function RedemptionPipeline({
   compact = false,
 }: RedemptionPipelineProps) {
   const currentIdx = stepIndex(currentStep);
-  const isCompleted = currentStep === "completed";
 
   return (
     <div
@@ -42,8 +41,8 @@ export function RedemptionPipeline({
     >
       <div className="flex items-center w-full">
         {STEPS.map((step, idx) => {
-          const done = currentIdx > idx || (isCompleted && currentIdx === idx);
-          const active = !isCompleted && currentIdx === idx;
+          const done = currentIdx > idx;
+          const active = currentIdx === idx;
 
           return (
             <div key={step.key} className="flex items-center flex-1 last:flex-none">
@@ -103,7 +102,7 @@ export function RedemptionPipeline({
                 <div
                   className={cn(
                     "flex-1 h-0.5 mx-1 transition-all duration-700 ease-out rounded-full",
-                    currentIdx > idx || (isCompleted && currentIdx > idx)
+                    currentIdx > idx
                       ? "bg-[var(--color-accent)]"
                       : "bg-[var(--color-border-subtle)]"
                   )}

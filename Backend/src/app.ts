@@ -13,6 +13,7 @@ import { adminRoutes }    from "./api/admin.routes";
 import { leaderRoutes }   from "./api/leader.routes";
 import chatbotRoutes      from "./api/chatbot.routes";
 import { errorHandler }   from "./middleware/error-handler";
+import { metricsMiddleware, metricsHandler } from "./middleware/metrics";
 import { prisma }         from "./db/prisma";
 import { redisClient }    from "./utils/cache/redis-client";
 import path from "path";
@@ -26,11 +27,27 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+const allowedOrigins = (process.env.FRONTEND_ORIGIN ?? "http://localhost:3000").split(",");
+
 app.use(
   cors({
-    origin:      process.env.FRONTEND_ORIGIN ?? "http://localhost:3000",
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server) 
+      // or if the origin is explicitly in our allowed list, or ends with our dynamic deployment domains.
+      const isAllowed = !origin || 
+        allowedOrigins.includes(origin) || 
+        origin.endsWith(".sslip.io") || 
+        origin.endsWith(".nip.io");
+
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        // Use callback(null, false) instead of throwing an Error to prevent 500 Internal Server Errors
+        callback(null, false);
+      }
+    },
     credentials: true,
-    methods:     ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
   })
 );
 
@@ -43,7 +60,20 @@ app.use((_req, res, next) => {
   next();
 });
 
-// ── Health check ──────────────────────────────────────────────────────────
+// ── Prometheus Metrics ───────────────────────────────────────────────────
+app.use(metricsMiddleware);
+app.get("/metrics", metricsHandler);
+
+// ── Health & Root checks ──────────────────────────────────────────────────
+app.get("/", (_req, res) => {
+  res.json({
+    service: "Techno Loyalty Program API",
+    status: "online",
+    docs: "/api-docs",
+    health: "/health"
+  });
+});
+
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
@@ -83,20 +113,23 @@ async function bootstrap() {
     );
   });
 
-  // ── Graceful shutdown — prevents orphaned DB/Redis connections ───────────
-  async function shutdown(signal: string) {
+  function shutdown(signal: string): void {
     console.warn(`[Backend] ${signal} received — shutting down gracefully`);
-    server.close(async () => {
-      await Promise.allSettled([
+    server.close(() => {
+      Promise.allSettled([
         prisma.$disconnect(),
         redisClient.disconnect(),
-      ]);
-      process.exit(0);
+      ]).then(() => {
+        process.exit(0);
+      }).catch((err: unknown) => {
+        console.error("Error during shutdown", err);
+        process.exit(1);
+      });
     });
   }
 
-  process.on("SIGTERM", () => { void shutdown("SIGTERM"); });
-  process.on("SIGINT",  () => { void shutdown("SIGINT"); });
+  process.on("SIGTERM", () => { shutdown("SIGTERM"); });
+  process.on("SIGINT",  () => { shutdown("SIGINT"); });
 }
 
 void bootstrap();

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { auth, getServerToken } from "@/lib/auth";
 import { adminApi } from "@/lib/api-client";
 import RedemptionsClient from "./redemptions-client";
@@ -43,7 +45,7 @@ export default async function RedemptionsPage(props: {
     status: r.status as import("@/types").RewardRequestStatus,
     isRepresented: (r as any).isRepresented ?? false,
     powerOfAttorneyUrl: (r as any).powerOfAttorneyUrl ?? null,
-    rejectReason: r.rejectReason ?? null,
+    rejectReason: r.rejectReason ?? undefined,
     requestedAt: r.createdAt,
     updatedAt: r.createdAt,
   }));

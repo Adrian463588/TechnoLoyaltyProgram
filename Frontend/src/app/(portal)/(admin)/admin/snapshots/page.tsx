@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { BentoCard } from "@/components/ui/bento-card";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/shared/stat-card";

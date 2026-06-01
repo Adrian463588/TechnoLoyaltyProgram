@@ -1,3 +1,8 @@
+// All portal routes depend on next-auth session (auth()/getServerToken()).
+// Session is only available at request time, not build time.
+// force-dynamic opts ALL child routes out of static prerendering.
+export const dynamic = 'force-dynamic';
+
 import { ReactNode } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import { auth } from "@/lib/auth";

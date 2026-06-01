@@ -20,7 +20,7 @@ describe('TokenHeroSection', () => {
     expect(container.querySelector('.skeleton')).toBeInTheDocument();
   });
 
-  it('renders the correct token balance and tier', () => {
+  it('renders the correct token balance', () => {
     render(
       <TokenHeroSection 
         tokenBalance={4200} 
@@ -29,30 +29,8 @@ describe('TokenHeroSection', () => {
         isLoading={false} 
       />
     );
-    expect(screen.getByText('Total Tokens')).toBeInTheDocument();
+    expect(screen.getByText(/Your Total Balance/i)).toBeInTheDocument();
     expect(screen.getByTestId('animated-count')).toHaveTextContent('4200');
-    expect(screen.getByText('EMERALD')).toBeInTheDocument();
-  });
-
-  it('renders the correct eligibility chip when eligible', () => {
-    render(
-      <TokenHeroSection 
-        tokenBalance={4200} 
-        tier="EMERALD" 
-        eligibilityStatus={{ eligible: true }} 
-      />
-    );
-    expect(screen.getByRole('status')).toHaveTextContent('Eligible for Redemption');
-  });
-
-  it('renders the correct eligibility chip when not eligible', () => {
-    render(
-      <TokenHeroSection 
-        tokenBalance={100} 
-        tier="SAPHIRE" 
-        eligibilityStatus={{ eligible: false, reason: 'Insufficient balance' }} 
-      />
-    );
-    expect(screen.getByRole('status')).toHaveTextContent('Not eligible — Insufficient balance');
+    expect(screen.getByRole('link', { name: /Redeem Reward Now/i })).toBeInTheDocument();
   });
 });

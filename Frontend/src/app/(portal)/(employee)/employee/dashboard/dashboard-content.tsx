@@ -103,7 +103,7 @@ export function DashboardContent({ data, userName, welcomeMessage }: { data: Das
     const { p1Start, p1End, p2Start, p2End, claimP1Start, claimP1End, claimP2Start, claimP2End } = data.settings;
     
     const formatDateStr = (mmdd: string) => {
-      const [m, d] = mmdd.split("-");
+      const [m = "01", d = "01"] = mmdd.split("-");
       const date = new Date(2000, parseInt(m) - 1, parseInt(d));
       return date.toLocaleString('en-GB', { month: 'short', day: 'numeric' });
     };
@@ -175,7 +175,7 @@ export function DashboardContent({ data, userName, welcomeMessage }: { data: Das
 
   // ── Helper logic for countdowns ─────────────────────────────────────────
   const getDaysDiff = (targetMMDD: string) => {
-    const [m, d] = targetMMDD.split("-").map(Number);
+    const [m = 1, d = 1] = targetMMDD.split("-").map(Number);
     const targetDate = new Date(now.getFullYear(), m - 1, d);
     
     // If target date is in the past for this month, and we might be looking at next month 
@@ -234,13 +234,26 @@ export function DashboardContent({ data, userName, welcomeMessage }: { data: Das
           <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-sm shadow-primary/5 shrink-0"> 
             <LayoutDashboard size={28} />
           </div>
-          <div className="space-y-1">
-            <h1 className="text-2xl font-extrabold text-[--color-text-secondary] leading-none">Dashboard</h1>
-            <p className="text-sm text-[--color-text-secondary] font-medium leading-none">
+          <div className="space-y-1 flex flex-col">
+            <motion.h1
+              data-testid="employee-dashboard-heading"
+              className="text-2xl font-extrabold text-[--color-text-secondary] leading-none mb-1"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              Dashboard
+            </motion.h1>
+            <motion.p
+              className="text-sm text-[--color-text-secondary] font-medium leading-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
               {welcomeMessage ? welcomeMessage : (
                 <>Welcome back, <span className="font-bold">{userName}</span>! Here's an overview of your loyalty status.</>
               )}
-            </p>
+            </motion.p>
           </div>
         </div>
         <div className="mt-4 md:mt-0">

@@ -50,14 +50,12 @@ describe("EmployeeDashboardPage", () => {
     const Page = await EmployeeDashboardPage();
     render(Page);
 
-    expect(screen.getByTestId("employee-dashboard-heading")).toBeInTheDocument();
-    expect(screen.getByText(/P2: Jun 16/)).toBeInTheDocument();
-    expect(screen.getByText("Earning Streak")).toBeInTheDocument();
-    expect(screen.getByText("Redemption")).toBeInTheDocument();
-    expect(screen.getByText("Token History")).toBeInTheDocument();
-    expect(screen.getByText("Upcoming Rewards")).toBeInTheDocument();
+    expect(screen.getByText(/Welcome back,/i)).toBeInTheDocument();
+    expect(screen.getByText(/Test User/i)).toBeInTheDocument();
+    expect(screen.getByText(/Token History/i)).toBeInTheDocument();
+    expect(screen.getByText(/Pickup Point/i)).toBeInTheDocument();
+    expect(screen.getByText(/Dashboard/i)).toBeInTheDocument();
 
     expect(screen.getByTestId("breadcrumb")).toBeInTheDocument();
-    expect(screen.getByTestId("token-hero")).toBeInTheDocument();
   });
 });

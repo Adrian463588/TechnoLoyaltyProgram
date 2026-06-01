@@ -8,10 +8,7 @@
  * DRY: one fetch helper, one error-handling pattern, reused everywhere.
  */
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL ??
-  process.env.BACKEND_URL ??
-  "http://localhost:8080";
+import { PUBLIC_BACKEND_URL as BACKEND_URL } from "@/lib/backend-url";
 
 // ── Base fetch helper ──────────────────────────────────────────────────────
 

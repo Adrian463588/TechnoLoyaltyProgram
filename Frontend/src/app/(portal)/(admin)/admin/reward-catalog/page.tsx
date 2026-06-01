@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { Metadata } from "next";
 import { RewardCatalogClient } from "@/features/admin/rewards/reward-catalog-client";
 import { fetchRewardsAction } from "@/features/admin/rewards/actions";

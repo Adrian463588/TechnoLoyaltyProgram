@@ -133,6 +133,7 @@ export class UploadProcessingService {
       action: "BULK_UPLOAD_COMMITTED",
       actorId,
       targetType: "System",
+      targetId: "bulk-upload",
       newValue: { division, processedCount, createdCount },
     });
 

@@ -9,7 +9,7 @@
  * AGENTS.md: TL can only see their own subordinates — RBAC enforced here.
  */
 
-import type { RequestHandler } from "express";
+import { asyncHandler } from "@/middleware/asyncHandler";
 import { prisma } from "@/db/prisma";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
 import { LoyaltyCalculationService } from "@/services/loyalty-calculation.service";
@@ -90,8 +90,7 @@ export const TeamLeaderController = {
    * Returns summary of all subordinates for the current TL.
    * PRD TL-02
    */
-  getTeamSummary: (async (req, res, next) => {
-    try {
+  getTeamSummary: asyncHandler(async (req, res) => {
       const { user } = req;
       const cacheKey = CacheKeys.teamTokenSummary(user.id);
       
@@ -124,18 +123,14 @@ export const TeamLeaderController = {
       });
       
       res.json(result);
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   /**
    * GET /api/leader/team/:memberId
    * Returns token summary + recent history for a specific team member.
    * PRD TL-03. TL can only view their own subordinates.
    */
-  getMemberDetail: (async (req, res, next) => {
-    try {
+  getMemberDetail: asyncHandler(async (req, res) => {
       const { user } = req;
       const idResult = uuidSchema.safeParse(req.params["memberId"]);
       if (!idResult.success) throw new ValidationError("Invalid member ID", {});
@@ -180,8 +175,5 @@ export const TeamLeaderController = {
         ledger: history,
         total,
       });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 };

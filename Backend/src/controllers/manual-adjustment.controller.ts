@@ -8,7 +8,7 @@
  * AGENTS.md: Audit logging is in the service, not here.
  */
 
-import type { RequestHandler } from "express";
+import { asyncHandler } from "@/middleware/asyncHandler";
 import { z } from "zod";
 import { manualAdjustmentService } from "@/services/manual-adjustment.service";
 import { ValidationError } from "@/errors/index";
@@ -22,8 +22,7 @@ const adjustmentSchema = z.object({
 export const ManualAdjustmentController = {
 
   /** POST /api/admin/adjustments */
-  adjust: (async (req, res, next) => {
-    try {
+  adjust: asyncHandler(async (req, res) => {
       const { user } = req;
       const parsed = adjustmentSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -43,8 +42,5 @@ export const ManualAdjustmentController = {
         ledgerEntryId: entry.id,
         entry,
       });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 };

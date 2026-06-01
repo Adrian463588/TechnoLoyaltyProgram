@@ -134,9 +134,9 @@ export class TokenLedgerRepository {
           eventType,
           amount: -consume,
           balanceAfter: runningBalance,
-          referenceId,
-          earnedYear,
-          expiresAt,
+          referenceId: referenceId ?? null,
+          earnedYear: earnedYear ?? null,
+          expiresAt: expiresAt ?? null,
           performedBy,
           reason: `${reason || "Token deduction"} (Cohort ${earnedYear || "Unknown"})`,
         }
@@ -152,7 +152,7 @@ export class TokenLedgerRepository {
           eventType,
           amount: -remainingDeduction,
           balanceAfter: runningBalance - remainingDeduction,
-          referenceId,
+          referenceId: referenceId ?? null,
           performedBy,
           reason: `${reason || "Token deduction"} (Residual)`,
         }

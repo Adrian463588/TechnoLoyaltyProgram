@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import UploadsClient from "./uploads-client";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { FileUp } from "lucide-react";

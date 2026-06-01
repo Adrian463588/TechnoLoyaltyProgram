@@ -59,7 +59,7 @@ leaderRoutes.get(  "/redemptions",                         RedemptionController.
  *       200:
  *         description: List retrieved
  */
-leaderRoutes.get(  "/partner-confirmations",              PartnerStatusConfirmationController.listForTL    as RequestHandler);
+leaderRoutes.get(  "/partner-confirmations",              PartnerStatusConfirmationController.listForTL);
 
 /**
  * @openapi
@@ -87,7 +87,7 @@ leaderRoutes.get(  "/partner-confirmations",              PartnerStatusConfirmat
  *       200:
  *         description: Status confirmed/declined
  */
-leaderRoutes.post( "/partner-confirmations/:id/confirm",  PartnerStatusConfirmationController.confirm      as RequestHandler);
+leaderRoutes.post( "/partner-confirmations/:id/confirm",  PartnerStatusConfirmationController.confirm);
 
 // ── Team Summary (TL-02) ──────────────────────────────────────────────────────
 /**
@@ -101,7 +101,7 @@ leaderRoutes.post( "/partner-confirmations/:id/confirm",  PartnerStatusConfirmat
  *       200:
  *         description: Team summary retrieved
  */
-leaderRoutes.get(  "/team",                               TeamLeaderController.getTeamSummary              as RequestHandler);
+leaderRoutes.get(  "/team",                               TeamLeaderController.getTeamSummary);
 
 // ── Team Member Detail (TL-03) ───────────────────────────────────────────────
 /**
@@ -122,4 +122,4 @@ leaderRoutes.get(  "/team",                               TeamLeaderController.g
  *       403:
  *         description: Forbidden (member is not in your team)
  */
-leaderRoutes.get(  "/team/:memberId",                     TeamLeaderController.getMemberDetail             as RequestHandler);
+leaderRoutes.get(  "/team/:memberId",                     TeamLeaderController.getMemberDetail);

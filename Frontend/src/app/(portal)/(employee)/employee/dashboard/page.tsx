@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import React from "react";
 import { auth, getServerToken } from "@/lib/auth";
 import { employeeApi, adminApi } from "@/lib/api-client";

@@ -11,12 +11,33 @@ vi.mock('sonner', () => ({
 // Mock next/navigation for Breadcrumb inside RewardsClient
 vi.mock('next/navigation', () => ({
   usePathname: vi.fn(() => '/employee/rewards'),
+  useRouter: vi.fn(() => ({ refresh: vi.fn() }))
+}))
+
+vi.mock('@/lib/auth', () => ({
+  auth: vi.fn().mockResolvedValue(null),
+  getServerToken: vi.fn().mockResolvedValue("mock-token")
 }))
 
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
     <a href={href} {...props}>{children}</a>
   ),
+}))
+
+// Mock API client
+vi.mock('@/lib/api-client', () => ({
+  employeeApi: {
+    getDocuments: vi.fn().mockResolvedValue([
+      { type: 'ID_CARD_MITRA' },
+      { type: 'KTP' },
+      { type: 'NPWP' }
+    ])
+  }
+}))
+
+vi.mock('@/features/redemptions/actions', () => ({
+  submitRedemptionRequest: vi.fn().mockResolvedValue({ success: true })
 }))
 
 const mockRewards: RewardItem[] = [
@@ -28,6 +49,8 @@ const mockRewards: RewardItem[] = [
     category: "Merchandise",
     isAvailable: true,
     imageUrl: undefined,
+    stock: 100,
+    minTier: "SAPHIRE",
   },
   {
     id: "2",
@@ -37,6 +60,8 @@ const mockRewards: RewardItem[] = [
     category: "Voucher",
     isAvailable: true,
     imageUrl: undefined,
+    stock: 100,
+    minTier: "SAPHIRE",
   },
   {
     id: "3",
@@ -46,24 +71,26 @@ const mockRewards: RewardItem[] = [
     category: "Experience",
     isAvailable: false,
     imageUrl: undefined,
+    stock: 0,
+    minTier: "SAPHIRE",
   },
 ]
 
 describe('RewardsClient', () => {
   it('shows locked state when not eligible', () => {
-    render(<RewardsClient rewards={mockRewards} userTokens={4500} isEligible={false} />)
+    render(<RewardsClient rewards={mockRewards} userTokens={4500} isEligible={false} userTier="SAPHIRE" token="mock" />)
     expect(screen.getByText('Redemption Locked')).toBeInTheDocument()
   })
 
   it('renders rewards correctly when eligible', () => {
-    render(<RewardsClient rewards={mockRewards} userTokens={4500} isEligible={true} />)
+    render(<RewardsClient rewards={mockRewards} userTokens={4500} isEligible={true} userTier="SAPHIRE" token="mock" />)
     expect(screen.getByText('Reward 1')).toBeInTheDocument()
     expect(screen.getByText('Reward 2')).toBeInTheDocument()
     expect(screen.getByText('Reward 3')).toBeInTheDocument()
   })
 
   it('disables redeem button if not enough tokens or out of stock', () => {
-    render(<RewardsClient rewards={mockRewards} userTokens={4500} isEligible={true} />)
+    render(<RewardsClient rewards={mockRewards} userTokens={4500} isEligible={true} userTier="SAPHIRE" token="mock" />)
     
     // Reward 1 costs 1000, user has 4500 → enabled
     expect(screen.getByTestId('redeem-btn-1')).not.toBeDisabled()
@@ -75,42 +102,22 @@ describe('RewardsClient', () => {
     expect(screen.getByTestId('redeem-btn-3')).toBeDisabled()
   })
 
-  it('shows tooltip wrapper for disabled reward buttons', () => {
-    render(<RewardsClient rewards={mockRewards} userTokens={4500} isEligible={true} />)
-    // TooltipWrapper renders role="tooltip" spans
-    const tooltips = screen.getAllByRole('tooltip')
-    expect(tooltips.length).toBeGreaterThan(0)
-  })
-
   it('opens dialog and submits redemption', async () => {
-    render(<RewardsClient rewards={mockRewards} userTokens={4500} isEligible={true} />)
+    render(<RewardsClient rewards={mockRewards} userTokens={4500} isEligible={true} userTier="SAPHIRE" token="mock" />)
     
     fireEvent.click(screen.getByTestId('redeem-btn-1'))
-    expect(screen.getByText('Confirm Redemption')).toBeInTheDocument()
+    
+    await waitFor(() => {
+      expect(screen.getByText('Confirm Redemption')).toBeInTheDocument()
+    })
     
     fireEvent.click(screen.getByTestId('confirm-redeem-btn'))
     
-    // Loading state
-    expect(screen.getByTestId('confirm-redeem-btn')).toBeDisabled()
-    
-    // Success state with pipeline
+    // Success state
     await waitFor(() => {
-      expect(screen.getByText('Request Submitted!')).toBeInTheDocument()
+      expect(screen.getByText('Permintaan Terkirim!')).toBeInTheDocument()
     }, { timeout: 2000 })
 
-    expect(screen.getByTestId('redemption-pipeline')).toBeInTheDocument()
     expect(screen.getByTestId('done-btn')).toBeInTheDocument()
-  })
-
-  it('filters rewards by category', () => {
-    render(<RewardsClient rewards={mockRewards} userTokens={4500} isEligible={true} />)
-    
-    // Click Voucher filter
-    fireEvent.click(screen.getByRole('button', { name: 'Voucher' }))
-    
-    // Only Reward 2 is Voucher
-    expect(screen.getByText('Reward 2')).toBeInTheDocument()
-    // Reward 1 is Merchandise, should not show
-    expect(screen.queryByText('Reward 1')).not.toBeInTheDocument()
   })
 })

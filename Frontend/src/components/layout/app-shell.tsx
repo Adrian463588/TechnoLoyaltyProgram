@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { Sidebar } from "./sidebar";
 import { Navbar } from "./navbar";
-import { SessionProvider } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Session } from "next-auth";
 
@@ -12,8 +11,7 @@ export function AppShell({ children, session }: { children: React.ReactNode, ses
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
-    <SessionProvider session={session}>
-      <div className="flex h-screen w-full overflow-hidden bg-[var(--color-surface-base)]">
+    <div className="flex h-screen w-full overflow-hidden bg-[var(--color-surface-base)]">
         {/* Sidebar */}
         <Sidebar 
           isOpen={isMobileMenuOpen} 
@@ -36,6 +34,5 @@ export function AppShell({ children, session }: { children: React.ReactNode, ses
           </main>
         </div>
       </div>
-    </SessionProvider>
   );
 }

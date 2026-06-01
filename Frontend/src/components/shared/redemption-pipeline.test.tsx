@@ -10,29 +10,27 @@ describe('RedemptionPipeline', () => {
 
   it('shows step labels in full mode', () => {
     render(<RedemptionPipeline currentStep="submitted" />);
-    expect(screen.getByText('Submit')).toBeInTheDocument();
-    expect(screen.getByText('Verify')).toBeInTheDocument();
-    expect(screen.getByText('Purchase')).toBeInTheDocument();
-    expect(screen.getByText('Pickup')).toBeInTheDocument();
-    expect(screen.getByText('Done')).toBeInTheDocument();
+    expect(screen.getByText('Request Sent')).toBeInTheDocument();
+    expect(screen.getByText('Document Review')).toBeInTheDocument();
+    expect(screen.getByText('Confirmation')).toBeInTheDocument();
   });
 
   it('renders in compact mode without labels', () => {
     render(<RedemptionPipeline currentStep="submitted" compact />);
-    expect(screen.queryByText('Submit')).not.toBeInTheDocument();
+    expect(screen.queryByText('Request Sent')).not.toBeInTheDocument();
   });
 
-  it('reflects verified step correctly', () => {
-    const { container } = render(<RedemptionPipeline currentStep="verified" />);
-    // The "Verify" label should exist
-    expect(screen.getByText('Verify')).toBeInTheDocument();
+  it('reflects reviewed step correctly', () => {
+    const { container } = render(<RedemptionPipeline currentStep="review" />);
+    // The "Document Review" label should exist
+    expect(screen.getByText('Document Review')).toBeInTheDocument();
     // Should render at least one CheckCircle2 (completed step)
     expect(container.querySelectorAll('[class*="animate-success-pop"]').length).toBeGreaterThan(0);
   });
 
-  it('reflects completed state', () => {
-    render(<RedemptionPipeline currentStep="completed" />);
+  it('reflects accepted state', () => {
+    render(<RedemptionPipeline currentStep="accepted" />);
     // All labels present
-    expect(screen.getByText('Done')).toBeInTheDocument();
+    expect(screen.getByText('Confirmation')).toBeInTheDocument();
   });
 });

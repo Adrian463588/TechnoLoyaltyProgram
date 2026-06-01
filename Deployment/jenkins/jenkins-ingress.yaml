@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: jenkins-ingress
-  namespace: tools
+  namespace: devops
   annotations:
     # Timeout diperpanjang karena Jenkins build bisa lama
     nginx.ingress.kubernetes.io/proxy-read-timeout: "90"

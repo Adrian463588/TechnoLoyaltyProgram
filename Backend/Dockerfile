@@ -2,15 +2,17 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+COPY prisma.config.ts ./
 COPY prisma ./prisma
-RUN npm ci --omit=dev && npx prisma generate
+RUN npm install --omit=dev && npx prisma generate
 
 # ---- Stage 2: Build ----
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
+COPY prisma.config.ts ./
 COPY prisma ./prisma
-RUN npm ci && npx prisma generate
+RUN npm install --include=dev && npx prisma generate
 COPY . .
 RUN npm run build
 
@@ -22,9 +24,17 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nodeapp
 
+# Ensure uploads directory exists and is writable by non-root user
+RUN mkdir -p /app/uploads/documents && chown -R nodeapp:nodejs /app/uploads
+
 COPY --from=deps --chown=nodeapp:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodeapp:nodejs /app/dist ./dist
-COPY package.json ./
+COPY --chown=nodeapp:nodejs package.json ./
+COPY --chown=nodeapp:nodejs prisma.config.ts ./
+COPY --chown=nodeapp:nodejs prisma ./prisma
+COPY --chown=nodeapp:nodejs entrypoint.sh ./
+
+RUN chmod +x ./entrypoint.sh
 
 USER nodeapp
 EXPOSE 3000
@@ -32,7 +42,8 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 # Health check for Kubernetes probes
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD wget -qO- http://localhost:3000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/health || exit 1
 
-CMD ["node", "dist/src/app.js"]
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["node", "--max-old-space-size=384", "dist/src/app.js"]

@@ -71,7 +71,6 @@ const ALL_TOOLS = [
     role: ["HC_PM"]
   }
 ];
-
 export async function POST(req: NextRequest) {
   try {
     // 1. Verify Authentication
@@ -202,7 +201,7 @@ PERATURAN PENTING:
       const toolStartTime = Date.now();
       
       // Execute all tool calls in PARALLEL for maximum performance
-      const functionResponses = await Promise.all(functionCalls.map(async (call) => {
+      const functionResponses = await Promise.all(functionCalls.map(async (call: any) => {
         const isAuthorized = ALL_TOOLS.find(t => t.name === call.name && (t as any).role.includes(userRole));
         
         if (!isAuthorized) {

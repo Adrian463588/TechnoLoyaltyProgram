@@ -13,7 +13,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 
 interface TokenHeroSectionProps {
-  tokenBalance: number;
+  tokenBalance?: number;
   tier: MembershipTier;
   eligibilityStatus: { eligible: boolean; reason?: string };
   isLoading?: boolean;
@@ -62,7 +62,7 @@ export function TokenHeroSection({
           <div className="flex-1 flex flex-col justify-center mb-6">
             <div className="flex items-baseline gap-2">
               <div className="text-7xl font-black text-[--color-accent] font-display tracking-tighter leading-none" data-testid="token-counter">
-                <AnimatedTokenCount value={tokenBalance} />
+                <AnimatedTokenCount value={tokenBalance ?? 0} />
               </div>
             </div>
           </div>
@@ -128,7 +128,7 @@ export function TokenHeroSection({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-medium">Available</span>
                   <span className="text-primary font-bold">
-                    {tokenBalance.toLocaleString()}
+                    {(tokenBalance ?? 0).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">

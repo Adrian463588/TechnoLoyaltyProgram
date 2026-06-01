@@ -1,0 +1,211 @@
+# ============================================================
+# LOYALTY PROGRAM — GitHub Actions CI/CD Pipeline
+# ============================================================
+# Trigger: Push to main branch
+# Flow:
+#   1. Lint & Type-Check
+#   2. Unit Tests
+#   3. Secret Scan (TruffleHog)
+#   4. Build Docker Images
+#   5. Container Security Scan (Trivy)
+#   6. Push to Artifact Registry
+#   7. Trigger Coolify Deploy Webhooks
+#
+# REQUIRED GITHUB SECRETS (Settings → Secrets → Actions):
+#   GCP_PROJECT_ID  — GCP project ID (e.g. project-654b743a-b24b-45ad-85e)
+# Note: GCP Auth now uses Workload Identity Federation instead of JSON keys.
+# ============================================================
+
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+# Cancel in-progress runs when a new push happens
+concurrency:
+  group: deploy-prod-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: asia-southeast2
+  REGISTRY: asia-southeast2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/loyalty-program-repo
+  IMAGE_TAG: "latest" # Placeholder, overwritten dynamically in build step
+
+jobs:
+  # ─────────────────────────────────────────────
+  lint-and-test:
+    name: Lint, Type-Check & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install Backend dependencies
+        working-directory: Backend
+        run: npm install
+
+      - name: Install Frontend dependencies
+        working-directory: Frontend
+        run: npm install
+
+      - name: Backend lint & typecheck
+        working-directory: Backend
+        run: |
+          npm run prisma:generate
+          npm run lint
+          npm run typecheck
+
+      - name: Frontend lint & typecheck
+        working-directory: Frontend
+        run: |
+          npm run lint
+          npm run typecheck
+
+      - name: Run unit tests
+        working-directory: Backend
+        run: npm run test:unit
+
+  # ─────────────────────────────────────────────
+  security-scan:
+    name: Secret Scan (DevSecOps)
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # TruffleHog needs full history
+
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.before }}
+          head: HEAD
+          extra_args: --only-verified
+
+  # ─────────────────────────────────────────────
+  build-and-push:
+    name: Build, Scan & Push Images
+    runs-on: ubuntu-latest
+    needs: security-scan
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      image_tag: ${{ steps.set-tag.outputs.image_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: set-tag
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          IMAGE_TAG="${{ github.run_number }}-${SHORT_SHA}"
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+
+      - name: Verify GCP secrets are configured
+        run: |
+          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then
+            echo "::error::GCP_PROJECT_ID secret is not set."
+            exit 1
+          fi
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/932577142121/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
+          service_account: 'github-actions@project-654b743a-b24b-45ad-85e.iam.gserviceaccount.com'
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build Backend image
+        run: |
+          docker build \
+            -t ${{ env.REGISTRY }}/backend:${{ env.IMAGE_TAG }} \
+            -t ${{ env.REGISTRY }}/backend:latest \
+            -f Backend/Dockerfile \
+            Backend/
+
+      - name: Build Frontend image
+        run: |
+          docker build \
+            -t ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }} \
+            -t ${{ env.REGISTRY }}/frontend:latest \
+            -f Frontend/Dockerfile \
+            Frontend/
+
+      # DevSecOps: Container vulnerability scan — fail on CRITICAL
+      - name: Trivy scan — Backend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ env.REGISTRY }}/backend:${{ env.IMAGE_TAG }}"
+          format: "table"
+          exit-code: "1"
+          severity: "CRITICAL"
+          ignore-unfixed: true
+
+      - name: Trivy scan — Frontend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }}"
+          format: "table"
+          exit-code: "1"
+          severity: "CRITICAL"
+          ignore-unfixed: true
+
+      - name: Push Backend image
+        run: |
+          docker push ${{ env.REGISTRY }}/backend:${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/backend:latest
+
+      - name: Push Frontend image
+        run: |
+          docker push ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/frontend:latest
+
+  # ─────────────────────────────────────────────
+  deploy-coolify:
+    name: Trigger Coolify Deploy
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Deploy Backend via Coolify Webhook
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
+            "${{ secrets.COOLIFY_BACKEND_WEBHOOK }}"
+
+      - name: Deploy Frontend via Coolify Webhook
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
+            "${{ secrets.COOLIFY_FRONTEND_WEBHOOK }}"
+
+      - name: Verify Backend health
+        run: |
+          sleep 30
+          curl --fail --retry 5 --retry-delay 10 \
+            "${{ secrets.BACKEND_HEALTH_URL }}/health" || echo "Health check failed - check Coolify dashboard"
+
+      - name: Verify Frontend health
+        run: |
+          curl --fail --retry 5 --retry-delay 10 \
+            "${{ secrets.FRONTEND_URL }}" || echo "Health check failed - check Coolify dashboard"

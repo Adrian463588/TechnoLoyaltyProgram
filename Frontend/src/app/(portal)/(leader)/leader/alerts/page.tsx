@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getPendingConfirmations } from "@/features/leader/actions";
 import { LeaderAlertsClient } from "./alerts-client";
 

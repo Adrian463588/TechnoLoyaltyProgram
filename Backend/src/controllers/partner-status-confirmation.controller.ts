@@ -8,7 +8,7 @@
  * SOLID — SRP: HTTP parsing and response only.
  */
 
-import type { RequestHandler } from "express";
+import { asyncHandler } from "@/middleware/asyncHandler";
 import { z } from "zod";
 import { partnerStatusConfirmationService } from "@/services/partner-status-confirmation.service";
 import { uuidSchema } from "@/types/validations";
@@ -39,8 +39,7 @@ export const PartnerStatusConfirmationController = {
    * POST /api/admin/partner-confirmations
    * HC creates a confirmation request for a TL.
    */
-  requestConfirmation: (async (req, res, next) => {
-    try {
+  requestConfirmation: asyncHandler(async (req, res) => {
       const { user } = req;
       const parsed = requestConfirmationSchema.safeParse(req.body);
       if (!parsed.success) throw new ValidationError("Invalid input", z.treeifyError(parsed.error));
@@ -53,17 +52,13 @@ export const PartnerStatusConfirmationController = {
       );
 
       res.status(201).json(result);
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   /**
    * GET /api/admin/partner-confirmations
    * HC views their own confirmation requests.
    */
-  listForHC: (async (req, res, next) => {
-    try {
+  listForHC: asyncHandler(async (req, res) => {
       const { user } = req;
       const statusResult = listStatusSchema.safeParse(req.query["status"]);
       const status = statusResult.success ? statusResult.data : undefined;
@@ -77,34 +72,26 @@ export const PartnerStatusConfirmationController = {
         offset,
         items
       });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   /**
    * GET /api/leader/partner-confirmations
    * TL views confirmations assigned to them.
    */
-  listForTL: (async (req, res, next) => {
-    try {
+  listForTL: asyncHandler(async (req, res) => {
       const { user } = req;
       const statusResult = listStatusSchema.safeParse(req.query["status"]);
       const status = statusResult.success ? statusResult.data : undefined;
 
       const items = await partnerStatusConfirmationService.listForTL(user.id, status);
       res.json(items);
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   /**
    * POST /api/leader/partner-confirmations/:id/confirm
    * TL confirms the status.
    */
-  confirm: (async (req, res, next) => {
-    try {
+  confirm: asyncHandler(async (req, res) => {
       const { user } = req;
       const idResult = uuidSchema.safeParse(req.params["id"]);
       if (!idResult.success) throw new ValidationError("Invalid confirmation ID", {});
@@ -120,25 +107,18 @@ export const PartnerStatusConfirmationController = {
       );
 
       res.json({ success: true, confirmation: result });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 
   /**
    * POST /api/admin/partner-confirmations/:id/cancel
    * HC cancels a pending request.
    */
-  cancel: (async (req, res, next) => {
-    try {
+  cancel: asyncHandler(async (req, res) => {
       const { user } = req;
       const idResult = uuidSchema.safeParse(req.params["id"]);
       if (!idResult.success) throw new ValidationError("Invalid confirmation ID", {});
 
       const result = await partnerStatusConfirmationService.cancel(idResult.data, user.id);
       res.json({ success: true, confirmation: result });
-    } catch (err) {
-      next(err);
-    }
-  }) satisfies RequestHandler,
+  }),
 };

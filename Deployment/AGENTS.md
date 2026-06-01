@@ -10,15 +10,18 @@ Jaga deployment Loyalty Program tetap aman, replikatif, dan mudah diverifikasi.
 
 Target deployment saat ini:
 
-- Cloud provider: Google Cloud Platform (GCP)
-- Kubernetes: Google Kubernetes Engine (GKE)
-- Cluster: `loyalty-cluster-prod`
-- Namespace aplikasi: `loyalty-prod`
-- Registry: Artifact Registry `asia-southeast2-docker.pkg.dev/.../loyalty-program-repo`
-- GitOps path: `Deployment/kubernetes/overlays/prod`
-- CD: ArgoCD pull-based GitOps
+- Application runtime: Coolify.
+- Backend service: Coolify `loyalty-backend`.
+- Frontend service: Coolify `loyalty-frontend`.
+- Database/cache: Coolify managed PostgreSQL `loyalty-postgres` and Redis `loyalty-redis`.
+- DevOps Kubernetes: K3s on the Coolify VPS.
+- DevOps namespaces: `devops`, `monitoring`, `argocd`.
+- Registry: Artifact Registry `asia-southeast2-docker.pkg.dev/.../loyalty-program-repo`.
+- GitOps path: root `Deployment` kustomization for K3s DevOps tooling only.
+- CD: Jenkins triggers Coolify deploy hooks for apps; ArgoCD pull-based GitOps manages K3s DevOps resources.
 - CI: Jenkins pipeline
 - Runtime utama: Backend Node.js/Express/Prisma, Frontend Next.js, PostgreSQL, Redis
+- Legacy infrastructure: Terraform-managed GKE is retired through `Deployment/runbooks/terraform-destroy.md`.
 
 ---
 
@@ -39,21 +42,24 @@ Sebelum mengubah file deployment:
 
 | Folder / file | Tanggung jawab |
 |---|---|
-| `kubernetes/base/` | Workload, Service, HPA, Job, dan resource reusable. |
-| `kubernetes/overlays/prod/` | Kustomize production, namespace, ingress, dan network policy. |
+| `kubernetes/base/` | Legacy Kubernetes app manifests retained for reference/rollback only. |
+| `kubernetes/overlays/prod/` | Legacy production overlay; do not use as active app deployment source of truth. |
+| `kubernetes/overlays/devops/` | K3s DevOps namespace, HPA, and network policy support files. |
 | `argocd/` | ArgoCD project, application, ingress, dan instruksi instalasi. |
 | `jenkins/` | Jenkins manifests dan pipeline CI/CD. |
 | `monitoring/` | Prometheus, Grafana, Alertmanager, Uptime Kuma, rules, dan dashboard. |
-| `terraform/` | Provisioning GKE dan infrastructure GCP. |
-| `deploy-all.ps1` | Bootstrap script untuk namespace, tools, monitoring, Jenkins, dan ArgoCD. |
+| `terraform/` | Legacy GKE provisioning retained for destroy/runbook history. |
+| `coolify/` | Coolify application runtime notes. |
+| `runbooks/` | Operational runbooks including Terraform destroy. |
+| `deploy-all.ps1` | Bootstrap script untuk namespace, monitoring, Jenkins, dan ArgoCD on K3s. |
 
 Placement rule:
 
-- Perubahan deployment aplikasi produksi masuk ke `kubernetes/overlays/prod/` bila environment-specific.
-- Perubahan workload reusable masuk ke `kubernetes/base/`.
-- Perubahan CI image build, scan, push, atau GitOps update masuk ke `jenkins/Jenkinsfile`.
+- Perubahan deployment aplikasi produksi masuk ke Coolify configuration/runbook, not Kubernetes app manifests.
+- Perubahan workload reusable untuk DevOps tooling masuk ke root `Deployment` kustomization atau folder tool terkait.
+- Perubahan CI image build, scan, push, atau Coolify deploy trigger masuk ke `jenkins/Jenkinsfile`.
 - Perubahan sync behavior ArgoCD masuk ke `argocd/applications/` atau `argocd/projects/`.
-- Perubahan cluster/infrastructure GCP masuk ke `terraform/`.
+- Perubahan Terraform hanya untuk dokumentasi legacy/destroy kecuali user meminta reprovisioning eksplisit.
 
 ---
 
@@ -67,7 +73,8 @@ Jangan commit:
 
 Jangan ubah tanpa mengecek `Deployment/README.md` dan manifest terkait:
 
-- Namespace `loyalty-prod`.
+- Coolify service names and environment variables.
+- K3s namespaces `devops`, `monitoring`, and `argocd`.
 - Host ingress production.
 - Artifact Registry path.
 - Routing ingress.
@@ -115,18 +122,19 @@ Jenkins bertanggung jawab untuk:
 - Scan container image.
 - Generate SBOM.
 - Push image ke Artifact Registry.
-- Update manifest GitOps dengan tag image deterministik.
+- Sign image dengan Cosign.
+- Trigger Coolify deploy hook untuk Backend dan Frontend.
 
 ArgoCD bertanggung jawab untuk:
 
-- Sync `Deployment/kubernetes/overlays/prod`.
+- Sync root `Deployment` kustomization untuk DevOps stack.
 - Self-heal drift dari cluster.
-- Prune resource yang sudah dihapus dari Git sesuai policy aplikasi.
+- Prune resource DevOps yang sudah dihapus dari Git sesuai policy aplikasi.
 
 Aturan perubahan:
 
-- Jangan bypass GitOps untuk perubahan aplikasi permanen.
-- Perubahan hotfix manual di cluster harus dicatat dan disusul commit manifest.
+- Jangan memakai Kubernetes app manifests sebagai source of truth runtime backend/frontend.
+- Perubahan hotfix manual Coolify harus dicatat dan disusul update runbook/config yang relevan.
 - Jika mengubah `syncPolicy.prune`, `selfHeal`, atau target path ArgoCD, jelaskan risiko rollout dan rollback.
 - Jika mengubah Jenkins credentials ID, registry, branch deploy, atau repo URL, verifikasi semua reference yang bergantung.
 
@@ -134,14 +142,13 @@ Aturan perubahan:
 
 ## 7. Database, Cache, dan Migration
 
-PostgreSQL dan Redis adalah stateful dependency.
+PostgreSQL dan Redis adalah stateful dependency yang sekarang dikelola oleh Coolify.
 
 Aturan:
 
-- Jangan menghapus PVC production.
-- Jangan mengganti storage class, mount path, atau `subPath` tanpa rencana migrasi.
-- PostgreSQL harus tetap memakai pola PVC yang aman untuk direktori data.
-- Redis changes harus memperhatikan persistence, resource limit, dan readiness/liveness bila ditambahkan.
+- Jangan menghapus volume/database Coolify production.
+- Jangan mengganti database/cache endpoint tanpa rencana migrasi.
+- Kubernetes PVC hanya berlaku untuk DevOps tools seperti Jenkins/Uptime Kuma.
 - Migration Prisma untuk production harus idempotent, dapat diamati statusnya, dan punya rollback notes.
 
 ---
@@ -156,12 +163,11 @@ Untuk perubahan monitoring:
 - Uptime Kuma endpoint harus memakai URL production yang benar.
 - Jangan commit credential Grafana/Alertmanager production.
 
-Untuk perubahan deployment app:
+Untuk perubahan deployment app di Coolify:
 
-- Pastikan readiness/liveness probe tetap valid.
+- Pastikan health check tetap valid.
 - Pastikan resource request/limit realistis.
-- Pastikan HPA memakai metric yang tersedia.
-- Pastikan NetworkPolicy tidak memutus koneksi Frontend, Backend, PostgreSQL, Redis, ingress, atau monitoring.
+- Pastikan Coolify service network tidak memutus koneksi Frontend, Backend, PostgreSQL, Redis, ingress, atau monitoring.
 
 ---
 
@@ -170,13 +176,13 @@ Untuk perubahan deployment app:
 Minimal untuk perubahan manifest Kubernetes:
 
 ```bash
-kubectl kustomize Deployment/kubernetes/overlays/prod
+kubectl kustomize Deployment
 ```
 
 Jika cluster tersedia dan user mengizinkan validasi server-side:
 
 ```bash
-kubectl apply --dry-run=server -k Deployment/kubernetes/overlays/prod
+kubectl apply --dry-run=server -k Deployment
 ```
 
 Jika perubahan menyentuh build/deploy aplikasi:
@@ -197,17 +203,17 @@ pnpm test:e2e
 Verifikasi cluster bila deployment benar-benar dijalankan:
 
 ```bash
-kubectl get pods -n loyalty-prod
-kubectl get svc -n loyalty-prod
-kubectl get ingress -n loyalty-prod
-kubectl get certificate -n loyalty-prod
+kubectl get pods -n monitoring
+kubectl get pods -n devops
+kubectl get pods -n argocd
+kubectl get hpa -A
 ```
 
 Verifikasi GitOps dan observability:
 
-- ArgoCD application `loyalty-program-prod` sehat dan synced.
-- Pod Backend, Frontend, PostgreSQL, Redis running.
-- Ingress HTTPS valid.
+- ArgoCD application `loyalty-devops` sehat dan synced.
+- Coolify services Backend, Frontend, PostgreSQL, Redis running.
+- Coolify/reverse-proxy HTTPS valid.
 - Login dan NextAuth session tidak terkena route collision.
 - Dashboard/alert/uptime endpoint tidak broken.
 
@@ -219,8 +225,8 @@ Jangan klaim command pass jika tidak benar-benar dijalankan.
 
 Setiap perubahan deployment harus punya rollback sederhana:
 
-- Untuk image release: revert tag image di `kubernetes/overlays/prod/kustomization.yaml`.
-- Untuk manifest app: revert commit manifest dan biarkan ArgoCD sync.
+- Untuk image release: redeploy previous deterministic image tag in Coolify.
+- Untuk manifest DevOps: revert commit manifest dan biarkan ArgoCD sync.
 - Untuk ingress: restore rule sebelumnya dan validasi NextAuth serta Backend API.
 - Untuk migration: jelaskan apakah rollback database tersedia, manual, atau tidak aman dilakukan.
 - Untuk Terraform: gunakan plan sebelum apply dan dokumentasikan resource yang akan berubah.

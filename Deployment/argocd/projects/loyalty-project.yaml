@@ -4,15 +4,27 @@ metadata:
   name: loyalty-program
   namespace: argocd
 spec:
-  description: Loyalty Program Application Project
+  description: Loyalty Program DevOps Project
   sourceRepos:
   - 'https://github.com/Adrian463588/TechnoLoyaltyProgram'
   destinations:
-  - namespace: loyalty-prod
+  - namespace: argocd
+    server: https://kubernetes.default.svc
+  - namespace: devops
+    server: https://kubernetes.default.svc
+  - namespace: monitoring
     server: https://kubernetes.default.svc
   clusterResourceWhitelist:
   - group: ''
     kind: Namespace
+  - group: autoscaling
+    kind: HorizontalPodAutoscaler
+  - group: networking.k8s.io
+    kind: NetworkPolicy
+  - group: rbac.authorization.k8s.io
+    kind: ClusterRole
+  - group: rbac.authorization.k8s.io
+    kind: ClusterRoleBinding
   namespaceResourceBlacklist:
   - group: ''
     kind: ResourceQuota

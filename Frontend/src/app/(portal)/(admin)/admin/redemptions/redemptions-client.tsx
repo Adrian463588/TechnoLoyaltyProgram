@@ -548,7 +548,7 @@ export default function RedemptionsClient({
                        </div>
                     </div>
                     <div className="px-6 py-3 bg-white rounded-2xl border border-indigo-100 text-xs font-bold text-indigo-700 max-w-xs italic text-center md:text-left shadow-sm">
-                       "Admin has verified the documentation. Proceed to finalize the reward handover."
+                       &quot;Admin has verified the documentation. Proceed to finalize the reward handover.&quot;
                     </div>
                   </div>
                 </div>
@@ -581,7 +581,7 @@ export default function RedemptionsClient({
                    </div>
                    <p className="text-sm font-black text-slate-500 uppercase tracking-[0.3em]">Application Closed</p>
                    {selectedRequest.rejectReason && (
-                     <p className="text-xs font-bold text-slate-400 bg-slate-100 px-4 py-2 rounded-xl italic">"{selectedRequest.rejectReason}"</p>
+                     <p className="text-xs font-bold text-slate-400 bg-slate-100 px-4 py-2 rounded-xl italic">&quot;{selectedRequest.rejectReason}&quot;</p>
                    )}
                 </div>
               )}

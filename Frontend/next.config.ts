@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
   experimental: {
     // Other experimental features would go here
     optimizePackageImports: ["lucide-react", "framer-motion"],
+    webpackMemoryOptimizations: true,
   },
 
   // ── Standalone output: ONLY in production builds ─────────────────────────
@@ -39,6 +40,9 @@ const nextConfig: NextConfig = {
       // { protocol: "https", hostname: "storage.googleapis.com" },
     ],
   },
+  
+  // Disable source maps to save RAM during builds
+  productionBrowserSourceMaps: false,
 };
 
 export default nextConfig;

@@ -245,7 +245,7 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Redemption Review Center</h2>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge className="bg-slate-900 text-white border-none rounded-lg px-2 py-0.5 text-[10px] font-mono">#{selectedRedemption.id.split('-')[0].toUpperCase()}</Badge>
+                    <Badge className="bg-slate-900 text-white border-none rounded-lg px-2 py-0.5 text-[10px] font-mono">#{(selectedRedemption.id.split('-')[0] || "").toUpperCase()}</Badge>
                     <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Transaction Tracking</span>
                   </div>
                 </div>
@@ -356,7 +356,7 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
                      REJECTED: { bg: "bg-red-50 border-red-200", text: "text-red-600", label: "Rejected" },
                      CANCELLED: { bg: "bg-slate-50 border-slate-200", text: "text-slate-500", label: "Cancelled" },
                    };
-                   const config = statusConfig[selectedRedemption.status] || statusConfig.CANCELLED;
+                   const config = statusConfig[selectedRedemption.status] || statusConfig.CANCELLED!;
 
                    return (
                      <div className={cn("sm:col-span-4 p-8 border rounded-[32px] flex flex-col justify-center items-center text-center shadow-sm transition-all", config.bg, config.text)}>
@@ -452,7 +452,7 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
                           <span className="text-[11px] font-black uppercase tracking-widest">HC Admin Update</span>
                        </div>
                        <p className="text-lg font-bold text-slate-600 leading-relaxed italic">
-                          "{selectedRedemption.status === "REQUESTED" 
+                          &quot;{selectedRedemption.status === "REQUESTED" 
                             ? "Permintaan Anda telah kami terima. Tim HC sedang memproses verifikasi dokumen identitas untuk memastikan keaslian data. Mohon tunggu informasi selanjutnya."
                             : selectedRedemption.status === "REVIEWED"
                             ? "Dokumen Anda telah diverifikasi oleh tim HC. Saat ini kami sedang menyiapkan item hadiah fisik Anda untuk proses serah terima."
@@ -461,7 +461,7 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
                             : selectedRedemption.status === "REJECTED"
                           ? `Mohon maaf, klaim ditolak: ${selectedRedemption.rejectReason}`
                           : "Status permintaan Anda telah diperbarui dalam sistem kami."
-                          }"
+                          }&quot;
                        </p>
                        <div className="flex items-center gap-3 mt-6">
                           <div className="h-1 w-10 bg-primary/20 rounded-full" />

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 /**
  * /employee/history — Token Ledger History (Server Component)
  * Fetches real token transaction data from /api/employee/history.
