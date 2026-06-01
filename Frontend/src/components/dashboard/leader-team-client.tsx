@@ -118,55 +118,60 @@ export function LeaderTeamClient({
   };
 
   return (
-    <div className="max-w-7xl mx-auto w-full space-y-6 animate-fade-up-in">
+    <div className="max-w-7xl mx-auto w-full space-y-6">
       {/* Header Card */}
-      <BentoCard className="p-6 flex flex-col md:flex-row md:items-start justify-between bg-white border-[var(--color-border-subtle)] shadow-sm">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Team Overview</h1>
-          <p className="text-sm text-muted-foreground">
-            Monitor your team&apos;s loyalty performance, tiers, and status updates.
-          </p>
+      <div className="bento-card p-8 flex flex-col md:flex-row md:items-center justify-between animate-fade-up-in">
+        <div className="flex items-center gap-5">
+          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-sm shadow-primary/5 shrink-0"> 
+            <Users size={28} />
+          </div>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-extrabold text-[--color-text-secondary] leading-none">Team Overview</h1>
+            <p className="text-sm text-[--color-text-secondary]">
+              Monitor your team&apos;s loyalty performance, tiers, and status updates.
+            </p>
+          </div>
         </div>
-      </BentoCard>
+      </div>
 
       {/* Team Summary Cards - Admin Dashboard Style */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <BentoCard className="p-6 flex flex-col justify-between bg-white border-[var(--color-border-subtle)] shadow-sm">
+        <BentoCard className="p-4 flex flex-col justify-between bg-white border-[var(--color-border-subtle)] shadow-sm animate-fade-up-in stagger-1">
           <h3 className="text-label flex items-center gap-2 mb-4">
             <Coins className="h-[14px] w-[14px] text-primary" />
             Team Aggregate Tokens
           </h3>
           <div>
-            <p className="text-3xl font-bold text-foreground leading-none">{totalTokens.toLocaleString()}</p>
-            <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-tight">Combined team balance</p>
+            <p className="text-3xl font-black text-slate-700 leading-none">{totalTokens.toLocaleString()}</p>
+            <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-widest">Combined team balance</p>
           </div>
         </BentoCard>
 
-        <BentoCard className="p-6 flex flex-col justify-between bg-white border-[var(--color-border-subtle)] shadow-sm">
+        <BentoCard className="p-4 flex flex-col justify-between bg-white border-[var(--color-border-subtle)] shadow-sm animate-fade-up-in stagger-2">
           <h3 className="text-label flex items-center gap-2 mb-4">
             <Users className="h-[14px] w-[14px] text-emerald-500" />
             Eligible for Rewards
           </h3>
           <div>
-            <p className="text-3xl font-bold text-foreground leading-none">{eligibleMembers} Members</p>
-            <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-tight">Balance {'>'}= 2,000 tokens</p>
+            <p className="text-3xl font-black text-slate-700 leading-none">{eligibleMembers} Members</p>
+            <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-widest">Balance {'>'}= 2,000 tokens</p>
           </div>
         </BentoCard>
 
-        <BentoCard className="p-6 flex flex-col justify-between bg-white border-[var(--color-border-subtle)] shadow-sm">
+        <BentoCard className="p-4 flex flex-col justify-between bg-white border-[var(--color-border-subtle)] shadow-sm animate-fade-up-in stagger-3">
           <h3 className="text-label flex items-center gap-2 mb-4">
             <AlertTriangle className="h-[14px] w-[14px] text-amber-500" />
             Team Alerts
           </h3>
           <div>
-            <p className="text-3xl font-bold text-foreground leading-none">{alertsCount} Members</p>
-            <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-tight">Action required or inactive</p>
+            <p className="text-3xl font-black text-slate-700 leading-none">{alertsCount} Members</p>
+            <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-widest">Action required or inactive</p>
           </div>
         </BentoCard>
       </div>
 
       {/* Members Data Grid - Admin Style */}
-      <BentoCard className="overflow-hidden p-0 shadow-sm border-[var(--color-border-subtle)]">
+      <BentoCard className="overflow-hidden p-0 shadow-sm border-[var(--color-border-subtle)] h-[500px] min-h-[500px] flex flex-col animate-fade-up-in stagger-4">
         <div className="p-6 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)]/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-tertiary)]" />

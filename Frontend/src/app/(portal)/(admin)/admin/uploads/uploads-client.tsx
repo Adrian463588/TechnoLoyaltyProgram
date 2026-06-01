@@ -490,14 +490,14 @@ export default function UploadsClient() {
                             <TableCell className="py-4 px-6 text-center text-[var(--color-text-tertiary)] text-sm font-normal">{row.rowNumber}</TableCell>
                             <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] font-normal">{row.npk}</TableCell>
                             <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] font-normal group-hover:text-[var(--color-text-primary)] transition-colors">{row.name}</TableCell>
-                            <TableCell className="py-4 px-6 text-sm text-[var(--color-text-tertiary)]">{(row as any).fungsi || "-"}</TableCell>
-                            <TableCell className="py-4 px-6 text-sm font-bold text-[var(--color-text-secondary)] uppercase tracking-tight">{(row as any).division || "-"}</TableCell>
+                            <TableCell className="py-4 px-6 text-sm text-[var(--color-text-tertiary)] font-normal">{(row as any).fungsi || "-"}</TableCell>
+                            <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] font-normal">{(row as any).division || "-"}</TableCell>
                             <TableCell className="py-4 px-6">
-                              <span className="font-bold text-sm tracking-wider uppercase px-2.5 py-0.5 rounded-full border shadow-sm flex items-center w-fit gap-1.5 bg-blue-500/10 text-blue-600 border-blue-200">
+                              <span className="font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5 rounded-full border shadow-sm flex items-center w-fit gap-1.5 bg-blue-500/10 text-blue-600 border-blue-200">
                                 {String((row as any).tier || "-")}
                               </span>
                             </TableCell>
-                            <TableCell className="py-4 px-6 text-right text-sm text-[var(--color-text-tertiary)] font-normal">
+                            <TableCell className="py-4 px-6 text-right text-sm text-[var(--color-text-secondary)] font-normal">
                               {typeof (row as any).token === "number"
                                 ? (row as any).token.toLocaleString()
                                 : "-"}
