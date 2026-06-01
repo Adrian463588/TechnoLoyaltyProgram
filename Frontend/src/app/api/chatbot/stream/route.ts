@@ -102,24 +102,27 @@ PERATURAN PENTING:
     }
 
     if (userRole === "HC_PM") {
-      systemInstruction += "Anda berbicara dengan HC Admin (Pengelola Program). Anda dapat membantu mereka memahami cara menyetujui penukaran (redemption), mengelola status mitra, dan melihat analitik token secara global.";
+      systemInstruction += "Anda berbicara dengan HC Admin. Bantu mereka mengelola penukaran dan status mitra.";
     } else if (userRole === "TEAM_LEADER") {
-      systemInstruction += "Anda berbicara dengan Team Leader. Anda dapat membantu mereka memonitor performa tim mereka, melihat sisa token tim, dan memberikan tips untuk meningkatkan loyalitas tim.";
+      systemInstruction += "Anda berbicara dengan Team Leader. Bantu mereka memonitor saldo token tim dan statistik divisi.";
     } else {
-      systemInstruction += "Anda berbicara dengan Mitra/Karyawan. Anda dapat membantu mereka memahami cara mendapatkan token, menukarkan reward, dan melihat status penukaran mereka sendiri.";
+      systemInstruction += "Anda berbicara dengan Mitra/Karyawan. Bantu mereka cek saldo, riwayat, dan katalog hadiah.";
     }
 
-    systemInstruction += "\n\nBatasan: Jangan pernah memberikan informasi sensitif pengguna lain kecuali Anda berbicara dengan role yang berwenang (seperti Leader melihat timnya sendiri atau Admin melihat data global). Jika ada fungsi yang gagal atau data tidak ditemukan, sampaikan dengan sopan.";
+    systemInstruction += "\n\nBatasan: Jangan memberikan informasi sensitif user lain. Jika data tidak ditemukan, sampaikan dengan sopan.";
 
-    // 3. Initialize Model with Filtered Tools
+    // 3. Initialize Model
     const model = genAI.getGenerativeModel({ 
-      model: process.env.GEMINI_MODEL || "gemini-flash-latest",
+      model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
       systemInstruction: systemInstruction,
       tools: toolsConfig as any,
     });
 
-    // 4. Robust cleaning for Gemini API: 
-    const rawHistory = messages.slice(0, -1).map((m: any) => ({
+    // 4. Robust cleaning for Gemini API: Diet Context (Last 4 messages)
+    const MAX_HISTORY = 4;
+    const recentMessages = messages.slice(-MAX_HISTORY - 1, -1);
+    
+    const rawHistory = recentMessages.map((m: any) => ({
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }],
     }));
@@ -146,20 +149,41 @@ PERATURAN PENTING:
       latestMessageContent = lastUserMsg.parts[0].text + "\n" + latestMessageContent;
     }
 
-    // 5. Start Chat
-    const startChatTime = Date.now();
+    // 5. Start Chat with Retry Logic for 503
     const chat = model.startChat({
       history: history,
       generationConfig: {
-        temperature: 0.7,
+        temperature: 0.1,
+        topP: 0.8,
+        topK: 16,
       },
     });
 
-    // --- Handling Function Calling ---
-    console.log("[Chatbot] Sending message to Gemini...");
-    let response = await chat.sendMessage(latestMessageContent);
-    console.log(`[Chatbot] Gemini first response took: ${Date.now() - startChatTime}ms`);
-    
+    // --- Handling Function Calling with RETRY LOGIC ---
+    let response;
+    let retries = 0;
+    const MAX_RETRIES = 2;
+
+    while (retries <= MAX_RETRIES) {
+      try {
+        console.log(`[Chatbot] Sending message to Gemini (Attempt ${retries + 1})...`);
+        const startCall = Date.now();
+        response = await chat.sendMessage(latestMessageContent);
+        console.log(`[Chatbot] Gemini responded in: ${Date.now() - startCall}ms`);
+        break; // Success!
+      } catch (err: any) {
+        const is503 = err?.status === 503 || err?.message?.includes("503") || err?.message?.includes("high demand");
+        if (is503 && retries < MAX_RETRIES) {
+          retries++;
+          const delay = 2000 * retries;
+          console.warn(`[Chatbot] Gemini Busy (503). Retrying in ${delay}ms...`);
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+        throw err; // Re-throw if not 503 or max retries reached
+      }
+    }
+
     let functionCalls = response.response.functionCalls();
 
     if (functionCalls && allowedTools.length > 0) {
@@ -217,6 +241,10 @@ PERATURAN PENTING:
 
     if (status === 429 || errorMessage.includes("429")) {
       return new Response(JSON.stringify({ error: "API Quota Exceeded. Silakan coba lagi nanti." }), { status: 429 });
+    }
+
+    if (status === 503 || errorMessage.includes("503") || errorMessage.includes("high demand")) {
+      return new Response(JSON.stringify({ error: "Server AI sedang sibuk (High Demand). Silakan coba lagi dalam beberapa saat." }), { status: 503 });
     }
 
     if (status === 404 || errorMessage.includes("404")) {
