@@ -69,6 +69,7 @@ const ALL_TOOLS = [
   }
 ];
 export async function POST(req: NextRequest) {
+  let modelName = "gemini-2.0-flash";
   try {
     // 1. Verify Authentication
     const token = await getServerToken();
@@ -83,8 +84,11 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: "Messages array is required" }), { status: 400 });
     }
 
-    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.includes("your_google_ai")) {
-      return mockStreamResponse("Saya adalah AI Mock. Konfigurasi API Key belum benar.");
+    // --- Guard: validate GEMINI_API_KEY before calling API ---
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
+    if (!apiKey || apiKey.length < 10 || apiKey.includes("your_google_ai")) {
+      console.warn("[Chatbot] GEMINI_API_KEY is missing or invalid. Returning mock response.");
+      return mockStreamResponse("Chatbot AI belum dikonfigurasi. Hubungi administrator.");
     }
 
     // --- Filter Tools based on User Role ---
@@ -120,8 +124,9 @@ PERATURAN PENTING:
     systemInstruction += "\n\nBatasan: Jangan memberikan informasi sensitif user lain. Jika data tidak ditemukan, sampaikan dengan sopan.";
 
     // 3. Initialize Model using the new @google/genai SDK
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-    const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+    const ai = new GoogleGenAI({ apiKey: apiKey });
+    modelName = process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
+    console.log(`[Chatbot] Using model: ${modelName}`);
 
     // 4. Robust cleaning for Gemini API: Diet Context (Last 4 messages)
     const MAX_HISTORY = 4;
@@ -270,8 +275,16 @@ PERATURAN PENTING:
       return new Response(JSON.stringify({ error: "Server AI sedang sibuk (High Demand). Silakan coba lagi dalam beberapa saat." }), { status: 503 });
     }
 
-    if (status === 404 || errorMessage.includes("404")) {
-      return new Response(JSON.stringify({ error: "Model AI tidak ditemukan. Cek konfigurasi GEMINI_MODEL." }), { status: 404 });
+    if (status === 404 || errorMessage.includes("404") || errorMessage.includes("models/")) {
+      return new Response(JSON.stringify({ error: `Model AI (${modelName}) tidak ditemukan. Cek konfigurasi GEMINI_MODEL.` }), { status: 404 });
+    }
+
+    if (status === 400 || errorMessage.includes("400") || errorMessage.toUpperCase().includes("API_KEY_INVALID")) {
+      return new Response(JSON.stringify({ error: "API Key Gemini tidak valid. Hubungi administrator." }), { status: 400 });
+    }
+
+    if (status === 401 || errorMessage.includes("401") || errorMessage.toLowerCase().includes("unauthorized")) {
+      return new Response(JSON.stringify({ error: "Autentikasi API Gemini gagal. Cek konfigurasi GEMINI_API_KEY." }), { status: 401 });
     }
 
     return new Response(JSON.stringify({ error: "Internal Server Error", details: errorMessage }), { status: 500 });
