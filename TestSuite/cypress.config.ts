@@ -10,7 +10,9 @@ export default defineConfig({
   e2e: {
     // ── Base URL ────────────────────────────────────────────────────────────
     // Override with: CYPRESS_BASE_URL=https://staging.example.com cypress run
-    baseUrl: process.env.CYPRESS_BASE_URL ?? "http://localhost:3000",
+    baseUrl:
+      process.env.CYPRESS_BASE_URL ??
+      "https://m4nx9kc046wxksnhs6zfseor.34.128.73.127.sslip.io",
 
     // ── Test file locations ─────────────────────────────────────────────────
     supportFile:       "cypress/support/e2e.ts",

@@ -4,19 +4,19 @@
   "description": "Berijalan Employee Loyalty Program — Cypress E2E Test Suite",
   "private": true,
   "scripts": {
-    "test:e2e":       "cypress run",
-    "test:e2e:open":  "cypress open",
-    "lint":           "eslint \"cypress/**/*.ts\"",
-    "lint:fix":       "eslint \"cypress/**/*.ts\" --fix",
-    "typecheck":      "tsc --noEmit"
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open",
+    "lint": "eslint \"cypress/**/*.ts\"",
+    "lint:fix": "eslint \"cypress/**/*.ts\" --fix",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@testing-library/cypress": "^10.1.3",
-    "@types/node":              "^20",
-    "cypress":                  "^15.14.2",
-    "eslint":                   "^9",
-    "eslint-plugin-cypress":    "^4.1.0",
-    "typescript":               "^5",
-    "typescript-eslint":        "^8"
+    "@types/node": "^20.19.41",
+    "cypress": "^15.14.2",
+    "eslint": "^9",
+    "eslint-plugin-cypress": "^4.1.0",
+    "typescript": "^5",
+    "typescript-eslint": "^8"
   }
 }
