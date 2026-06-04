@@ -267,5 +267,14 @@ temp-*.yaml
 query.sql
 uptime-kuma.yaml
 
+# Root-level debug/log/temp files (never commit)
+backend_log.txt
+backend_startup_log.txt
+check-users.ts
+test-bcrypt.ts
+test_payload.json
+test-genai.mjs
+PROJECT_REPORT.md
+
 # Backend uploads
 Backend/uploads/

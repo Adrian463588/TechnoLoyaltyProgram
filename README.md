@@ -3,173 +3,445 @@
 [![Stack: Next.js](https://img.shields.io/badge/Stack-Next.js%2015-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![Stack: Express](https://img.shields.io/badge/Stack-Express%204-blue?style=for-the-badge&logo=express)](https://expressjs.com/)
 [![Stack: Prisma](https://img.shields.io/badge/Stack-Prisma%207-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
+[![DB: PostgreSQL](https://img.shields.io/badge/DB-PostgreSQL%2014-336791?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
 [![Testing: Cypress](https://img.shields.io/badge/Testing-Cypress-04C38E?style=for-the-badge&logo=cypress)](https://www.cypress.io/)
-[![AI: RTK + Caveman](https://img.shields.io/badge/AI_Workflow-RTK_+_Caveman-orange?style=for-the-badge)](#-ai-agentic-workflow-mandatory)
+[![AI: RTK + Caveman](https://img.shields.io/badge/AI_Workflow-RTK_+_Caveman-orange?style=for-the-badge)](#-ai-agentic-workflow)
 
-An enterprise-grade platform for managing employee loyalty programs across the **Optel** and **Techno** divisions. This portal allows employees (Mitra) to earn tokens for their contributions (extra shifts, sprints, projects) and redeem them for rewards through a transparent, auditable system.
+An enterprise-grade platform for managing employee loyalty programs across the **Optel** and **Techno** divisions.  
+Employees (Mitra) earn tokens for extra shifts / projects and redeem them for rewards through a transparent, auditable system.
 
 ---
 
 ## 📑 Table of Contents
+
 - [About The Project](#-about-the-project)
-- [Architecture Overview](#%EF%B8%8F-architecture-overview)
+- [Architecture Overview](#️-architecture-overview)
 - [Prerequisites](#-prerequisites)
-- [Getting Started](#-getting-started)
-  - [1. Installation](#1-installation)
+- [Step-by-Step: Getting Started](#-step-by-step-getting-started)
+  - [1. Clone & Install](#1-clone--install)
   - [2. Environment Variables](#2-environment-variables)
   - [3. Database Setup](#3-database-setup)
-  - [4. Running the App](#4-running-the-app)
+  - [4. Run the App (Local)](#4-run-the-app-local)
+  - [5. Alternative: Docker Compose](#5-alternative-docker-compose)
 - [Testing](#-testing)
-- [🤖 AI Agentic Workflow (MANDATORY)](#-ai-agentic-workflow-mandatory)
-- [Architecture & Business Rules](#-architecture--business-rules)
+- [Branch Strategy](#-branch-strategy)
+- [AI Agentic Workflow](#-ai-agentic-workflow)
+- [Architecture & Business Rules](#️-architecture--business-rules)
+- [Data Templates](#-data-templates)
 - [Documentation Reference](#-documentation-reference)
+- [Security Policy](#-security-policy)
 
 ---
 
 ## 📖 About The Project
-The Berijalan Loyalty Program Portal is built as a **Monorepo**. It separates the Backend API, Frontend Client, and E2E Test Suite while maintaining shared development scripts at the root level. 
+
+The **Berijalan Loyalty Program Portal** is a full-stack monorepo with three independent packages:
+
+| Package | Tech | Purpose |
+|---------|------|---------|
+| `Frontend/` | Next.js 15 + NextAuth | Role-based UI (Mitra, HC, Team Leader) |
+| `Backend/` | Express 4 + Prisma 7 | REST API, token engine, audit log |
+| `TestSuite/` | Cypress + Vitest | E2E, integration, and unit tests |
 
 **Key Features:**
-- Role-Based Access Control (Admin, HC, Team Leader, Mitra).
-- Append-only Token Ledger for strict financial auditing.
-- Automated token expiration and calculation engines specific to division rules.
-- Modern Glassmorphism UI with Framer Motion animations.
+- Role-Based Access Control: `MITRA`, `HC`, `TEAM_LEADER`
+- Append-only `TokenLedger` for strict financial auditing
+- Automated token expiry and division-specific calculation engines
+- Glassmorphism dark-mode UI with Framer Motion animations
+- AI chatbot powered by Gemini (optional)
+- Redis cache layer (optional for dev, enabled for prod)
 
 ---
 
 ## 🏗️ Architecture Overview
 
+```
+Browser
+  └─► Next.js 15 (Frontend :3000)
+        └─► NextAuth.js (session)
+        └─► Express API (Backend :8080)
+              └─► Prisma ORM
+              └─► PostgreSQL :5432
+              └─► Redis :6379 (optional)
+```
+
 ```mermaid
 graph TD
-    A[Root Monorepo] --> B[Frontend Next.js]
-    A --> C[Backend Express.js]
-    A --> D[TestSuite Cypress]
+    A[Root Monorepo] --> B[Frontend — Next.js 15]
+    A --> C[Backend — Express 4]
+    A --> D[TestSuite — Cypress + Vitest]
     C --> E[(PostgreSQL)]
     C --> F[Prisma ORM]
-    B --> G[NextAuth.js]
+    C --> G[Redis Cache]
+    B --> H[NextAuth.js]
+    B --> C
 ```
 
 ---
 
 ## ⚙️ Prerequisites
-Before you begin, ensure you have met the following requirements:
-- **Node.js**: `v20.x` or higher.
-- **npm**: `v10.x` or higher.
-- **Database**: PostgreSQL (v14+ running locally or via Docker).
-- **AI Tooling**: You **must** have [RTK AI](https://github.com/rtk-ai/rtk) and [Caveman](https://github.com/JuliusBrussee/caveman) installed if you are using AI coding assistants (Copilot, Cursor, Codex, Gemini). See the [AI Workflow section](#-ai-agentic-workflow-mandatory) below.
+
+| Tool | Version | Notes |
+|------|---------|-------|
+| Node.js | `≥ 20.x` | Use nvm or fnm for version management |
+| npm | `≥ 10.x` | Bundled with Node 20 |
+| PostgreSQL | `≥ 14` | Local install **or** Docker (see below) |
+| Git | any | For cloning |
+| Docker (optional) | `≥ 24` | For the Docker Compose path |
+
+> **Windows users:** Use PowerShell or Git Bash. WSL2 also works.
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Step-by-Step: Getting Started
 
-### 1. Installation
-Clone the repository and install dependencies at the root level (this will install concurrently for workspace management):
+### 1. Clone & Install
+
 ```bash
+# Clone the repository
 git clone https://github.com/Adrian463588/TechnoLoyaltyProgram.git
 cd TechnoLoyaltyProgram
+
+# Install root workspace tooling (concurrently, etc.)
 npm install
+
+# Install each package's dependencies
+cd Backend  && npm install && cd ..
+cd Frontend && npm install && cd ..
+cd TestSuite && npm install && cd ..
 ```
-Then, install dependencies for the sub-projects:
-```bash
-cd Backend && npm install
-cd ../Frontend && npm install
-cd ../TestSuite && npm install
-cd ..
-```
+
+---
 
 ### 2. Environment Variables
-You need to set up environment variables for both the Backend and Frontend.
 
-**Backend (`Backend/.env`):**
-Copy the example file and update the database URL.
+Both Backend and Frontend need `.env` files. **Never commit real `.env` files.**
+
+#### Backend (`Backend/.env`)
+
 ```bash
+# Copy the example and fill in real values
 cp Backend/.env.example Backend/.env
 ```
-Ensure your `DATABASE_URL` is correct:
+
+Edit `Backend/.env`:
+
 ```env
-DATABASE_URL="postgresql://username:password@localhost:5432/loyalty_db"
-JWT_SECRET="your-super-secret-jwt-key"
+# Server
+PORT=8080
+NODE_ENV=development
+
+# Database — replace with your local PostgreSQL credentials
+DATABASE_URL="postgresql://loyalty_user:loyalty_pass@localhost:5432/loyalty_db"
+
+# Auth — must match NEXTAUTH_SECRET in Frontend
+NEXTAUTH_SECRET="your-super-secret-32-char-string-here"
+
+# Frontend origin (CORS allow-list)
+FRONTEND_ORIGIN="http://localhost:3000"
+
+# Redis (optional for local dev — set REDIS_ENABLED=false to skip)
+REDIS_ENABLED=false
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# AI Chatbot (optional — set CHATBOT_ENABLED=false to skip)
+GEMINI_API_KEY="your-gemini-api-key-here"
+GEMINI_MODEL="gemini-2.0-flash"
+CHATBOT_ENABLED=false
 ```
 
-**Frontend (`Frontend/.env.local`):**
-Copy the example file.
+#### Frontend (`Frontend/.env.local`)
+
 ```bash
 cp Frontend/.env.example Frontend/.env.local
 ```
+
+Edit `Frontend/.env.local`:
+
 ```env
-NEXTAUTH_SECRET="your-super-secret-nextauth-key"
-NEXT_PUBLIC_API_URL="http://localhost:3001/api"
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+AUTH_TRUST_HOST=true
+NEXTAUTH_SECRET="your-super-secret-32-char-string-here"
+
+# Backend URL — server-side (internal)
+BACKEND_URL="http://localhost:8080/api"
+
+# Backend URL — client-side (browser)
+NEXT_PUBLIC_BACKEND_URL="http://localhost:8080/api"
+
+# AI Chatbot (optional)
+GEMINI_API_KEY="your-gemini-api-key-here"
+GEMINI_MODEL="gemini-2.0-flash"
+CHATBOT_ENABLED=false
 ```
 
+> **Important:** `NEXTAUTH_SECRET` must be the **same value** in both files.
+
+---
+
 ### 3. Database Setup
-Run the Prisma migrations to set up your PostgreSQL database schema:
+
+> **Option A — Local PostgreSQL**
+
+Ensure PostgreSQL is running and create the database:
+
+```sql
+-- Run in psql or your DB client
+CREATE USER loyalty_user WITH PASSWORD 'loyalty_pass';
+CREATE DATABASE loyalty_db OWNER loyalty_user;
+```
+
+Then run migrations and seed:
+
 ```bash
+# Generate Prisma client
 npm run db:generate
+
+# Apply migrations to the database
+npm run db:migrate
+
+# Seed with initial data (roles, admin user, sample rewards)
+npm run db:seed
+```
+
+> **Option B — Docker PostgreSQL only**
+
+```bash
+docker run -d \
+  --name loyalty-postgres \
+  -e POSTGRES_USER=loyalty_user \
+  -e POSTGRES_PASSWORD=loyalty_pass \
+  -e POSTGRES_DB=loyalty_db \
+  -p 5432:5432 \
+  postgres:16-alpine
+
+# Then run migrations from root
 npm run db:migrate
 npm run db:seed
 ```
 
-### 4. Running the App
-Start both the Backend and Frontend development servers concurrently from the root directory:
+---
+
+### 4. Run the App (Local)
+
+Start Backend and Frontend concurrently from the root:
+
 ```bash
 npm run dev:all
 ```
-- **Frontend** will be available at: `http://localhost:3000`
-- **Backend API** will be available at: `http://localhost:3001`
+
+| Service | URL |
+|---------|-----|
+| **Frontend** | http://localhost:3000 |
+| **Backend API** | http://localhost:8080/api |
+| **API Health** | http://localhost:8080/api/health |
+
+Or run each separately in different terminals:
+
+```bash
+# Terminal 1 — Backend
+cd Backend && npm run dev
+
+# Terminal 2 — Frontend
+cd Frontend && npm run dev
+```
+
+**Default seed accounts:**
+
+| Role | Email | Password |
+|------|-------|----------|
+| HC (Admin) | `hc@berijalan.id` | `admin123` |
+| Team Leader | `tl@berijalan.id` | `leader123` |
+| Mitra | `mitra@berijalan.id` | `mitra123` |
+
+> Check `Backend/prisma/seed.ts` for the full seeded data.
+
+---
+
+### 5. Alternative: Docker Compose
+
+Run the full stack (Backend + Frontend + PostgreSQL + Redis) in containers:
+
+```bash
+# Start all services
+docker compose up -d
+
+# Check service status
+docker compose ps
+
+# View logs
+docker compose logs -f backend
+docker compose logs -f frontend
+
+# Stop all
+docker compose down
+```
+
+Services will be available at the same ports (`3000`, `8080`).
 
 ---
 
 ## 🧪 Testing
 
-We enforce strict quality gates. Ensure tests pass before pushing changes.
+Run quality gates **before every push**:
 
-| Test Type | Command (Run from Root) | Description |
-| :--- | :--- | :--- |
-| **Unit Tests (Backend)** | `npm run test:backend` | Tests domain logic and token engines. |
-| **Unit Tests (Frontend)** | `npm run test:frontend` | Tests UI components and hooks. |
-| **E2E Tests (Cypress)** | `cd TestSuite && npx cypress open` | Full browser automation testing. |
+| Command | Location | What it tests |
+|---------|----------|---------------|
+| `npm run test:backend` | Root | Backend unit + domain logic |
+| `npm run test:frontend` | Root | Frontend component + hooks |
+| `npm run lint` | Root | ESLint across all packages |
+| `npm run typecheck` | Root | TypeScript strict check |
+| `cd TestSuite && npx cypress open` | TestSuite/ | E2E browser automation |
+| `cd TestSuite && npx cypress run` | TestSuite/ | E2E headless CI mode |
+
+**Quality gate (must pass before merge to `main`):**
+
+```bash
+npm run lint
+npm run typecheck
+npm run test:backend
+```
 
 ---
 
-## 🤖 AI Agentic Workflow (MANDATORY)
+## 🌿 Branch Strategy
 
-To prevent context window bloat, save tokens, and ensure high-quality output, **all developers and AI agents operating in this repository MUST use RTK AI and Caveman Mode.**
-
-### 1. ALWAYS Use RTK for Terminal Commands
-Never run raw shell commands that output large logs (like `git diff`, `npm test`, `docker logs`) directly into the AI context. **Always prefix with `rtk`**:
-```bash
-# ❌ BAD (Wastes tokens, pollutes context)
-npm run test:backend
-git status
-
-# ✅ GOOD (Compresses output for AI)
-rtk npm run test:backend
-rtk git status
+```
+main              ← production-ready, protected
+├── ADRIAN        ← merged ✅
+├── ezra          ← merged ✅
+├── resolve-pr9-conflicts  ← merged ✅
+└── run-local-fullstack    ← merged ✅
 ```
 
-### 2. ALWAYS Use Caveman Mode
-When interacting with AI assistants (Codex, Gemini, Copilot, Cline), you must instruct the AI to use Caveman Mode. 
-- Use the `/caveman ultra` trigger.
-- AI must provide concise answers, no filler, and summarize logs instead of full-file rewrites.
-- Read `.agent/` and `.kiro/steering/token-saving.md` for specific agent rules.
+**Workflow for new features:**
+
+```bash
+# 1. Branch from main
+git checkout -b feat/your-feature-name
+
+# 2. Make small, testable commits
+git commit -m "feat(scope): what changed"
+
+# 3. Lint + typecheck before pushing
+npm run lint && npm run typecheck
+
+# 4. Open PR → main
+```
+
+**Commit format** (Conventional Commits):
+
+```
+feat(scope): short description
+fix(scope): short description
+chore(scope): short description
+docs(scope): short description
+test(scope): short description
+```
+
+---
+
+## 🤖 AI Agentic Workflow
+
+All developers and AI coding agents **must** use RTK AI + Caveman mode to prevent token waste and context bloat.
+
+### Rule 1: Use RTK for Terminal Commands
+
+```bash
+# ❌ BAD — floods AI context with raw output
+npm run test:backend
+git diff HEAD
+
+# ✅ GOOD — compressed output for AI
+rtk npm run test:backend
+rtk git diff HEAD
+```
+
+### Rule 2: Caveman Mode for AI Interactions
+
+When using Gemini, Copilot, Cursor, or Codex:
+
+```
+/caveman ultra
+```
+
+AI must:
+- Respond concisely — no filler
+- Show diffs, not full files
+- Ask before making architectural decisions
+- Use `TODO(OQ-...)` tags for unclear business policy
+
+### Rule 3: Follow AGENTS.md
+
+Read [`AGENTS.md`](AGENTS.md) before any code change. It defines:
+- Severity levels (S0–S3)
+- Architecture layers
+- Non-negotiable business rules (append-only ledger, audit log, RBAC)
+- Definition of Done
 
 ---
 
 ## 🏛️ Architecture & Business Rules
 
-To maintain system integrity, adhere to these non-negotiable rules:
-1. **Append-Only Token Ledger**: The `TokenLedger` table is append-only. **Never** write `UPDATE` or `DELETE` queries for token balances. Balance is always calculated via `SUM(amount)`.
-2. **Server-Side RBAC**: Role checks must happen in the API middleware/services, not just by hiding UI elements on the Frontend.
-3. **Audit Logging**: Any action that modifies balances, user tiers, or redemptions must trigger an audit log entry.
-4. **Thin Controllers**: Route handlers should only parse requests and validate with Zod. All business logic belongs in the `Service` and `Domain` layers.
+Non-negotiable rules — enforced at review:
+
+1. **Append-Only Token Ledger**  
+   `TokenLedger` rows are never `UPDATE`d or `DELETE`d.  
+   Balance = `SUM(amount)` always.
+
+2. **Server-Side RBAC**  
+   Role checks happen in API middleware and services — never only in UI.
+
+3. **Audit Logging Required**  
+   Any mutation to tokens, membership, redemptions, or user status must produce an audit log entry.
+
+4. **Thin Controllers**  
+   Route handlers: parse + Zod-validate only. Business logic → `Service` → `Domain` layers.
+
+5. **Zod for All Mutations**  
+   All incoming request bodies are validated with Zod schemas before reaching the service layer.
+
+Full rules: [`AGENTS.md`](AGENTS.md) | Design tokens: [`DESIGN.md`](DESIGN.md)
+
+---
+
+## 📊 Data Templates
+
+The following template files are committed for upload testing and data reference:
+
+| File | Division | Purpose |
+|------|----------|---------|
+| `SAMPLE.xlsx` | All | Sample upload file for HC testing |
+| `TEMPLATE_OPCENT_FIX.xlsx` | Opcent/Tele | Official token upload template |
+| `TEMPLATE LOYALTY PROGRAM - OPERATION TELEPHONY CENTER.csv` | Opcent/Tele | CSV variant |
+| `Template Loyalty Techno.tsv` | Techno | TSV upload template |
+| `Template Loyalty optel.tsv` | Optel | TSV upload template |
+
+Use these files to test the HC upload flow in development.
 
 ---
 
 ## 📚 Documentation Reference
-For deeper context on requirements and design:
-- [📖 Product Requirements Document (PRD)](PRD_Sprint_2_1_Loyalty_Program.md)
-- [🎨 Design System & UI Specs](DESIGN.md)
-- [🤖 Detailed Agent Rules](AGENTS.md)
+
+| Document | Purpose |
+|----------|---------|
+| [`PRD_Sprint_2_1_Loyalty_Program.md`](PRD_Sprint_2_1_Loyalty_Program.md) | Full product requirements |
+| [`DESIGN.md`](DESIGN.md) | Design system, tokens, component specs |
+| [`AGENTS.md`](AGENTS.md) | AI agent rules, architecture, Definition of Done |
+| [`Sprint_2.2.md`](Sprint_2.2.md) | Next sprint planning |
 
 ---
+
+## 🔒 Security Policy
+
+- **Never commit `.env` files.** Only `.env.example` with placeholder values.
+- **Never commit API keys, passwords, or service account JSON files.**
+- The `.gitignore` is configured to block `.env*`, `gcp-sa-key.json`, `*.key`, `*.pem`, and other sensitive patterns.
+- If you accidentally push a secret: revoke it immediately, then use `git filter-repo` or BFG to purge history.
+- Report security issues privately — do not open public issues.
+
+---
+
 *Built with ❤️ for the Berijalan Team.*
