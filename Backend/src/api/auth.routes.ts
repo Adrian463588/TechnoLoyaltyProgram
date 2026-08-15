@@ -40,7 +40,7 @@ export const authRoutes = Router();
  *               password:
  *                 type: string
  *                 format: password
- *                 example: password123
+ *                 example: "<environment-managed-secret>"
  *     responses:
  *       200:
  *         description: Login successful

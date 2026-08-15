@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { RewardRequest, RewardRequestStatus } from "@/types";
 import { adminApi } from "@/lib/api-client";
 import { BentoCard } from "@/components/ui/bento-card";
@@ -23,18 +23,10 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { AutosaveIndicator } from "@/components/shared/autosave-indicator";
-import { PipelineStep } from "@/components/shared/redemption-pipeline";
 import { CheckSquare, Info, ExternalLink, X, Loader2, FileText, Check, User, ShoppingBag, Coins, ShieldCheck, AlertCircle, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Pagination } from "@/components/shared/pagination";
-
-const STATUS_TO_STEP: Record<RewardRequestStatus, PipelineStep> = {
-  REQUESTED: "review",
-  REVIEWED:  "review",
-  ACCEPTED:  "accepted",
-  REJECTED:  "submitted",
-  CANCELLED: "submitted",
-};
+import { DocumentVerificationDrawer } from "@/features/admin/document-verification-drawer";
 
 interface RedemptionsClientProps {
   initialRequests: (RewardRequest & { 
@@ -55,6 +47,11 @@ export default function RedemptionsClient({
   currentPage,
   totalPages,
 }: RedemptionsClientProps) {
+  const isHydrated = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
   const [requests, setRequests] = useState(initialRequests);
   const [filter, setFilter] = useState<"All" | RewardRequestStatus>("All");
   const [selectedRequest, setSelectedRequest] = useState<typeof initialRequests[0] | null>(null);
@@ -66,6 +63,7 @@ export default function RedemptionsClient({
   });
   const [rejectReason, setRejectReason] = useState("");
   const [previewDoc, setPreviewDoc] = useState<{ url: string, label: string } | null>(null);
+  const [verificationRequest, setVerificationRequest] = useState<typeof initialRequests[0] | null>(null);
 
   const filtered =
     filter === "All" ? requests : requests.filter((r) => r.status === filter);
@@ -76,13 +74,6 @@ export default function RedemptionsClient({
   
   // Note: For a true fix in a large dataset, pagination should happen on the server.
   // This client-side adjustment handles the current local filtering scenario.
-
-  const handleFilterChange = (newFilter: "All" | RewardRequestStatus) => {
-    setFilter(newFilter);
-    // Optionally: if this was client-side only pagination, we'd reset the page here.
-    // However, since pagination is server-driven via URL, client-side filtering 
-    // is limited to the current page's data.
-  };
 
   const handleStatusUpdate = async (
     id: string,
@@ -123,20 +114,20 @@ export default function RedemptionsClient({
   const getStatusBadge = (status: RewardRequestStatus) => {
     const base = "font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5 rounded-full border shadow-sm flex items-center w-fit gap-1.5";
     switch (status) {
-      case "REQUESTED":
+      case "PENDING_VERIFICATION":
         return (
           <span className={cn(base, "bg-orange-500/10 text-orange-600 border-orange-200")}>
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
             Requested
           </span>
         );
-      case "REVIEWED":
+      case "VERIFIED":
         return (
           <span className={cn(base, "bg-blue-500/10 text-blue-600 border-blue-200")}>
             Reviewed
           </span>
         );
-      case "ACCEPTED":
+      case "PURCHASED":
         return (
           <span className={cn(base, "bg-emerald-500/10 text-emerald-600 border-emerald-200")}>
             Accepted
@@ -160,7 +151,7 @@ export default function RedemptionsClient({
   };
 
   const getDocUrl = (url: string) => {
-    return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/${url}`;
+    return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8081'}/${url}`;
   };
 
   return (
@@ -174,7 +165,7 @@ export default function RedemptionsClient({
 
           <div className="flex items-center gap-3">
             <div className="flex gap-1.5 p-1 bg-slate-100/50 rounded-lg border border-slate-200/50">
-              {(["All", "REQUESTED", "REVIEWED", "REJECTED"] as const).map((status) => (
+              {(["All", "PENDING_VERIFICATION", "VERIFIED", "REJECTED"] as const).map((status) => (
                 <button
                   key={status}
                   onClick={() => setFilter(status)}
@@ -186,8 +177,8 @@ export default function RedemptionsClient({
                   )}
                 >
                   {status === "All" ? "All" : 
-                   status === "REQUESTED" ? "Request" : 
-                   status === "REVIEWED" ? "Reviewed" : "Rejected"}
+                   status === "PENDING_VERIFICATION" ? "Pending Verification" :
+                   status === "VERIFIED" ? "Verified" : "Rejected"}
                 </button>
               ))}
             </div>
@@ -247,6 +238,7 @@ export default function RedemptionsClient({
                         onClick={() => setSelectedRequest(req)}
                         className="p-2.5 text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 rounded-xl transition-all border border-transparent hover:border-[var(--color-accent)]/20 active:scale-95"
                         title="Track & Manage"
+                        data-hydrated={isHydrated ? "true" : "false"}
                       >
                         <ExternalLink className="w-4 h-4" />
                       </button>
@@ -315,12 +307,12 @@ export default function RedemptionsClient({
                       let isDone = false;
                       let isActive = false;
                       
-                      if (selectedRequest.status === "ACCEPTED") {
+                      if (["PURCHASED", "PICKUP_SCHEDULED", "COMPLETED"].includes(selectedRequest.status)) {
                         isDone = true;
-                      } else if (selectedRequest.status === "REVIEWED") {
+                      } else if (selectedRequest.status === "VERIFIED") {
                         if (step.key === "submitted" || step.key === "review") isDone = true;
                         if (step.key === "accepted") isActive = true;
-                      } else if (selectedRequest.status === "REQUESTED") {
+                      } else if (selectedRequest.status === "PENDING_VERIFICATION") {
                         if (step.key === "submitted") isDone = true;
                         if (step.key === "review") isActive = true;
                       } else {
@@ -400,8 +392,8 @@ export default function RedemptionsClient({
                      <div>
                        <p className="text-[10px] font-black text-blue-900 uppercase tracking-wider">HC Instruction</p>
                        <p className="text-xs text-blue-700 font-medium">
-                          {selectedRequest.status === "REQUESTED" ? "Review documents below." : 
-                           selectedRequest.status === "REVIEWED" ? "Verify reward handover." : 
+                          {selectedRequest.status === "PENDING_VERIFICATION" ? "Review documents below." :
+                           selectedRequest.status === "VERIFIED" ? "Confirm active status and approve purchase." :
                            "Claim has been processed."}
                        </p>
                      </div>
@@ -410,7 +402,7 @@ export default function RedemptionsClient({
               </div>
 
               {/* PHASE 1: DOCUMENT REVIEW (REQUESTED) */}
-              {selectedRequest.status === "REQUESTED" && (
+              {selectedRequest.status === "PENDING_VERIFICATION" && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
                   <div className="flex items-center gap-3">
                      <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Identity Hub (Step 2)</h3>
@@ -504,7 +496,7 @@ export default function RedemptionsClient({
               )}
 
               {/* PHASE 2: CONFIRMATION (REVIEWED) */}
-              {selectedRequest.status === "REVIEWED" && (
+              {selectedRequest.status === "VERIFIED" && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
                   <div className="flex items-center gap-3">
                      <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Fulfillment Hub (Step 3)</h3>
@@ -555,7 +547,7 @@ export default function RedemptionsClient({
               )}
 
               {/* SUCCESS STATE (ACCEPTED) */}
-              {selectedRequest.status === "ACCEPTED" && (
+              {["PURCHASED", "PICKUP_SCHEDULED", "COMPLETED"].includes(selectedRequest.status) && (
                 <div className="flex flex-col items-center justify-center py-16 space-y-5 animate-in zoom-in-95 duration-700">
                    <div className="h-24 w-24 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-xl shadow-emerald-200 ring-[8px] ring-emerald-50">
                      <Check size={48} strokeWidth={4} />
@@ -586,21 +578,21 @@ export default function RedemptionsClient({
                 </div>
               )}
 
-              {/* Final Decision Area (Visible for REQUESTED and REVIEWED) */}
-              {(selectedRequest.status === "REQUESTED" || selectedRequest.status === "REVIEWED") && (
+              {/* Final Decision Area (verification and purchase approval) */}
+              {(selectedRequest.status === "PENDING_VERIFICATION" || selectedRequest.status === "VERIFIED") && (
                 <div className="pt-10 border-t border-slate-100">
                    <div className="flex flex-col items-center gap-8">
-                      {selectedRequest.status === "REQUESTED" && (
+                      {selectedRequest.status === "PENDING_VERIFICATION" && (
                         <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-4">
                           <Button
-                            onClick={() => handleStatusUpdate(selectedRequest.id, "REVIEWED")}
+                            onClick={() => setVerificationRequest(selectedRequest)}
                             className="w-full sm:w-[320px] h-16 bg-primary hover:bg-primary/90 text-white rounded-[24px] font-black text-base shadow-[0_24px_48px_-12px_rgba(var(--color-primary-rgb),0.4)] transition-all hover:scale-[1.02] active:scale-[0.98]"
                             disabled={isUpdating}
                           >
                             {isUpdating ? <Loader2 className="w-6 h-6 animate-spin" /> : (
                               <span className="flex items-center gap-3">
                                 <Check size={24} strokeWidth={3} />
-                                Konfirmasi
+                                Verify Documents
                               </span>
                             )}
                           </Button>
@@ -615,17 +607,17 @@ export default function RedemptionsClient({
                         </div>
                       )}
 
-                      {selectedRequest.status === "REVIEWED" && (
+                      {selectedRequest.status === "VERIFIED" && (
                         <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-4">
                           <Button
-                            onClick={() => handleStatusUpdate(selectedRequest.id, "ACCEPTED")}
+                            onClick={() => handleStatusUpdate(selectedRequest.id, "PURCHASED")}
                             className="w-full sm:w-[320px] h-16 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[24px] font-black text-base shadow-[0_24px_48px_-12px_rgba(16,185,129,0.4)] transition-all hover:scale-[1.02] active:scale-[0.98]"
                             disabled={isUpdating}
                           >
                             {isUpdating ? <Loader2 className="w-6 h-6 animate-spin" /> : (
                               <span className="flex items-center gap-3">
                                 <ShieldCheck size={24} />
-                                Konfirmasi Klaim
+                                Approve Purchase
                               </span>
                             )}
                           </Button>
@@ -718,6 +710,23 @@ export default function RedemptionsClient({
           </div>
         </DialogContent>
       </Dialog>
+
+      {verificationRequest && (
+        <DocumentVerificationDrawer
+          request={verificationRequest}
+          onClose={() => setVerificationRequest(null)}
+          onSuccess={() => {
+            const updated = requests.map((request) =>
+              request.id === verificationRequest.id
+                ? { ...request, status: "VERIFIED" as const }
+                : request,
+            );
+            setRequests(updated);
+            setSelectedRequest(updated.find((request) => request.id === verificationRequest.id) ?? null);
+            setVerificationRequest(null);
+          }}
+        />
+      )}
     </div>
   );
 }

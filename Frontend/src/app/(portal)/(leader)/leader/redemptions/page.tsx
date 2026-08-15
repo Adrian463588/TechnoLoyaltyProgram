@@ -1,5 +1,6 @@
-import { auth, getServerToken } from "@/lib/auth";
-import { leaderApi } from "@/lib/api-client";
+import { getServerToken } from "@/lib/auth";
+import { leaderApi, type RedemptionResponse } from "@/lib/api-client";
+import type { RewardRequestStatus } from "@/types";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { ShoppingBag, Clock, CheckCircle2, Coins } from "lucide-react";
 import { TeamRedemptionsTable } from "@/components/dashboard/team-redemptions-table";
@@ -15,21 +16,30 @@ export default async function LeaderRedemptionsPage(props: {
   const itemsPerPage = 10;
   const offset = (currentPage - 1) * itemsPerPage;
 
-  let teamRedemptions: any[] = [];
+  let teamRedemptions: Array<{
+    id: string;
+    mitraName: string;
+    division: string;
+    rewardName: string;
+    tokenCost: number;
+    status: RewardRequestStatus;
+    submittedAt: string;
+    userNpk: string;
+  }> = [];
   let totalCount = 0;
-  let allRedemptionsForStats: any[] = [];
+  let allRedemptionsForStats: RedemptionResponse[] = [];
 
   try {
     // Fetch paginated data for the table
     const res = await leaderApi.listRedemptions(token, { limit: itemsPerPage, offset });
     totalCount = res.total;
-    teamRedemptions = res.requests.map((r: any) => ({
+    teamRedemptions = res.requests.map((r) => ({
       id: r.id,
       mitraName: r.mitra?.name ?? "—",
       division: r.mitra?.division ?? "—",
       rewardName: r.item?.name ?? "—",
       tokenCost: r.item?.tokenCost ?? 0,
-      status: r.status as any,
+      status: r.status,
       submittedAt: r.createdAt,
       userNpk: r.mitra?.npk ?? "—",
     }));
@@ -38,17 +48,17 @@ export default async function LeaderRedemptionsPage(props: {
     const statsRes = await leaderApi.listRedemptions(token, { limit: 1000 });
     allRedemptionsForStats = statsRes.requests;
   } catch (error) {
-    console.error("Failed to fetch team redemptions:", error);
+    console.warn("Failed to fetch team redemptions:", error instanceof Error ? error.message : "Unknown error");
   }
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   const stats = {
     total: totalCount,
-    pending: allRedemptionsForStats.filter(r => r.status === "REQUESTED" || r.status === "REVIEWED").length,
-    approved: allRedemptionsForStats.filter(r => r.status === "ACCEPTED").length,
+    pending: allRedemptionsForStats.filter(r => r.status === "PENDING_VERIFICATION" || r.status === "VERIFIED").length,
+    approved: allRedemptionsForStats.filter(r => r.status === "PURCHASED" || r.status === "PICKUP_SCHEDULED" || r.status === "COMPLETED").length,
     totalTokens: allRedemptionsForStats
-      .filter(r => r.status === "ACCEPTED")
+      .filter(r => r.status === "PURCHASED" || r.status === "PICKUP_SCHEDULED" || r.status === "COMPLETED")
       .reduce((acc, r) => acc + (r.item?.tokenCost || 0), 0)
   };
 
@@ -67,7 +77,7 @@ export default async function LeaderRedemptionsPage(props: {
                 <ShoppingBag size={28} />
               </div>
               <div className="space-y-1">
-                <h1 className="text-2xl font-extrabold text-[--color-text-secondary] leading-none">Reward Catalog</h1>
+                <h1 className="text-2xl font-extrabold text-[--color-text-secondary] leading-none">Redemption Management</h1>
                 <p className="text-sm text-[--color-text-secondary]">Monitor reward redemptions from your division members.</p>     
               </div>
             </div>

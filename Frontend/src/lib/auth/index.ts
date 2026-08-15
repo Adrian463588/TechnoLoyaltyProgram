@@ -19,11 +19,10 @@ export async function getServerToken(): Promise<string> {
   const secret = process.env["NEXTAUTH_SECRET"];
 
   if (!session?.user || !secret) {
-    console.error("[getServerToken] Missing session.user or secret", { hasUser: !!session?.user, hasSecret: !!secret });
     return "";
   }
 
-  console.log("[getServerToken] session.user is:", JSON.stringify(session.user));
+  const user = session.user as typeof session.user & { division?: string };
 
   const payload = base64Url(JSON.stringify({
     id: session.user.id,
@@ -31,7 +30,7 @@ export async function getServerToken(): Promise<string> {
     name: session.user.name ?? "",
     email: session.user.email ?? "",
     role: session.user.role,
-    division: (session.user as any).division,
+    division: user.division,
     exp: Math.floor(Date.now() / 1000) + 5 * 60,
   }));
 

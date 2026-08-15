@@ -87,14 +87,14 @@ export async function POST(req: NextRequest) {
     // --- Guard: validate GEMINI_API_KEY before calling API ---
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey || apiKey.length < 10 || apiKey.includes("your_google_ai")) {
-      console.warn("[Chatbot] GEMINI_API_KEY is missing or invalid. Returning mock response.");
-      return mockStreamResponse("Chatbot AI belum dikonfigurasi. Hubungi administrator.");
+      console.warn("[Chatbot] GEMINI_API_KEY is missing or invalid; returning an unavailable state.");
+      return streamTextResponse("Chatbot AI belum dikonfigurasi. Hubungi administrator.");
     }
 
     // --- Filter Tools based on User Role ---
     const allowedTools = ALL_TOOLS
       .filter(t => (t as any).role.includes(userRole))
-      .map(({ role, ...toolProps }) => toolProps);
+      .map(({ role: _role, ...toolProps }) => toolProps);
 
     const toolsConfig = allowedTools.length > 0 ? [{ functionDeclarations: allowedTools }] : [];
 
@@ -126,7 +126,6 @@ PERATURAN PENTING:
     // 3. Initialize Model using the new @google/genai SDK
     const ai = new GoogleGenAI({ apiKey: apiKey });
     modelName = process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
-    console.log(`[Chatbot] Using model: ${modelName}`);
 
     // 4. Robust cleaning for Gemini API: Diet Context (Last 4 messages)
     const MAX_HISTORY = 4;
@@ -171,8 +170,6 @@ PERATURAN PENTING:
 
     while (retries <= MAX_RETRIES) {
       try {
-        console.log(`[Chatbot] Sending message to Gemini (Attempt ${retries + 1})...`);
-        const startCall = Date.now();
         response = await ai.models.generateContent({
           model: modelName,
           contents: formattedContents,
@@ -182,7 +179,6 @@ PERATURAN PENTING:
             tools: toolsConfig.length > 0 ? toolsConfig as any : undefined,
           },
         });
-        console.log(`[Chatbot] Gemini responded in: ${Date.now() - startCall}ms`);
         break;
       } catch (err: any) {
         const is503 = err?.status === 503 || err?.message?.includes("503") || err?.message?.includes("high demand");
@@ -202,8 +198,6 @@ PERATURAN PENTING:
       .map((p: any) => p.functionCall) ?? [];
 
     if (functionCalls.length > 0 && allowedTools.length > 0) {
-      const toolStartTime = Date.now();
-      
       // Execute all tool calls in PARALLEL for maximum performance
       const functionResponses = await Promise.all(functionCalls.map(async (call: any) => {
         const isAuthorized = ALL_TOOLS.find(t => t.name === call.name && (t as any).role.includes(userRole));
@@ -219,9 +213,7 @@ PERATURAN PENTING:
         }
 
         try {
-          const apiCallStart = Date.now();
           const toolResult = await chatbotApi.executeTool(token, call.name, call.args);
-          console.log(`[Chatbot] Parallel Tool ${call.name} took: ${Date.now() - apiCallStart}ms`);
           
           return {
             functionResponse: {
@@ -240,8 +232,6 @@ PERATURAN PENTING:
         }
       }));
 
-      console.log(`[Chatbot] All tools (${functionCalls.length}) finished in parallel: ${Date.now() - toolStartTime}ms`);
-
       // Send function responses back to Gemini for final answer
       const followUpContents = [
         ...formattedContents,
@@ -249,23 +239,28 @@ PERATURAN PENTING:
         { role: "user", parts: functionResponses.map((fr: any) => ({ functionResponse: fr.functionResponse })) },
       ];
 
-      const streamStartTime = Date.now();
       const finalResponse = await ai.models.generateContentStream({
         model: modelName,
         contents: followUpContents,
         config: { systemInstruction, temperature: 0.1 },
       });
-      console.log(`[Chatbot] Final stream start took: ${Date.now() - streamStartTime}ms`);
       return createStreamResponse(finalResponse);
     }
 
     const textResponse = response?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-    return mockStreamResponse(textResponse);
+    return streamTextResponse(textResponse);
 
-  } catch (error: any) {
-    console.error("[Chatbot Route Error]:", error);
-    const errorMessage = error?.message || error?.toString() || "Unknown error occurred";
-    const status = error?.status || 500;
+  } catch (error: unknown) {
+    const errorRecord = error && typeof error === "object"
+      ? error as { message?: unknown; status?: unknown }
+      : {};
+    const errorMessage = errorRecord.message instanceof Error
+      ? errorRecord.message.message
+      : typeof errorRecord.message === "string"
+        ? errorRecord.message
+        : "Unknown error occurred";
+    const status = typeof errorRecord.status === "number" ? errorRecord.status : 500;
+    console.error("[Chatbot Route Error]", { status, message: errorMessage });
 
     if (status === 429 || errorMessage.includes("429")) {
       return new Response(JSON.stringify({ error: "API Quota Exceeded. Silakan coba lagi nanti." }), { status: 429 });
@@ -287,7 +282,7 @@ PERATURAN PENTING:
       return new Response(JSON.stringify({ error: "Autentikasi API Gemini gagal. Cek konfigurasi GEMINI_API_KEY." }), { status: 401 });
     }
 
-    return new Response(JSON.stringify({ error: "Internal Server Error", details: errorMessage }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), { status: 500 });
   }
 }
 
@@ -324,7 +319,7 @@ function createStreamResponse(result: any) {
   });
 }
 
-function mockStreamResponse(message: string) {
+function streamTextResponse(message: string) {
   const stream = new TransformStream();
   const writer = stream.writable.getWriter();
   const encoder = new TextEncoder();

@@ -24,7 +24,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   }
 
   return (
-    <AppShell session={session}>
+    <AppShell>
       {children}
       <ChatbotWidget />
     </AppShell>

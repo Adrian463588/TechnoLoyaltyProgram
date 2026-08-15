@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { claimSchema } from '../components/forms/claim-form';
+import { claimSchema } from '../lib/validations';
 
 describe('Claim Form Zod Schema', () => {
   it('validates a correct payload', () => {

@@ -6,7 +6,6 @@ import { asyncHandler } from "@/middleware/asyncHandler";
  * Thin layer: parse → validate → call service → respond.
  */
 
-import { type RequestHandler } from "express";
 import { systemSettingService } from "@/services/system-setting.service";
 import { z } from "zod";
 import { ValidationError } from "@/errors";

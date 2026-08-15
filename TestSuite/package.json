@@ -6,7 +6,7 @@
   "scripts": {
     "test:e2e": "cypress run",
     "test:e2e:open": "cypress open",
-    "lint": "eslint \"cypress/**/*.ts\"",
+    "lint": "eslint \"cypress/**/*.ts\" --max-warnings 0",
     "lint:fix": "eslint \"cypress/**/*.ts\" --fix",
     "typecheck": "tsc --noEmit"
   },

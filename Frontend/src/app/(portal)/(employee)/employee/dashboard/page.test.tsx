@@ -13,17 +13,33 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/lib/api-client", () => ({
   employeeApi: {
     getDashboard: vi.fn().mockResolvedValue({
-      user: { id: "u1", name: "Test User", npk: "M001" },
+      user: { id: "u1", name: "Test User", npk: "M001", membershipTier: "EMERALD" },
       tokenSummary: {
         totalTokens:        4200,
         currentTier:        "EMERALD",
         isEligibleForReward: true,
+        eligibilityReasons: [],
         periodEnd:          "2024-12-15",
         memberStatus:       "ACTIVE",
         pointsToNextTier:   800,
         cumulativeValue:    4200,
       },
       recentRedemptions: [],
+    }),
+  },
+  adminApi: {
+    getSystemSettings: vi.fn().mockResolvedValue({
+      id: "settings-1",
+      rewardPickupLocation: "HC Office - Main Building",
+      p1Start: "06-16",
+      p1End: "12-15",
+      p2Start: "12-16",
+      p2End: "06-15",
+      claimP1Start: "01-01",
+      claimP1End: "01-31",
+      claimP2Start: "07-01",
+      claimP2End: "07-31",
+      updatedAt: "2024-01-01T00:00:00.000Z",
     }),
   },
 }));

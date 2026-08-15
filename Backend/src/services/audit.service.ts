@@ -10,6 +10,8 @@ import { prisma } from "@/db/prisma";
 
 export type AuditAction =
   | "TOKEN_MANUAL_ADJUST"
+  | "TOKEN_CREDITED"
+  | "TOKEN_DEBITED"
   | "TOKEN_EXPIRED"
   | "TIER_UPGRADE"
   | "TIER_DOWNGRADE"
@@ -17,6 +19,7 @@ export type AuditAction =
   | "MEMBERSHIP_RESET"
   | "MEMBERSHIP_DOWNGRADED"
   | "REDEMPTION_SUBMITTED"
+  | "REDEMPTION_APPROVED"
   | "REDEMPTION_DOCUMENTS_VERIFIED"
   | "REDEMPTION_STATUS_CHANGED"
   | "CLAIM_APPROVED"
@@ -33,7 +36,9 @@ export type AuditAction =
   | "REWARD_DELETED"
   | "SCHEDULED_MEMBERSHIP_EVALUATION"
   | "TOKEN_EXPIRY"
+  | "TOKEN_EXPIRY_REMINDER"
   | "TOKEN_RULE_UPDATED"
+  | "SNAPSHOT_CREATED"
   | "TIER_SYNC_EXCEL";
 
 interface LogAuditParams {

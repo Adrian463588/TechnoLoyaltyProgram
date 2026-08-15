@@ -36,13 +36,26 @@ export class PartnerStatusConfirmationService {
     // Verify redemption exists
     const redemption = await prisma.redemptionRequest.findUnique({
       where: { id: redemptionRequestId },
+      include: { mitra: { select: { id: true, division: true, teamLeadId: true } } },
     });
     if (!redemption) throw new NotFoundError("RedemptionRequest", redemptionRequestId);
+    if (redemption.mitraId !== mitraId) {
+      throw new ValidationError("Mitra does not belong to this redemption request.");
+    }
+    if (!["PENDING_VERIFICATION", "VERIFIED"].includes(redemption.status)) {
+      throw new ValidationError("Partner status can only be requested before redemption purchase.");
+    }
 
     // Verify TL exists and has the right role
     const tl = await prisma.user.findUnique({ where: { id: teamLeadId } });
     if (!tl || tl.role !== "TEAM_LEADER") {
       throw new ValidationError("Assigned user is not a Team Leader.");
+    }
+    if (tl.division !== redemption.mitra.division) {
+      throw new ValidationError("Assigned Team Leader must belong to the Mitra division.");
+    }
+    if (redemption.mitra.teamLeadId && redemption.mitra.teamLeadId !== teamLeadId) {
+      throw new ValidationError("Assigned Team Leader is not responsible for this Mitra.");
     }
 
     // Prevent duplicate active requests

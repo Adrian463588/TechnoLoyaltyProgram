@@ -30,9 +30,12 @@ export function RewardCard({ reward, onEdit, onToggleStatus, onDelete }: RewardC
   };
   
   return (
-    <div className={`bento-card p-0 flex flex-col h-full transition-all duration-300 group transform-gpu
+    <div
+      data-testid={`reward-card-${reward.id}`}
+      className={`bento-card p-0 flex flex-col h-full transition-all duration-300 group transform-gpu
       ${!reward.isActive ? "opacity-75" : ""}
-    `}>
+    `}
+    >
       {/* Thumbnail / Icon area */}
       <div className="aspect-[16/9] bg-[var(--color-surface-elevated)] relative overflow-hidden flex items-center justify-center border-b border-[var(--color-border-subtle)]">
         {reward.imageUrl ? (

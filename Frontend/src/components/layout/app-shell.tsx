@@ -4,9 +4,8 @@ import React, { useState } from "react";
 import { Sidebar } from "./sidebar";
 import { Navbar } from "./navbar";
 import { cn } from "@/lib/utils";
-import { Session } from "next-auth";
 
-export function AppShell({ children, session }: { children: React.ReactNode, session?: Session | null }) {
+export function AppShell({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 

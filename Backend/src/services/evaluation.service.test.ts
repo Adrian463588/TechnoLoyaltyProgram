@@ -41,9 +41,10 @@ vi.mock("@/db/prisma", () => ({
   },
 }));
 
-vi.mock("@/repositories/token-ledger.repository", () => ({
+  vi.mock("@/repositories/token-ledger.repository", () => ({
   tokenLedgerRepository: {
     getBalance: vi.fn(),
+    getExpirySummary: vi.fn(),
     appendTokenEvent: vi.fn(),
   },
 }));
@@ -140,6 +141,34 @@ describe("EvaluationService", () => {
 
     expect(prisma.jobRun.update).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ status: "FAILED" }),
+    }));
+  });
+
+  it("creates one audit-backed expiry reminder per eligible user", async () => {
+    vi.setSystemTime(new Date(2026, 4, 14));
+    vi.mocked(prisma.jobRun.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.jobRun.create).mockResolvedValue({ id: "reminder-run-id" } as any);
+    vi.mocked(prisma.jobRun.update).mockResolvedValue({} as any);
+    vi.mocked(prisma.user.findMany).mockResolvedValue([{ id: "user-1" }] as any);
+
+    const { tokenLedgerRepository } = await import("@/repositories/token-ledger.repository");
+    vi.mocked(tokenLedgerRepository.getExpirySummary).mockResolvedValue([
+      { earnedYear: 2023, expiresAt: new Date(2026, 5, 1), amount: 250 },
+      { earnedYear: 2022, expiresAt: new Date(2030, 0, 1), amount: 100 },
+    ]);
+    vi.mocked(prisma.auditLog.create).mockResolvedValue({} as any);
+
+    const result = await evaluationService.runTokenExpiryReminderJob();
+
+    expect(result).toEqual({ evaluatedUsers: 1, remindersCreated: 1 });
+    expect(prisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        action: "TOKEN_EXPIRY_REMINDER",
+        targetEntityId: "user-1",
+      }),
+    }));
+    expect(prisma.jobRun.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ status: "SUCCESS" }),
     }));
   });
 });

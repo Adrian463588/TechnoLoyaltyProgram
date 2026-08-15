@@ -8,7 +8,6 @@ import { RewardFormModal } from "./reward-form-modal";
 import { DeleteRewardModal } from "./delete-reward-modal";
 import { createRewardAction, updateRewardAction, toggleRewardStatusAction, deleteRewardAction } from "./actions";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 
 interface RewardCatalogClientProps {
   initialRewards: RewardCatalogItem[];

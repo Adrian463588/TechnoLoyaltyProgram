@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { Menu, LogOut, User, ChevronDown } from "lucide-react";
+import { Menu, LogOut, User, ChevronDown, Moon, Sun } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
 import { LazyMotion, domAnimation, m, AnimatePresence } from "framer-motion";
 import {
   DropdownMenu,
@@ -23,11 +24,19 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
+import { NotificationDropdown } from "./notification-dropdown";
+
 export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { data: session } = useSession();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
   const role = (session?.user?.role as string) || "MITRA";
   const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
 
   const profileHref = role === "HC_PM" ? "/admin/profile" : 
                       role === "TEAM_LEADER" ? "/leader/profile" : 
@@ -57,14 +66,29 @@ export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          data-testid="theme-toggle"
+          aria-label={mounted && resolvedTheme === "dark" ? "Use light theme" : "Use dark theme"}
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          className="h-9 w-9 rounded-full flex items-center justify-center text-muted-foreground hover:bg-[var(--color-surface-muted)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          {mounted && resolvedTheme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+        </button>
+
+        {/* Notification Bell */}
+        <NotificationDropdown />
+
         {/* User Profile Dropdown */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="!outline-none !ring-0 focus:!outline-none focus:!ring-0 focus-visible:!outline-none focus-visible:!ring-0">
+          <DropdownMenuTrigger
+            data-testid={mounted ? "profile-menu-trigger" : undefined}
+            className="!outline-none !ring-0 focus:!outline-none focus:!ring-0 focus-visible:!outline-none focus-visible:!ring-0"
+          >
             <m.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              data-testid="profile-menu-trigger"
               className="flex items-center gap-2 rounded-full p-1 pr-3 hover:bg-slate-100 transition-colors cursor-pointer !outline-none !ring-0"
             >
               <m.div
@@ -85,17 +109,18 @@ export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
           <DropdownMenuContent
             align="end"
-            className="w-64 bg-white border border-border p-2 shadow-lg rounded-xl"
+            className="w-64 bg-[var(--color-surface)] border-[var(--color-border)] p-2 shadow-lg rounded-xl"
           >
-            <AnimatePresence mode="wait">
-              <m.div
-                key="dropdown-content"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.15 }}
-              >
-                <DropdownMenuLabel className="flex items-center gap-3 p-2 rounded-xl bg-slate-50">
+            <div data-testid="profile-menu-content">
+              <AnimatePresence mode="wait">
+                <m.div
+                  key="dropdown-content"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                <DropdownMenuLabel className="flex items-center gap-3 p-2 rounded-xl bg-[var(--color-surface-muted)]">
                   <m.div
                     whileHover={{ rotate: 10 }}
                     className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 text-primary overflow-hidden"
@@ -116,7 +141,7 @@ export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
                 <DropdownMenuItem
                   onClick={() => router.push(profileHref as string as never)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors hover:bg-slate-100 focus:bg-slate-100"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-surface-muted)] focus:bg-[var(--color-surface-muted)]"
                 >
                     <m.div whileHover={{ x: 2 }}>
                       <User size={16} />
@@ -138,32 +163,33 @@ export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
                   </m.div>
                   <span className="font-medium">Sign out</span>
                 </DropdownMenuItem>
-              </m.div>
-            </AnimatePresence>
+                </m.div>
+              </AnimatePresence>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
       {/* Logout Confirmation Modal */}
       <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
-        <DialogContent className="rounded-2xl bg-white border border-neutral-200 shadow-2xl p-0 overflow-hidden max-w-sm">
+        <DialogContent className="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-2xl p-0 overflow-hidden max-w-sm">
           <div className="p-8 text-center">
             <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
               <LogOut size={32} />
             </div>
             <DialogHeader className="mb-0 p-0">
-              <DialogTitle className="text-xl font-bold text-neutral-900 text-center">Confirm Sign Out</DialogTitle>
-              <DialogDescription className="text-neutral-500 text-sm leading-relaxed text-center mt-2">
+              <DialogTitle className="text-xl font-bold text-[var(--color-text-primary)] text-center">Confirm Sign Out</DialogTitle>
+              <DialogDescription className="text-[var(--color-text-muted)] text-sm leading-relaxed text-center mt-2">
                 Are you sure you want to sign out of your account? You will need to log in again to access the portal.
               </DialogDescription>
             </DialogHeader>
           </div>
 
           <DialogFooter className="bg-neutral-50 p-6 border-t border-neutral-100 flex flex-row gap-3 mt-0">
-            <Button 
+            <Button
               variant="outline" 
               onClick={() => setShowLogoutConfirm(false)}
-              className="flex-1 rounded-xl border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              className="flex-1 rounded-xl border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] transition-colors"
             >
               Cancel
             </Button>

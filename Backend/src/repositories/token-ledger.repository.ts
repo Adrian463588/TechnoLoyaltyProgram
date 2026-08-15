@@ -1,10 +1,8 @@
 /**
- * Backend/src/repositories/token-ledger.repository.ts
+ * Append-only token ledger repository.
  *
- * Atomic, append-only repository for token ledger operations.
- *
- * SOLID — SRP: handles only ledger-specific database transactions.
- * Security — Immutability: only supports insertions, never updates or deletes.
+ * `amount` is the source of truth. `balanceAfter` is retained only as an
+ * audit snapshot and is never used to calculate a balance.
  */
 
 import { prisma } from "@/db/prisma";
@@ -14,183 +12,171 @@ import { CacheService } from "@/services/cache.service";
 import { CacheKeys } from "@/utils/cache/cache-key.registry";
 
 export interface AppendTokenEventInput {
-  userId:      string;
-  eventType:   TokenEventType;
-  amount:      number;
+  userId: string;
+  eventType: TokenEventType;
+  amount: number;
   referenceId?: string;
-  earnedYear?:  number;
-  expiresAt?:   Date;
-  reason?:      string;
+  earnedYear?: number;
+  expiresAt?: Date;
+  reason?: string;
   performedBy: string;
+  idempotencyKey?: string;
+}
+
+function expiryForEarnedYear(earnedYear: number): Date {
+  // Tokens earned in year N expire on 31 December N+3.
+  return new Date(Date.UTC(earnedYear + 3, 11, 31, 23, 59, 59, 999));
 }
 
 export class TokenLedgerRepository {
-  /**
-   * Appends a new event to the ledger and computes the balanceAfter snapshot.
-   * Uses a database transaction and SELECT FOR UPDATE to prevent race conditions.
-   *
-   * @throws DomainError if balance becomes negative.
-   */
   async appendTokenEvent(
     input: AppendTokenEventInput,
     externalTx?: Prisma.TransactionClient,
   ): Promise<TokenLedger> {
+    if (!Number.isInteger(input.amount) || input.amount === 0) {
+      throw new DomainError("INVALID_TOKEN_EVENT", "Token event amount must be a non-zero integer");
+    }
+
     const operation = async (tx: Prisma.TransactionClient): Promise<TokenLedger> => {
-      // 1. Lock the User record to serialize transactions for this specific user.
+      if (input.idempotencyKey) {
+        const existing = await tx.tokenLedger.findUnique({
+          where: { idempotencyKey: input.idempotencyKey },
+        });
+        if (existing) return existing;
+      }
+
+      // Serialise ledger writes for one account. The database trigger in the
+      // migration also rejects UPDATE/DELETE on TokenLedger.
       await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${input.userId} FOR UPDATE`;
-      
-      const lastEntry = await tx.tokenLedger.findFirst({
+
+      const aggregate = await tx.tokenLedger.aggregate({
         where: { userId: input.userId },
-        orderBy: { createdAt: "desc" },
+        _sum: { amount: true },
       });
-
-      const currentBalance = lastEntry?.balanceAfter ?? 0;
+      const currentBalance = aggregate._sum.amount ?? 0;
       const balanceAfter = currentBalance + input.amount;
-
       if (balanceAfter < 0) {
         throw new DomainError("INSUFFICIENT_TOKENS", "Token balance cannot go negative");
       }
 
-      let expiresAt = input.expiresAt;
-      if (!expiresAt && input.earnedYear && input.amount > 0) {
-        // Requirement Update: Tokens earned in Year N expire on Dec 31 of Year (N+4)
-        expiresAt = new Date(input.earnedYear + 4, 11, 31, 23, 59, 59);
-      }
+      const earnedYear = input.earnedYear;
+      const expiresAt = input.expiresAt ??
+        (input.amount > 0 && earnedYear !== undefined ? expiryForEarnedYear(earnedYear) : undefined);
 
       return tx.tokenLedger.create({
         data: {
-          userId:      input.userId,
-          eventType:   input.eventType,
-          amount:      input.amount,
+          userId: input.userId,
+          eventType: input.eventType,
+          amount: input.amount,
           balanceAfter,
           referenceId: input.referenceId ?? null,
-          earnedYear:  input.earnedYear ?? null,
-          expiresAt:   expiresAt ?? null,
-          reason:      input.reason ?? null,
+          earnedYear: earnedYear ?? null,
+          expiresAt: expiresAt ?? null,
+          reason: input.reason ?? null,
           performedBy: input.performedBy,
+          idempotencyKey: input.idempotencyKey ?? null,
         },
       });
     };
 
-    return (externalTx ? operation(externalTx) : prisma.$transaction(operation));
+    return externalTx ? operation(externalTx) : prisma.$transaction(operation);
   }
 
-  /**
-   * Deducts tokens using FIFO (First In First Out) across annual cohorts.
-   * Splits the deduction into multiple entries if it spans multiple years.
-   */
   async deductTokensFIFO(
     input: {
       userId: string;
-      amount: number; // Positive number representing the deduction (will be negated)
+      amount: number;
       eventType: TokenEventType;
       referenceId?: string;
       performedBy: string;
       reason?: string;
+      idempotencyKey?: string;
     },
-    externalTx: Prisma.TransactionClient
+    externalTx: Prisma.TransactionClient,
   ): Promise<TokenLedger[]> {
-    const tx = externalTx;
-    const { userId, amount: totalToDeduct, eventType, referenceId, performedBy, reason } = input;
-
-    // 1. Ensure sufficient total balance
-    const currentTotalBalance = await this.getBalance(userId, tx);
-    if (currentTotalBalance < totalToDeduct) {
-      throw new DomainError("INSUFFICIENT_TOKENS", `Insufficient total balance: ${currentTotalBalance}`);
+    if (!Number.isInteger(input.amount) || input.amount <= 0) {
+      throw new DomainError("INVALID_TOKEN_DEDUCTION", "Token deduction must be a positive integer");
     }
 
-    // 2. Get balances per cohort (Credit - Debit per year)
+    const tx = externalTx;
+    const prefix = input.idempotencyKey ? `${input.idempotencyKey}:` : null;
+    if (prefix) {
+      const existing = await tx.tokenLedger.findMany({
+        where: { userId: input.userId, idempotencyKey: { startsWith: prefix } },
+        orderBy: { createdAt: "asc" },
+      });
+      if (existing.length > 0) return existing;
+    }
+
+    await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${input.userId} FOR UPDATE`;
+    const currentBalance = await this.getBalance(input.userId, tx);
+    if (currentBalance < input.amount) {
+      throw new DomainError("INSUFFICIENT_TOKENS", `Insufficient total balance: ${currentBalance}`);
+    }
+
     const rawCohorts = await tx.tokenLedger.groupBy({
       by: ["earnedYear"],
-      where: { userId },
+      where: { userId: input.userId },
       _sum: { amount: true },
       orderBy: { earnedYear: "asc" },
     });
-
     const cohorts = rawCohorts
-      .map(c => ({ year: c.earnedYear, balance: c._sum.amount ?? 0 }))
-      .filter(c => c.balance > 0);
+      .map((cohort) => ({ year: cohort.earnedYear, balance: cohort._sum.amount ?? 0 }))
+      .filter((cohort) => cohort.balance > 0);
 
-    let remainingDeduction = totalToDeduct;
-    const createdEntries: TokenLedger[] = [];
-    let runningBalance = currentTotalBalance;
+    let remaining = input.amount;
+    let runningBalance = currentBalance;
+    const entries: TokenLedger[] = [];
 
-    // 3. Deduct from oldest cohorts first
     for (const cohort of cohorts) {
-      if (remainingDeduction <= 0) break;
-
-      const consume = Math.min(remainingDeduction, cohort.balance);
+      if (remaining <= 0) break;
+      const consumed = Math.min(remaining, cohort.balance);
       const earnedYear = cohort.year ?? undefined;
-      
-      // Calculate expiresAt based on original earnedYear
-      const expiresAt = earnedYear ? new Date(earnedYear + 4, 11, 31, 23, 59, 59) : undefined;
+      runningBalance -= consumed;
+      remaining -= consumed;
 
-      runningBalance -= consume;
-      remainingDeduction -= consume;
-
+      const idempotencyKey = prefix
+        ? `${prefix}${earnedYear ?? "unknown"}`
+        : undefined;
       const entry = await tx.tokenLedger.create({
         data: {
-          userId,
-          eventType,
-          amount: -consume,
+          userId: input.userId,
+          eventType: input.eventType,
+          amount: -consumed,
           balanceAfter: runningBalance,
-          referenceId: referenceId ?? null,
+          referenceId: input.referenceId ?? null,
           earnedYear: earnedYear ?? null,
-          expiresAt: expiresAt ?? null,
-          performedBy,
-          reason: `${reason || "Token deduction"} (Cohort ${earnedYear || "Unknown"})`,
-        }
+          expiresAt: earnedYear !== undefined ? expiryForEarnedYear(earnedYear) : null,
+          performedBy: input.performedBy,
+          reason: `${input.reason ?? "Token deduction"} (Cohort ${earnedYear ?? "Unknown"})`,
+          idempotencyKey: idempotencyKey ?? null,
+        },
       });
-      createdEntries.push(entry);
+      entries.push(entry);
     }
 
-    // 4. Handle edge case: deduction exceeding cohorts (should be prevented by getBalance check but safety first)
-    if (remainingDeduction > 0) {
-       const entry = await tx.tokenLedger.create({
-        data: {
-          userId,
-          eventType,
-          amount: -remainingDeduction,
-          balanceAfter: runningBalance - remainingDeduction,
-          referenceId: referenceId ?? null,
-          performedBy,
-          reason: `${reason || "Token deduction"} (Residual)`,
-        }
-      });
-      createdEntries.push(entry);
+    if (remaining > 0) {
+      throw new DomainError("LEDGER_COHORT_MISMATCH", "Token cohorts could not cover the requested deduction");
     }
-
-    return createdEntries;
+    return entries;
   }
 
-  /**
-   * Gets current token balance for a user.
-   */
-  async getBalance(userId: string, client: Prisma.TransactionClient | typeof prisma = prisma): Promise<number> {
+  async getBalance(
+    userId: string,
+    client: Prisma.TransactionClient | typeof prisma = prisma,
+  ): Promise<number> {
     const fetchBalance = async (): Promise<number> => {
-      const lastEntry = await client.tokenLedger.findFirst({
+      const aggregate = await client.tokenLedger.aggregate({
         where: { userId },
-        orderBy: { createdAt: "desc" },
-        select: { balanceAfter: true },
+        _sum: { amount: true },
       });
-      return lastEntry?.balanceAfter ?? 0;
+      return aggregate._sum.amount ?? 0;
     };
 
-    // If we're inside a transaction, bypass the cache (authoritative read)
-    if (client !== prisma) {
-      return fetchBalance();
-    }
-
-    // Otherwise, use read-through caching
-    return CacheService.getWithFallback(
-      CacheKeys.tokenBalance(userId),
-      fetchBalance
-    );
+    if (client !== prisma) return fetchBalance();
+    return CacheService.getWithFallback(CacheKeys.tokenBalance(userId), fetchBalance);
   }
 
-  /**
-   * Gets paginated ledger history for a user.
-   */
   async getHistory(userId: string, limit = 20, offset = 0): Promise<TokenLedger[]> {
     return prisma.tokenLedger.findMany({
       where: { userId },
@@ -200,50 +186,27 @@ export class TokenLedgerRepository {
     });
   }
 
-  /**
-   * Gets total number of ledger entries for a user.
-   */
   async countHistory(userId: string): Promise<number> {
-    return prisma.tokenLedger.count({
-      where: { userId },
-    });
+    return prisma.tokenLedger.count({ where: { userId } });
   }
 
-  /**
-   * Gets token expiry summary grouped by earnedYear and expiresAt.
-   *
-   * Requirement 4.1, 4.2, 4.3, 4.4:
-   * - Returns cohorts of tokens grouped by earnedYear and expiresAt
-   * - Includes amount and expiry date for each cohort
-   * - Used for displaying token expiry information to Mitra
-   *
-   * @param userId - The user ID
-   * @returns Array of expiry cohorts with amount and expiry date
-   */
   async getExpirySummary(
     userId: string,
-    client: Prisma.TransactionClient | typeof prisma = prisma
+    client: Prisma.TransactionClient | typeof prisma = prisma,
   ): Promise<Array<{ earnedYear: number | null; expiresAt: Date | null; amount: number }>> {
     const cohorts = await client.tokenLedger.groupBy({
       by: ["earnedYear", "expiresAt"],
-      where: {
-        userId,
-      },
-      _sum: {
-        amount: true,
-      },
-      orderBy: [
-        { expiresAt: "asc" },
-        { earnedYear: "asc" },
-      ],
+      where: { userId },
+      _sum: { amount: true },
+      orderBy: [{ expiresAt: "asc" }, { earnedYear: "asc" }],
     });
 
     return cohorts
-      .filter((cohort) => cohort._sum.amount && cohort._sum.amount > 0)
+      .filter((cohort) => (cohort._sum.amount ?? 0) > 0)
       .map((cohort) => ({
         earnedYear: cohort.earnedYear,
         expiresAt: cohort.expiresAt,
-        amount: cohort._sum.amount || 0,
+        amount: cohort._sum.amount ?? 0,
       }));
   }
 }

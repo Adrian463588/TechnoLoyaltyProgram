@@ -70,7 +70,7 @@ export function ChatbotWidget() {
           const errData = await response.json();
           if (errData?.error) errorMsg = errData.error;
           else if (errData?.details) errorMsg = errData.details;
-        } catch (e) {
+        } catch {
           // ignore
         }
         throw new Error(errorMsg);

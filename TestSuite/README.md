@@ -44,10 +44,10 @@ TestSuite/
 # 1. Install dependencies
 npm install
 
-# 2. Run against the deployed default URL
+# 2. Run against the local default URL
 npm run test:e2e
 
-# 3. Or run against a local/staging environment
+# 3. Or run against an explicitly selected local/staging environment
 CYPRESS_BASE_URL=http://localhost:3000 npm run test:e2e
 
 # 4. Open Cypress UI
@@ -58,16 +58,26 @@ npm run test:e2e:open
 
 | Role | NPK | Password |
 |------|-----|----------|
-| MITRA | 34567 | password123 |
-| TEAM_LEADER | 23456 | password123 |
-| HC_PM | 12345 | password123 |
+| MITRA | 34567 | `CYPRESS_EMPLOYEE_PASSWORD` |
+| TEAM_LEADER | 23456 | `CYPRESS_LEADER_PASSWORD` |
+| HC_PM | 12345 | `CYPRESS_ADMIN_PASSWORD` |
 
 Override with:
 
 ```bash
-CYPRESS_EMPLOYEE_NPK=34567 CYPRESS_EMPLOYEE_PASSWORD=password123 npm run test:e2e
-CYPRESS_LEADER_NPK=23456 CYPRESS_LEADER_PASSWORD=password123 npm run test:e2e
-CYPRESS_ADMIN_NPK=12345 CYPRESS_ADMIN_PASSWORD=password123 npm run test:e2e
+CYPRESS_EMPLOYEE_NPK=34567 CYPRESS_EMPLOYEE_PASSWORD=<local-test-secret> npm run test:e2e
+CYPRESS_LEADER_NPK=23456 CYPRESS_LEADER_PASSWORD=<local-test-secret> npm run test:e2e
+CYPRESS_ADMIN_NPK=12345 CYPRESS_ADMIN_PASSWORD=<local-test-secret> npm run test:e2e
+```
+
+The password values are intentionally not committed. For PowerShell, set them
+in the current process before running Cypress, for example:
+
+```powershell
+$env:CYPRESS_ADMIN_PASSWORD = "<local-test-secret>"
+$env:CYPRESS_LEADER_PASSWORD = "<local-test-secret>"
+$env:CYPRESS_EMPLOYEE_PASSWORD = "<local-test-secret>"
+npm run test:e2e
 ```
 
 ## POM Rules

@@ -8,7 +8,7 @@
  * AGENTS.md: Thin routes, no DB calls here.
  */
 
-import { Router, type RequestHandler } from "express";
+import { Router } from "express";
 import { authenticate }                      from "@/middleware/authenticate";
 import { authorize }                         from "@/middleware/authorize";
 import { RedemptionController }              from "@/controllers/redemption.controller";
@@ -16,6 +16,8 @@ import { ManualAdjustmentController }        from "@/controllers/manual-adjustme
 import { RewardCatalogController }           from "@/controllers/reward-catalog.controller";
 import { PartnerStatusConfirmationController } from "@/controllers/partner-status-confirmation.controller";
 import { SystemSettingController }           from "@/controllers/system-setting.controller";
+import { TokenRuleController }                from "@/controllers/token-rule.controller";
+import { SnapshotController }                 from "@/controllers/snapshot.controller";
 import {
   AdminFoundationController,
   uploadProcessMiddleware,
@@ -42,6 +44,10 @@ adminRoutes.post("/uploads/commit", AdminFoundationController.commitUpload);
 
 // ── System Settings (Write-access for HC_PM only) ──────────────────────────
 adminRoutes.patch("/system-settings",                    SystemSettingController.updateSettings);
+adminRoutes.get("/token-rules",                           TokenRuleController.list);
+adminRoutes.patch("/token-rules",                         TokenRuleController.update);
+adminRoutes.get("/snapshots",                            SnapshotController.list);
+adminRoutes.post("/snapshots",                           SnapshotController.create);
 
 // ── Redemptions ─────────────────────────────────────────────────────────────
 /**

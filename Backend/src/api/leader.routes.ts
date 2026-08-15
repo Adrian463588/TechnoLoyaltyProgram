@@ -8,7 +8,7 @@
  * PRD: TL-01, TL-02, TL-03.
  */
 
-import { Router, type RequestHandler } from "express";
+import { Router } from "express";
 import { authenticate }                       from "@/middleware/authenticate";
 import { authorize }                          from "@/middleware/authorize";
 import { PartnerStatusConfirmationController } from "@/controllers/partner-status-confirmation.controller";

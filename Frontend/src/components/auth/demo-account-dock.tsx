@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { 
-  Zap, 
   X, 
   Search, 
   Shield, 
@@ -13,27 +12,28 @@ import {
   UserCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+const demoPassword = process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? "";
+
 const DEMO_ACCOUNTS = [
   { group: "Administrator", items: [
-    { label: "Admin HC", npk: "12345", password: "password123", role: "HC_PM", icon: Shield },
+    { label: "Admin HC", npk: "12345", role: "HC_PM", icon: Shield },
   ]},
   { group: "Team Leader", items: [
-    { label: "Leader OpCent", npk: "23456", password: "password123", role: "TEAM_LEADER", icon: Users },
-    { label: "Leader Tele", npk: "23457", password: "password123", role: "TEAM_LEADER", icon: Users },
-    { label: "Leader Techno", npk: "23458", password: "password123", role: "TEAM_LEADER", icon: Users },
+    { label: "Leader OpCent", npk: "23456", role: "TEAM_LEADER", icon: Users },
+    { label: "Leader Tele", npk: "23457", role: "TEAM_LEADER", icon: Users },
+    { label: "Leader Techno", npk: "23458", role: "TEAM_LEADER", icon: Users },
   ]},
   { group: "Employee (Mitra)", items: [
-    { label: "Alice (Emerald)", npk: "34567", password: "password123", role: "MITRA", icon: Trophy },
-    { label: "Saphire (Saphire)", npk: "40001", password: "password123", role: "MITRA", icon: Trophy },
-    { label: "Emerald (Emerald)", npk: "40002", password: "password123", role: "MITRA", icon: Trophy },
-    { label: "Ruby (Ruby)", npk: "40003", password: "password123", role: "MITRA", icon: Trophy },
-    { label: "Diamond (Diamond)", npk: "40004", password: "password123", role: "MITRA", icon: Trophy },
-    { label: "Eve (Inactive)", npk: "40005", password: "password123", role: "MITRA", icon: Trophy },
-    { label: "Frank (Resigned)", npk: "40006", password: "password123", role: "MITRA", icon: Trophy },
+    { label: "Alice (Emerald)", npk: "34567", role: "MITRA", icon: Trophy },
+    { label: "Saphire (Saphire)", npk: "40001", role: "MITRA", icon: Trophy },
+    { label: "Emerald (Emerald)", npk: "40002", role: "MITRA", icon: Trophy },
+    { label: "Ruby (Ruby)", npk: "40003", role: "MITRA", icon: Trophy },
+    { label: "Diamond (Diamond)", npk: "40004", role: "MITRA", icon: Trophy },
+    { label: "Eve (Inactive)", npk: "40005", role: "MITRA", icon: Trophy },
+    { label: "Frank (Resigned)", npk: "40006", role: "MITRA", icon: Trophy },
   ]},
 ];
 
@@ -57,6 +57,13 @@ export function DemoAccountDock({ onSelect }: DemoAccountDockProps) {
     })).filter(group => group.items.length > 0);
   }, [search]);
 
+  if (
+    process.env.NODE_ENV !== "development" &&
+    process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS !== "true"
+  ) {
+    return null;
+  }
+
   return (
     <>
       {/* Floating Toggle Button */}
@@ -64,6 +71,7 @@ export function DemoAccountDock({ onSelect }: DemoAccountDockProps) {
         whileHover={{ scale: 1.1, rotate: 5 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
+        data-testid="demo-account-toggle"
         className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full bg-primary text-white shadow-xl shadow-primary/20 flex items-center justify-center border-4 border-white/30 hover:brightness-110 transition-all group"
       >
         <UserCircle className="h-8 w-8" />
@@ -144,7 +152,7 @@ export function DemoAccountDock({ onSelect }: DemoAccountDockProps) {
                             whileHover={{ x: 4 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => {
-                              onSelect(item.npk, item.password);
+                              onSelect(item.npk, demoPassword);
                               setIsOpen(false);
                             }}
                             className="w-full group flex items-center gap-4 p-3 rounded-xl border border-slate-100 bg-white hover:border-primary/20 hover:shadow-md hover:shadow-primary/5 transition-all text-left"
@@ -164,7 +172,7 @@ export function DemoAccountDock({ onSelect }: DemoAccountDockProps) {
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Pass</span>
                                   <span className="text-[10px] font-mono font-bold text-primary bg-primary/5 px-1.5 py-0.5 rounded border border-primary/10">
-                                    {item.password}
+                                    {demoPassword ? "configured" : "set local env"}
                                   </span>
                                 </div>
                               </div>

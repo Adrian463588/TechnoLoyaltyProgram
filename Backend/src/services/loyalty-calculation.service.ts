@@ -12,6 +12,7 @@ import { membershipService } from "./membership.service";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
 import { CacheService } from "./cache.service";
 import { CacheKeys } from "@/utils/cache/cache-key.registry";
+import { checkRedemptionEligibility } from "./loyalty.service";
 import type {
   EmployeeDashboardData,
   TokenSummary,
@@ -81,6 +82,12 @@ async function getTokenSummary(userId: string): Promise<TokenSummary> {
     if (!user) throw new Error("User not found");
 
     const totalTokens = await tokenLedgerRepository.getBalance(userId);
+
+    const leastExpensiveReward = await prisma.rewardItem.findFirst({
+      where: { isActive: true },
+      orderBy: { tokenCost: "asc" },
+      select: { tokenCost: true, stock: true, isActive: true },
+    });
     
     // Calculate cumulativeValue based on the current evaluation period
     const { start, end } = membershipService.getCurrentPeriodDates(user.division);
@@ -96,6 +103,15 @@ async function getTokenSummary(userId: string): Promise<TokenSummary> {
 
     const cumulativeValue = aggregation._sum.amount ?? 0;
     const calcResult = membershipService.calculateTier(user.division, cumulativeValue);
+    const eligibility = leastExpensiveReward
+      ? checkRedemptionEligibility({
+          tokenBalance: totalTokens,
+          rewardTokenCost: leastExpensiveReward.tokenCost,
+          partnerStatus: user.partnerStatus,
+          isItemActive: leastExpensiveReward.isActive,
+          stock: leastExpensiveReward.stock,
+        })
+      : { isEligible: false, reasons: ["No active rewards are currently available."] };
 
     return {
       userId,
@@ -103,7 +119,8 @@ async function getTokenSummary(userId: string): Promise<TokenSummary> {
       currentTier: calcResult.tier,
       pointsToNextTier: calcResult.pointsToNext,
       nextTier: calcResult.nextTier,
-      isEligibleForReward: totalTokens > 0, // Simplified guard
+      isEligibleForReward: eligibility.isEligible,
+      eligibilityReasons: eligibility.reasons,
       memberStatus: user.partnerStatus,
       cumulativeValue, // Added for frontend progress bars
       periodEnd: end.toISOString(),

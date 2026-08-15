@@ -41,10 +41,10 @@ describe('AdminDashboardPage', () => {
     expect(screen.getByText('HC Admin Dashboard')).toBeInTheDocument()
     
     // Check for KPI cards
-    expect(screen.getByText('Uploads This Month')).toBeInTheDocument()
+    expect(screen.getByText(/EMPLOYEE TIER DISTRIBUTION/i)).toBeInTheDocument()
     expect(screen.getByText('Requested Redeem')).toBeInTheDocument()
     expect(screen.getByText('Active Partners')).toBeInTheDocument()
-    expect(screen.getByText('Tokens Issued')).toBeInTheDocument()
+    expect(screen.getByText(/CURRENT CYCLE/i)).toBeInTheDocument()
     
     // Check for Action Center
     expect(screen.getByText('Action Center')).toBeInTheDocument()

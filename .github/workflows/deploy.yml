@@ -1,31 +1,32 @@
 # ============================================================
 # LOYALTY PROGRAM — GitHub Actions CI/CD Pipeline
 # ============================================================
-# Trigger: Push to main branch
+# Triggers: Push to main for CI/security checks; manual dispatch for deployment
 # Flow:
 #   1. Lint & Type-Check
 #   2. Unit Tests
 #   3. Secret Scan (TruffleHog)
-#   4. Build Docker Images
-#   5. Container Security Scan (Trivy)
-#   6. Push to Artifact Registry
-#   7. Trigger Coolify Deploy Webhooks
+#   4. Build Docker Images (manual dispatch only)
+#   5. Container Security Scan (Trivy, manual dispatch only)
+#   6. Push to Artifact Registry (manual dispatch only)
+#   7. Trigger Coolify Deploy Webhooks (manual dispatch only)
 #
 # REQUIRED GITHUB SECRETS (Settings → Secrets → Actions):
 #   GCP_PROJECT_ID  — GCP project ID (e.g. project-654b743a-b24b-45ad-85e)
 # Note: GCP Auth now uses Workload Identity Federation instead of JSON keys.
 # ============================================================
 
-name: Deploy to Production
+name: Loyalty Program CI and Manual Deploy
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 # Cancel in-progress runs when a new push happens
 concurrency:
-  group: deploy-prod-${{ github.ref }}
+  group: loyalty-ci-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -34,6 +35,9 @@ env:
   REGISTRY: asia-southeast2-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/loyalty-program-repo
   IMAGE_TAG: "latest" # Placeholder, overwritten dynamically in build step
 
+permissions:
+  contents: read
+
 jobs:
   # ─────────────────────────────────────────────
   lint-and-test:
@@ -41,24 +45,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "20"
           cache: "npm"
 
       - name: Install root dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install Backend dependencies
         working-directory: Backend
-        run: npm install
+        run: npm ci
 
       - name: Install Frontend dependencies
         working-directory: Frontend
-        run: npm install
+        run: npm ci
+
+      - name: Install TestSuite dependencies
+        working-directory: TestSuite
+        run: npm ci
 
       - name: Backend lint & typecheck
         working-directory: Backend
@@ -69,6 +77,12 @@ jobs:
 
       - name: Frontend lint & typecheck
         working-directory: Frontend
+        run: |
+          npm run lint
+          npm run typecheck
+
+      - name: TestSuite lint & typecheck
+        working-directory: TestSuite
         run: |
           npm run lint
           npm run typecheck
@@ -84,20 +98,21 @@ jobs:
     needs: lint-and-test
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0 # TruffleHog needs full history
 
       - name: TruffleHog Secret Scan
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@bcfcf73aaf4759d4dadc2783177c245a02792318 # main
         with:
           path: ./
-          base: ${{ github.event.before }}
+          base: ${{ github.event_name == 'push' && github.event.before || format('{0}^', github.sha) }}
           head: HEAD
           extra_args: --only-verified
 
   # ─────────────────────────────────────────────
   build-and-push:
+    if: github.event_name == 'workflow_dispatch'
     name: Build, Scan & Push Images
     runs-on: ubuntu-latest
     needs: security-scan
@@ -108,7 +123,7 @@ jobs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set image tag
         id: set-tag
@@ -126,7 +141,7 @@ jobs:
           fi
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:
           workload_identity_provider: 'projects/932577142121/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
           service_account: 'github-actions@project-654b743a-b24b-45ad-85e.iam.gserviceaccount.com'
@@ -152,7 +167,7 @@ jobs:
 
       # DevSecOps: Container vulnerability scan — fail on CRITICAL
       - name: Trivy scan — Backend
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@d2a0b60797ff03db6132bd4e2b293f9b37081297 # master
         with:
           image-ref: "${{ env.REGISTRY }}/backend:${{ env.IMAGE_TAG }}"
           format: "table"
@@ -161,7 +176,7 @@ jobs:
           ignore-unfixed: true
 
       - name: Trivy scan — Frontend
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@d2a0b60797ff03db6132bd4e2b293f9b37081297 # master
         with:
           image-ref: "${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }}"
           format: "table"
@@ -181,6 +196,7 @@ jobs:
 
   # ─────────────────────────────────────────────
   deploy-coolify:
+    if: github.event_name == 'workflow_dispatch'
     name: Trigger Coolify Deploy
     runs-on: ubuntu-latest
     needs: build-and-push

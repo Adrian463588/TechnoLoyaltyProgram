@@ -8,7 +8,6 @@
  */
 
 import { prisma } from "@/db/prisma";
-import { NotFoundError } from "@/errors";
 
 export class SystemSettingService {
   private readonly DEFAULT_ID = "GLOBAL_CONFIG";

@@ -12,7 +12,7 @@ import {
 import { BentoCard } from "@/components/ui/bento-card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ShoppingBag, Coins, Calendar, User, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RedemptionStatusChip, RedemptionStatus } from "@/components/shared/status-badge";
 import { Pagination } from "@/components/shared/pagination";
@@ -63,7 +63,13 @@ export function TeamRedemptionsTable({
     return matchesSearch && matchesStatus;
   });
 
-  const filterOptions: ("All" | RedemptionStatus)[] = ["All", "REQUESTED", "REVIEWED", "ACCEPTED", "REJECTED"];
+  const filterOptions: ("All" | RedemptionStatus)[] = [
+    "All",
+    "PENDING_VERIFICATION",
+    "VERIFIED",
+    "PURCHASED",
+    "REJECTED",
+  ];
 
   return (
     <div className="space-y-4">

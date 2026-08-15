@@ -47,8 +47,6 @@ The following are not required for Sprint 2.1 unless already partially implement
 - Full SSO production integration.
 - WhatsApp automation integration.
 - Advanced analytics dashboard.
-- Configurable Techno penalty UI before stakeholder confirmation.
-- Light mode.
 
 ---
 
@@ -68,7 +66,7 @@ The following are not required for Sprint 2.1 unless already partially implement
 | SPR21-REQ-08 | Add audit log for admin mutations | Must | Token, reward, redemption, membership, partner status, and manual adjustment changes create audit entries. |
 | SPR21-REQ-09 | Fix validation gaps | Must | All mutation payloads use Zod validation or equivalent strict schema validation. |
 | SPR21-REQ-10 | Improve automated testing | Must | Unit tests cover token and membership logic; integration tests cover service flows; E2E covers critical role journeys. |
-| SPR21-REQ-11 | Preserve open policy areas | Must | Techno downgrade/reset penalty remains `TODO(OQ-TECHNO-PENALTY)` until confirmed. |
+| SPR21-REQ-11 | Apply the confirmed Techno policy | Must | Techno downgrade penalty is 50% of the current balance, rounded down. |
 | SPR21-REQ-12 | Update project guidance | Must | `AGENTS.md` reflects Sprint 2.1 rules, token-saving commands, and current architecture. |
 
 ### 2.2 Functional Requirements
@@ -77,7 +75,7 @@ The following are not required for Sprint 2.1 unless already partially implement
 
 | ID | Requirement | Priority |
 |---|---|---:|
-| AUTH-01 | Users can log in using registered company email. | Must |
+| AUTH-01 | Users can log in using registered NPK and password. | Must |
 | AUTH-02 | System redirects users to the correct role shell after login. | Must |
 | AUTH-03 | Password reset flow exists or safe placeholder is documented. | Must |
 | AUTH-04 | SSO remains optional and behind future implementation. | Should |
@@ -177,8 +175,8 @@ The following are not required for Sprint 2.1 unless already partially implement
 - Use skeleton loading, not spinner-only UI.
 - Add empty and error states.
 - Use design tokens from `DESIGN.md`.
-- Keep Phase 1 dark mode only.
-- Keep dashboard bento grid and glassmorphism style.
+- Light mode is the default; dark mode is supported through shared design tokens.
+- Keep dashboard bento grid and token-driven surface styling.
 - Ensure responsive layouts for 375px, 768px, and 1280px.
 
 **Acceptance Criteria:**
@@ -269,12 +267,12 @@ The following are not required for Sprint 2.1 unless already partially implement
 
 - Techno evaluation period: 6 months.
 - Downgrade / reset trigger: 3 or more project rejections in a 6-month period.
-- Exact Techno token penalty is open and must not be invented.
+- Techno downgrade penalty is 50% of the current balance, rounded down.
 
 **Acceptance Criteria:**
 
 - Opcent / Tele and Techno calculators are separate modules behind a shared interface.
-- Open Techno penalty remains blocked behind `TODO(OQ-TECHNO-PENALTY)`.
+- The Techno penalty baseline is fixed for Sprint 2.1; no runtime feature flag is required.
 - Membership change inserts membership history and audit log.
 
 #### Feature 6 — Monthly Update Workflow Foundation
@@ -585,7 +583,7 @@ sequenceDiagram
   RedemptionService->>DB: Start transaction
   RedemptionService->>DB: Lock redemption / reward / ledger summary
   RedemptionService->>TokenService: Insert REDEEMED debit ledger row
-  RedemptionService->>DB: Update redemption status VERIFIED / PURCHASED
+  RedemptionService->>DB: Update redemption status PURCHASED
   RedemptionService->>Audit: Record REDEMPTION_APPROVED
   DB-->>RedemptionService: Commit transaction
   API-->>UI: Approved and token deducted
@@ -944,7 +942,7 @@ Sprint 2.1 is accepted only when:
 
 | ID | Question | Owner | Sprint 2.1 Handling |
 |---|---|---|---|
-| OQ-TECHNO-PENALTY | Should Techno downgrade/reset use 50% token cut and reset-to-zero like Opcent/Tele? | Stakeholder / HC | Do not implement penalty until confirmed. Keep safe TODO. |
+| OQ-TECHNO-PENALTY | Resolved for Sprint 2.1: use a 50% downgrade penalty, rounded down. | Product baseline | Keep the calculation in the domain/service layer. |
 | OQ-SSO | Which identity provider will be used for SSO? | IT / Security | Keep SSO optional. Do not block Sprint 2.1. |
 | OQ-REDEMPTION-WINDOW | What exact dates define valid redemption period? | HC | Implement configurable guard only if confirmed; otherwise feature-flag. |
 | OQ-NOTIFICATION-CHANNEL | Should reminders be in-app only, email, WhatsApp, or all? | Stakeholder / HC | Build notification data model foundation; defer channel integration. |
@@ -994,7 +992,7 @@ Fix [ISSUE_ID / DESCRIPTION] on [ROUTE].
 
 Rules:
 - Use existing design tokens.
-- Keep Phase 1 dark mode only.
+- Light mode is the default; dark mode is supported through shared design tokens.
 - Add loading, empty, and error states.
 - Prefer Server Components for data display.
 - Use Client Components only for interaction, forms, browser state, or animation.
@@ -1057,4 +1055,3 @@ A Sprint 2.1 task is done only when:
 - It has tests or documented reason why tests are not applicable.
 - It passes lint and typecheck.
 - It does not degrade responsive or accessibility behavior.
-

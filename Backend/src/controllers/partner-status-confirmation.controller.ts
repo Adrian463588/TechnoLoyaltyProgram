@@ -65,12 +65,30 @@ export const PartnerStatusConfirmationController = {
       const limit = Number(req.query["limit"]) || 100;
       const offset = Number(req.query["offset"]) || 0;
 
-      const { items, total } = await partnerStatusConfirmationService.listForHC(user.id, { status, limit, offset } as any);
+      const { items, total } = await partnerStatusConfirmationService.listForHC(user.id, {
+        limit,
+        offset,
+        ...(status ? { status } : {}),
+      });
       res.json({
         total,
         limit,
         offset,
-        items
+        items: items.map((item) => ({
+          id: item.id,
+          mitraId: item.mitraId,
+          mitraName: item.mitra.name,
+          leaderId: item.assignedTo,
+          leaderName: item.assignee.name,
+          status: item.status,
+          reason: null,
+          confirmedStatus: item.status === "CONFIRMED_ACTIVE"
+            ? "ACTIVE"
+            : item.status === "CONFIRMED_RESIGNED" ? "RESIGNED" : null,
+          note: item.note,
+          createdAt: item.createdAt.toISOString(),
+          updatedAt: item.updatedAt.toISOString(),
+        })),
       });
   }),
 
@@ -84,7 +102,21 @@ export const PartnerStatusConfirmationController = {
       const status = statusResult.success ? statusResult.data : undefined;
 
       const items = await partnerStatusConfirmationService.listForTL(user.id, status);
-      res.json(items);
+      res.json(items.map((item) => ({
+        id: item.id,
+        mitraId: item.mitraId,
+        mitraName: item.mitra.name,
+        leaderId: item.assignedTo,
+        leaderName: item.assignedTo,
+        status: item.status,
+        reason: null,
+        confirmedStatus: item.status === "CONFIRMED_ACTIVE"
+          ? "ACTIVE"
+          : item.status === "CONFIRMED_RESIGNED" ? "RESIGNED" : null,
+        note: item.note,
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
+      })));
   }),
 
   /**

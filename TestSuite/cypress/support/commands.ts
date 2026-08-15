@@ -14,7 +14,7 @@
 /// <reference types="cypress" />
 
 import { sel } from "./selectors";
-import { getTestUser, type TestRole } from "./users";
+import { loadTestUser, type TestRole } from "./users";
 
 // ── Type declarations ──────────────────────────────────────────────────────
 declare global {
@@ -61,8 +61,7 @@ Cypress.Commands.add("login", (npk: string, password: string) => {
 
 // ── loginAsRole ────────────────────────────────────────────────────────────
 Cypress.Commands.add("loginAsRole", (role: TestRole) => {
-  const user = getTestUser(role);
-  cy.login(user.npk, user.password);
+  return loadTestUser(role).then((user) => cy.login(user.npk, user.password));
 });
 
 // ── convenience wrappers ───────────────────────────────────────────────────
@@ -72,8 +71,8 @@ Cypress.Commands.add("loginAsEmployee", () => cy.loginAsRole("MITRA"));
 
 // ── assertNoServerError ────────────────────────────────────────────────────
 Cypress.Commands.add("assertNoServerError", () => {
-  cy.get(sel.common.body).should("not.contain.text", "500");
   cy.get(sel.common.body).should("not.contain.text", "Internal Server Error");
+  cy.get(sel.common.body).should("not.contain.text", "INTERNAL_ERROR");
 });
 
 export {};

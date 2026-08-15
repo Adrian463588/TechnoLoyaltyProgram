@@ -29,11 +29,17 @@ export const ManualAdjustmentController = {
         throw new ValidationError("Invalid adjustment payload", z.treeifyError(parsed.error));
       }
 
+      const idempotencyKey = req.header("Idempotency-Key")?.trim();
+      if (!idempotencyKey || idempotencyKey.length > 200) {
+        throw new ValidationError("A valid Idempotency-Key header is required for adjustments.");
+      }
+
       const entry = await manualAdjustmentService.adjustTokens(
         parsed.data.mitraId,
         parsed.data.amount,
         parsed.data.reason,
         user.id,
+        idempotencyKey,
       );
 
       res.status(201).json({

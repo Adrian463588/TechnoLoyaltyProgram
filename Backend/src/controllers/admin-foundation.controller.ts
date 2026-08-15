@@ -1,13 +1,11 @@
 import { asyncHandler } from "@/middleware/asyncHandler";
 import multer, { type FileFilterCallback } from "multer";
 import * as XLSX from "xlsx";
-import { prisma } from "@/db/prisma";
 import { ValidationError } from "@/errors";
-import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
-import { logAudit } from "@/services/audit.service";
 import { uploadProcessingService } from "@/services/upload-processing.service";
 import { aiColumnMapperService } from "@/services/ai-column-mapper.service";
-import { DivisionType } from "@prisma/client";
+import { adminFoundationService } from "@/services/admin-foundation.service";
+import type { DivisionType, PartnershipStatus } from "@prisma/client";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -29,10 +27,6 @@ const upload = multer({
 
 type UploadRow = Record<string, string | number | boolean | null>;
 
-function normalizeHeader(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, "_");
-}
-
 function readRows(file: Express.Multer.File): UploadRow[] {
   const isExcel = [
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -52,22 +46,18 @@ function readRows(file: Express.Multer.File): UploadRow[] {
     // Convert to array of arrays to find the header row dynamically
     const data = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1, defval: "" });
     
-    console.log(`[DEBUG_UPLOAD] Total rows in sheet AoA: ${data.length}`);
-
     // Find the row index that contains "NPK" or common variants
     const npkKeywords = ["npk", "no. induk", "no induk", "employee id", "nip", "no_induk", "nomor induk", "no.induk"];
-    let headerRowIndex = data.findIndex((row, idx) => {
+    let headerRowIndex = data.findIndex((row, _idx) => {
       const hasNpk = row.some((cell: any) => {
         const val = String(cell).toLowerCase().trim();
         return npkKeywords.some(k => val === k || val.includes(k));
       });
-      if (hasNpk) console.log(`[DEBUG_UPLOAD] Found potential primary header at row index: ${idx}`);
       return hasNpk;
     });
     
     // Fallback to row 0 if NPK not found
     if (headerRowIndex === -1) {
-      console.warn("[DEBUG_UPLOAD] NPK-like header NOT found, falling back to index 0");
       headerRowIndex = 0;
     }
 
@@ -78,7 +68,6 @@ function readRows(file: Express.Multer.File): UploadRow[] {
     const nextRow = data[headerRowIndex + 1];
     const monthKeywords = ["jan", "feb", "mar", "apr", "mei", "jun", "jul", "ags", "sep", "okt", "nov", "des"];
     if (nextRow && nextRow.some(cell => monthKeywords.some(m => String(cell).toLowerCase().includes(m)))) {
-      console.log(`[DEBUG_UPLOAD] Found secondary header (months) at row index: ${headerRowIndex + 1}`);
       headers = headers.map((h, i) => {
         const secondary = String(nextRow[i] || "").trim();
         if (!h) return secondary;
@@ -99,7 +88,6 @@ function readRows(file: Express.Multer.File): UploadRow[] {
       return obj;
     });
 
-    console.log(`[DEBUG_UPLOAD] Raw rows extracted after header: ${rows.length}`);
     return rows.filter(row => Object.values(row).some(v => v !== null && v !== ""));
   }
 
@@ -130,7 +118,17 @@ function readRows(file: Express.Multer.File): UploadRow[] {
   }).filter(row => Object.values(row).some(v => v !== null && v !== ""));
 }
 
-function validateRows(rows: UploadRow[]): Array<{
+function sourceUnitValue(row: UploadRow, division?: string): number | null {
+  const keys = division === "TECHNO"
+    ? ["sourceUnits", "completedProjects", "completed_projects", "projects", "sprints"]
+    : ["sourceUnits", "slots", "slotCount", "total_slot", "total_slot_reguler", "accumulated_slots"];
+  const key = keys.find((candidate) => row[candidate] !== null && row[candidate] !== undefined && row[candidate] !== "");
+  if (!key) return null;
+  const value = Number(row[key]);
+  return Number.isInteger(value) && value >= 0 ? value : Number.NaN;
+}
+
+function validateRows(rows: UploadRow[], division?: string): Array<{
   rowNumber: number;
   column: string;
   issue: string;
@@ -144,11 +142,10 @@ function validateRows(rows: UploadRow[]): Array<{
       severity: "ERROR" | "WARNING";
     }> = [];
 
-    // Required fields: NPK, Nama, Fungsi, Token, Jenis Membership
+    // Required fields: NPK, Nama, Fungsi, source contribution, membership tier.
     const npk = row["npk"];
     const name = row["name"] || row["nama"];
     const fungsi = row["fungsi"];
-    const token = row["token"];
     const tier = row["jenis_membership"];
 
     if (!npk) {
@@ -160,8 +157,21 @@ function validateRows(rows: UploadRow[]): Array<{
     if (!fungsi) {
       issues.push({ rowNumber: index + 1, column: "Fungsi", issue: "Fungsi is required", severity: "ERROR" });
     }
-    if (token === null || token === undefined || token === "") {
-      issues.push({ rowNumber: index + 1, column: "Token", issue: "Token is required", severity: "ERROR" });
+    const sourceUnits = sourceUnitValue(row, division);
+    if (sourceUnits === null) {
+      issues.push({
+        rowNumber: index + 1,
+        column: division === "TECHNO" ? "Completed Projects" : "Slots",
+        issue: "A validated source contribution is required; target token balance is not accepted.",
+        severity: "ERROR",
+      });
+    } else if (Number.isNaN(sourceUnits)) {
+      issues.push({
+        rowNumber: index + 1,
+        column: division === "TECHNO" ? "Completed Projects" : "Slots",
+        issue: "Source contribution must be a non-negative integer.",
+        severity: "ERROR",
+      });
     }
     if (!tier) {
       issues.push({ rowNumber: index + 1, column: "Jenis Membership", issue: "Jenis Membership is required", severity: "ERROR" });
@@ -171,50 +181,13 @@ function validateRows(rows: UploadRow[]): Array<{
   });
 }
 
-function getCurrentPeriod(): "P1" | "P2" {
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  const date = now.getDate();
-
-  // Period 1 (P1): Dec 16 - Jun 15
-  // Period 2 (P2): Jun 16 - Dec 15
-  
-  const isP2 = (month === 6 && date >= 16) || (month > 6 && month < 12) || (month === 12 && date <= 15);
-  return isP2 ? "P2" : "P1";
-}
-
 export const uploadProcessMiddleware = upload.single("file");
 
 export const AdminFoundationController = {
   listAuditLogs: asyncHandler(async (req, res) => {
       const limit = Number(req.query["limit"]) || 100;
       const offset = Number(req.query["offset"]) || 0;
-
-      const [logs, total] = await Promise.all([
-        prisma.auditLog.findMany({
-          orderBy: { createdAt: "desc" },
-          take: limit,
-          skip: offset,
-        }),
-        prisma.auditLog.count()
-      ]);
-
-      res.json({
-        total,
-        limit,
-        offset,
-        logs: logs.map((log) => ({
-          id: log.id,
-          action: log.action,
-          actorId: log.actorId,
-          actorName: log.actorId === "SYSTEM" ? "System" : log.actorId,
-          actorNpk: log.actorId,
-          targetId: log.targetEntityId,
-          targetType: log.targetEntityType,
-          details: log.newValue ?? log.previousValue ?? {},
-          createdAt: log.createdAt.toISOString(),
-        }))
-      });
+      res.json(await adminFoundationService.listAuditLogs(limit, offset));
   }),
 
   listUploads: asyncHandler((_req, res) => {
@@ -224,42 +197,7 @@ export const AdminFoundationController = {
   listUsers: asyncHandler(async (req, res) => {
       const limit = Number(req.query["limit"]) || 100;
       const offset = Number(req.query["offset"]) || 0;
-
-      const where: import("@prisma/client").Prisma.UserWhereInput = { role: "MITRA" };
-
-      const [users, total] = await Promise.all([
-        prisma.user.findMany({
-          where,
-          select: {
-            id: true,
-            name: true,
-            npk: true,
-            email: true,
-            division: true,
-            role: true,
-            membershipTier: true,
-            partnerStatus: true
-          },
-          orderBy: { name: "asc" },
-          take: limit,
-          skip: offset,
-        }),
-        prisma.user.count({ where })
-      ]);
-
-      const usersWithTokens = await Promise.all(
-        users.map(async (user) => ({
-          ...user,
-          tokens: await tokenLedgerRepository.getBalance(user.id)
-        }))
-      );
-
-      res.json({
-        total,
-        limit,
-        offset,
-        users: usersWithTokens
-      });
+      res.json(await adminFoundationService.listMitraUsers(limit, offset));
   }),
 
   updateUserStatus: asyncHandler(async (req, res) => {
@@ -274,23 +212,11 @@ export const AdminFoundationController = {
         throw new ValidationError("Status must be one of ACTIVE, INACTIVE, or RESIGNED");
       }
 
-      const existing = await prisma.user.findUnique({ where: { id: userId } });
-      if (!existing) throw new Error("User not found");
-
-      const updated = await prisma.user.update({
-        where: { id: userId },
-        data: { partnerStatus: status },
-      });
-
-      await logAudit({
-        action: "PARTNER_STATUS_UPDATED",
-        actorId: actor.id,
-        targetType: "User",
-        targetId: userId,
-        previousValue: { name: existing.name, status: existing.partnerStatus },
-        newValue: { status: updated.partnerStatus },
-      });
-
+      const updated = await adminFoundationService.updateUserStatus(
+        userId,
+        status as PartnershipStatus,
+        actor.id,
+      );
       res.json({ success: true, user: updated });
   }),
 
@@ -337,15 +263,12 @@ export const AdminFoundationController = {
       }
 
       // 1. Initial structural validation
-      const issues = validateRows(rows);
+      const issues = validateRows(rows, division);
       
       // 2. Database existence check
       if (rows.length > 0) {
         const npks = rows.map(r => String(r["npk"] ?? "")).filter(Boolean);
-        const existingUsers = await prisma.user.findMany({
-          where: { npk: { in: npks } },
-          select: { npk: true, division: true }
-        });
+        const existingUsers = await adminFoundationService.findUsersByNpk(npks);
         const existingNpks = new Set(existingUsers.map(u => u.npk));
         const userDivisions = new Map(existingUsers.map(u => [u.npk, u.division]));
 
@@ -372,8 +295,6 @@ export const AdminFoundationController = {
       const errorRows = new Set(issues.filter((issue) => issue.severity === "ERROR").map((issue) => issue.rowNumber));
       const warningRows = new Set(issues.filter((issue) => issue.severity === "WARNING").map((issue) => issue.rowNumber));
       
-      const currentPeriod = getCurrentPeriod();
-
       res.json({
         division,
         aiDetected,
@@ -401,7 +322,8 @@ export const AdminFoundationController = {
             name: String(rawName),
             fungsi: String(row["fungsi"] || ""),
             division: derivedDivision,
-            token: Number(row["token"] || 0),
+            sourceUnits: sourceUnitValue(row, division),
+            sourceType: division === "TECHNO" ? "PROJECTS" : "SLOTS",
             tier: String(row["jenis_membership"] || ""),
           };
         }),
@@ -429,7 +351,17 @@ export const AdminFoundationController = {
         throw new ValidationError("Invalid division");
       }
 
-      const result = await uploadProcessingService.processUploadBatch(division as DivisionType, rows, actor.id);
+      const idempotencyKey = req.header("Idempotency-Key")?.trim();
+      if (!idempotencyKey || idempotencyKey.length > 200) {
+        throw new ValidationError("A valid Idempotency-Key header is required for upload commit.");
+      }
+
+      const result = await uploadProcessingService.processUploadBatch(
+        division as DivisionType,
+        rows,
+        actor.id,
+        idempotencyKey,
+      );
 
       res.json({ success: true, ...result });
   }),

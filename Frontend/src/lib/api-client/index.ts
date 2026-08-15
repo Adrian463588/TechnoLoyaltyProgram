@@ -9,6 +9,7 @@
  */
 
 import { PUBLIC_BACKEND_URL as BACKEND_URL } from "@/lib/backend-url";
+import type { RewardRequestStatus } from "@/types";
 
 // ── Base fetch helper ──────────────────────────────────────────────────────
 
@@ -186,7 +187,32 @@ export const adminApi = {
         headers: withAuth(token),
         body: JSON.stringify(verification),
       },
-    ),
+  ),
+
+  listSnapshots: (token: string) =>
+    apiFetch<PeriodSnapshotResponse[]>("/api/admin/snapshots", {
+      headers: withAuth(token),
+      cache: "no-store",
+    } as RequestInit),
+
+  createSnapshot: (token: string, payload: CreateSnapshotRequest) =>
+    apiFetch<PeriodSnapshotResponse>("/api/admin/snapshots", {
+      method: "POST",
+      headers: withAuth(token),
+      body: JSON.stringify(payload),
+    }),
+
+  listTokenRules: (token: string) =>
+    apiFetch<TokenRuleResponse[]>("/api/admin/token-rules", {
+      headers: withAuth(token),
+    }),
+
+  updateTokenRule: (token: string, payload: { division: "OPCENT" | "TELE" | "TECHNO"; tokensPerUnit: number }) =>
+    apiFetch<TokenRuleResponse>("/api/admin/token-rules", {
+      method: "PATCH",
+      headers: withAuth(token),
+      body: JSON.stringify(payload),
+    }),
 
   listUploads: (token: string) =>
     apiFetch<UploadResponse[]>("/api/admin/uploads", {
@@ -227,13 +253,14 @@ export const adminApi = {
       mitraId: string;
       amount: number;
       reason: string;
+      idempotencyKey: string;
     },
   ) =>
     apiFetch<{ success: boolean; ledgerEntryId: string }>(
       "/api/admin/adjustments",
       {
         method: "POST",
-        headers: withAuth(token),
+        headers: { ...withAuth(token), "Idempotency-Key": payload.idempotencyKey },
         body: JSON.stringify(payload),
       },
     ),
@@ -291,7 +318,7 @@ export const adminApi = {
   /** HC-06: Request partner status confirmation from Team Leader */
   requestPartnerConfirmation: (
     token: string,
-    payload: { mitraId: string; leaderId: string; reason?: string },
+    payload: { redemptionRequestId: string; mitraId: string; teamLeadId: string },
   ) =>
     apiFetch<PartnerConfirmationResponse>("/api/admin/partner-confirmations", {
       method: "POST",
@@ -378,7 +405,7 @@ export const leaderApi = {
     token: string,
     id: string,
     payload: {
-      confirmedStatus: "ACTIVE" | "RESIGNED";
+      status: "CONFIRMED_ACTIVE" | "CONFIRMED_RESIGNED";
       note?: string;
     },
   ) =>
@@ -416,6 +443,35 @@ export const chatbotApi = {
 
 // ── Response types (Frontend-safe DTOs — no Prisma) ───────────────────────
 
+export interface PeriodSnapshotResponse {
+  id: string;
+  periodKey: string;
+  division: "OPCENT" | "TELE" | "TECHNO" | null;
+  cutoffAt: string;
+  status: string;
+  sourceHash: string | null;
+  payload: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface CreateSnapshotRequest {
+  periodKey: string;
+  division?: "OPCENT" | "TELE" | "TECHNO";
+  cutoffAt: string;
+  sourceHash?: string;
+  payload: Record<string, unknown>;
+}
+
+export interface TokenRuleResponse {
+  id: string;
+  division: "OPCENT" | "TELE" | "TECHNO";
+  tokensPerUnit: number;
+  effectiveFrom: string;
+  updatedBy: string;
+  updatedAt: string;
+}
+
 export interface LeaderDashboardResponse {
   teamTotalTokens: number;
   teamTierDistribution: {
@@ -426,7 +482,7 @@ export interface LeaderDashboardResponse {
   };
   recentRedemptions: Array<{
     id: string;
-    status: string;
+    status: RewardRequestStatus;
     createdAt: string;
     mitra: { name: string; division: string };
     item: { name: string; tokenCost: number };
@@ -481,13 +537,14 @@ export interface TokenSummaryResponse {
   nextTier?: "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
   cumulativeValue: number;
   isEligibleForReward: boolean;
+  eligibilityReasons: string[];
   periodEnd: string;
   memberStatus: "ACTIVE" | "INACTIVE" | "RESIGNED";
 }
 
 export interface RedemptionResponse {
   id: string;
-  status: string;
+  status: RewardRequestStatus;
   createdAt: string;
   mitra?: {
     id: string;
@@ -521,6 +578,7 @@ export interface RewardCatalogItem {
   name: string;
   description: string;
   tokenCost: number;
+  category: string | null;
   imageUrl?: string;
   stock: number | null;
   minTier: "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";

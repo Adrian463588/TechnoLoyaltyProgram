@@ -23,7 +23,7 @@ export async function confirmPartnerStatus(
   const token = await getServerToken();
   try {
     await leaderApi.confirmPartnerStatus(token, confirmationId, {
-      confirmedStatus,
+      status: confirmedStatus === "ACTIVE" ? "CONFIRMED_ACTIVE" : "CONFIRMED_RESIGNED",
       note,
     });
 

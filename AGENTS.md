@@ -193,16 +193,9 @@ Never trust token balance from client input.
 
 - Opcent and Tele use slot-based yearly evaluation.
 - Techno uses project-based 6-month evaluation.
+- Techno downgrade penalty is fixed at 50% of the current authoritative balance, rounded down.
 - Keep both calculators separate behind a shared interface.
-- Do not hardcode Techno downgrade/reset penalty until confirmed.
-
-Correct pattern:
-
-```ts
-const technoPenaltyRate = process.env.TECHNO_PENALTY_RATE
-  ? Number(process.env.TECHNO_PENALTY_RATE)
-  : null; // TODO(OQ-TECHNO-PENALTY): confirm with stakeholders
-```
+- Do not add a second configurable Techno penalty policy; the Sprint 2.1 baseline is 50%.
 
 ---
 
@@ -212,13 +205,25 @@ const technoPenaltyRate = process.env.TECHNO_PENALTY_RATE
 - Use skeleton loading, not spinner-only UI.
 - Every async view needs loading, empty, and error states.
 - Use `DESIGN.md` tokens. Do not hardcode random colors.
-- Phase 1 is dark mode only.
+- Light mode is the default; dark mode is supported through the shared theme tokens.
 - Use bento grid dashboard layout.
-- Use glassmorphism card style.
+- Use the token-driven bento surface style defined in `DESIGN.md`.
 - Token number must be visually prominent.
 - Role guards live in route layouts/middleware and server actions, not only inside page components.
 - Add `data-testid` only for stable E2E selectors.
 - Meet WCAG 2.1 AA.
+
+Local runtime contract:
+
+- Backend defaults to `8081`; frontend defaults to `3000`.
+- Both `/health` and `/api/health` return the same HTTP 200 health payload.
+- Login uses `{ npk, password }`; demo accounts are development-only and never enabled by production defaults.
+
+Redemption status contract:
+
+`DRAFT` → `PENDING_VERIFICATION` → `VERIFIED` → `PURCHASED` → `PICKUP_SCHEDULED` → `COMPLETED`, with `REJECTED` and `CANCELLED` terminal alternatives guarded by the service layer.
+
+Token expiry contract: tokens earned in year `N` expire on 31 December of year `N+3`.
 
 ---
 

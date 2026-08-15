@@ -96,7 +96,7 @@ export class AdminRedemptionsPage {
     cy.get(sel.common.body).then(($body) => {
       const actionBtn = "button[title='Track & Manage']";
       if ($body.find(actionBtn).length > 0) {
-        cy.get(actionBtn).first().click();
+        cy.get(actionBtn).first().should("have.attr", "data-hydrated", "true").click();
         cy.contains(/Redemption Review Center/i, { timeout: 8_000 }).should("be.visible");
       } else {
         cy.contains(/no requests|empty|results/i).should("exist");
@@ -156,7 +156,9 @@ export class AdminAdjustmentsPage {
       if ($body.find(sel.admin.adjMitraInput).length > 0) {
         cy.get(sel.admin.adjMitraInput).should("be.visible");
       } else {
-        cy.contains(/search|select mitra/i).should("exist");
+        cy.get("input[placeholder*='Search' i], input[placeholder*='Mitra' i]")
+          .should("exist")
+          .and("be.visible");
       }
     });
     return this;

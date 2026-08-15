@@ -4,15 +4,13 @@ import { defineConfig } from "cypress";
  * TestSuite/cypress.config.ts
  *
  * Cypress E2E configuration.
- * baseUrl is controlled via CYPRESS_BASE_URL env variable for CI/CD flexibility.
+ * Local is the safe default. Deployments must opt in with CYPRESS_BASE_URL.
  */
 export default defineConfig({
   e2e: {
     // ── Base URL ────────────────────────────────────────────────────────────
     // Override with: CYPRESS_BASE_URL=https://staging.example.com cypress run
-    baseUrl:
-      process.env.CYPRESS_BASE_URL ??
-      "https://m4nx9kc046wxksnhs6zfseor.34.128.73.127.sslip.io",
+    baseUrl: process.env.CYPRESS_BASE_URL ?? "http://localhost:3000",
 
     // ── Test file locations ─────────────────────────────────────────────────
     supportFile:       "cypress/support/e2e.ts",
@@ -32,9 +30,11 @@ export default defineConfig({
     // ── Reporting ───────────────────────────────────────────────────────────
     video:                  false,   // Enable on CI for debugging
     screenshotOnRunFailure: true,
+    allowCypressEnv: false,
 
-    setupNodeEvents(_on, _config) {
+    setupNodeEvents(_on, config) {
       // Node event plugins (e.g. code coverage) go here
+      return config;
     },
   },
 });

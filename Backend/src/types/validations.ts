@@ -27,10 +27,13 @@ export const TokenEventTypeEnum = z.enum([
 export const ClaimStatusEnum = z.enum(["PENDING", "APPROVED", "REJECTED"]);
 export const UploadStatusEnum = z.enum(["STAGED", "VALIDATING", "PROCESSING", "COMPLETED", "FAILED"]);
 export const RedemptionStatusEnum = z.enum([
-  "REQUESTED",
-  "REVIEWED",
-  "ACCEPTED",
+  "DRAFT",
+  "PENDING_VERIFICATION",
+  "VERIFIED",
   "REJECTED",
+  "PURCHASED",
+  "PICKUP_SCHEDULED",
+  "COMPLETED",
   "CANCELLED",
 ]);
 
@@ -56,7 +59,7 @@ export const redeemRequestSchema = z.object({
 
 export const updateStatusSchema = z.object({
   status: RedemptionStatusEnum,
-  reason: z.string().optional(),
+  reason: z.string().trim().max(500).optional(),
 });
 
 export const redemptionVerificationSchema = z.object({

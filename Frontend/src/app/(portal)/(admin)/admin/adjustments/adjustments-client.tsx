@@ -5,7 +5,7 @@ import { UserResponse } from "@/lib/api-client";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Edit2, Search, Coins } from "lucide-react";
+import { Edit2, Search } from "lucide-react";
 import AdjustmentModal from "./adjustment-modal";
 import { cn } from "@/lib/utils";
 import { Pagination } from "@/components/shared/pagination";

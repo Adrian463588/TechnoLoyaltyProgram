@@ -4,35 +4,29 @@ import React from "react";
 import { auth, getServerToken } from "@/lib/auth";
 import { employeeApi, adminApi } from "@/lib/api-client";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
-import { DashboardContent } from "./dashboard-content";
+import { DashboardContent, type DashboardData } from "./dashboard-content";
 
 /**
  * Fetches dashboard data from the real backend.
  */
-async function getDashboardData(token: string) {
-  try {
-    const [summary, settings] = await Promise.all([
-      employeeApi.getDashboard(token),
-      adminApi.getSystemSettings(token).catch(() => null),
-    ]);
+async function getDashboardData(token: string): Promise<DashboardData> {
+  const [summary, settings] = await Promise.all([
+    employeeApi.getDashboard(token),
+    adminApi.getSystemSettings(token),
+  ]);
 
-    return {
-      tokenBalance:      summary.tokenSummary.totalTokens,
-      tier:              summary.user.membershipTier,
-      eligibilityStatus: { eligible: summary.tokenSummary.isEligibleForReward },
-      period:            "—",
-      recentTransactions: summary.recentTransactions,
-      settings:          settings,
-    };
-  } catch {
-    return {
-      tokenBalance:      0,
-      tier:              "SAPHIRE" as const,
-      eligibilityStatus: { eligible: false },
-      period:            "—",
-      settings:          null,
-    };
-  }
+  return {
+    tokenBalance: summary.tokenSummary.totalTokens,
+    tier: summary.user.membershipTier ?? summary.tokenSummary.currentTier,
+    eligibilityStatus: {
+      eligible: summary.tokenSummary.isEligibleForReward,
+      reasons: summary.tokenSummary.eligibilityReasons ?? [],
+      reason: summary.tokenSummary.eligibilityReasons?.[0],
+    },
+    period: summary.tokenSummary.periodEnd,
+    recentTransactions: summary.recentTransactions,
+    settings,
+  };
 }
 
 export default async function DashboardPage() {
@@ -48,7 +42,7 @@ export default async function DashboardPage() {
 
       <div className="flex-1 p-4 md:p-6 max-w-[1600px] w-full mx-auto">
         <DashboardContent 
-          data={data as any} 
+          data={data}
           userName={session?.user?.name || "Member"} 
         />
       </div>

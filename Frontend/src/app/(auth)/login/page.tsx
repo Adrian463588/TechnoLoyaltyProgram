@@ -1,19 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
-import { useForm } from "react-hook-form";
+import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/lib/validations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Lock, Shield, Trophy, Users } from "lucide-react";
-import { motion } from "framer-motion";
+import { Loader2, Lock } from "lucide-react";
 import { DemoAccountDock } from "@/components/auth/demo-account-dock";
 
 const ROLE_REDIRECT: Record<string, string> = {
@@ -26,10 +25,17 @@ export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const isHydrated = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
 
   const {
     register,
     handleSubmit,
+    getValues,
+    setError,
     setValue,
     formState: { errors },
   } = useForm<LoginInput>({
@@ -58,6 +64,21 @@ export default function LoginPage() {
     const role = session?.user?.role as string | undefined;
     const redirectTo = role ? (ROLE_REDIRECT[role] ?? "/employee/dashboard") : "/employee/dashboard";
     router.push(redirectTo as Route);
+  };
+
+  const onInvalidSubmit = (_errors: FieldErrors<LoginInput>) => {
+    setErrorMsg(null);
+    setIsLoading(false);
+  };
+
+  const validateEmptyFields = () => {
+    const values = getValues();
+    if (!values.npk?.trim()) {
+      setError("npk", { type: "manual", message: "NPK is required" });
+    }
+    if (!values.password) {
+      setError("password", { type: "manual", message: "Password is required" });
+    }
   };
 
   return (
@@ -91,7 +112,13 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <form
+          onSubmit={handleSubmit(onSubmit, onInvalidSubmit)}
+          className="space-y-4"
+          data-testid="login-form"
+          data-hydrated={isHydrated ? "true" : "false"}
+          noValidate
+        >
           <div className="space-y-2">
             <Label htmlFor="npk" className="text-sm font-medium">
               NPK (Employee ID)
@@ -146,6 +173,7 @@ export default function LoginPage() {
             type="submit"
             className="w-full"
             disabled={isLoading}
+            onClick={validateEmptyFields}
             size="lg"
             data-testid="login-submit"
           >

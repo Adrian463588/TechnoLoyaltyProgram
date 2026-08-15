@@ -39,7 +39,7 @@ The **Berijalan Loyalty Program Portal** is a full-stack monorepo with three ind
 
 | Package | Tech | Purpose |
 |---------|------|---------|
-| `Frontend/` | Next.js 15 + NextAuth | Role-based UI (Mitra, HC, Team Leader) |
+| `Frontend/` | Next.js 16 + NextAuth | Role-based UI (Mitra, HC, Team Leader) |
 | `Backend/` | Express 4 + Prisma 7 | REST API, token engine, audit log |
 | `TestSuite/` | Cypress + Vitest | E2E, integration, and unit tests |
 
@@ -47,7 +47,7 @@ The **Berijalan Loyalty Program Portal** is a full-stack monorepo with three ind
 - Role-Based Access Control: `MITRA`, `HC`, `TEAM_LEADER`
 - Append-only `TokenLedger` for strict financial auditing
 - Automated token expiry and division-specific calculation engines
-- Glassmorphism dark-mode UI with Framer Motion animations
+- Light-first token-driven bento UI with optional dark mode and Framer Motion animations
 - AI chatbot powered by Gemini (optional)
 - Redis cache layer (optional for dev, enabled for prod)
 
@@ -57,9 +57,9 @@ The **Berijalan Loyalty Program Portal** is a full-stack monorepo with three ind
 
 ```
 Browser
-  └─► Next.js 15 (Frontend :3000)
+  └─► Next.js 16 (Frontend :3000)
         └─► NextAuth.js (session)
-        └─► Express API (Backend :8080)
+        └─► Express API (Backend :8081)
               └─► Prisma ORM
               └─► PostgreSQL :5432
               └─► Redis :6379 (optional)
@@ -67,7 +67,7 @@ Browser
 
 ```mermaid
 graph TD
-    A[Root Monorepo] --> B[Frontend — Next.js 15]
+    A[Root Monorepo] --> B[Frontend — Next.js 16]
     A --> C[Backend — Express 4]
     A --> D[TestSuite — Cypress + Vitest]
     C --> E[(PostgreSQL)]
@@ -128,7 +128,7 @@ Edit `Backend/.env`:
 
 ```env
 # Server
-PORT=8080
+PORT=8081
 NODE_ENV=development
 
 # Database — replace with your local PostgreSQL credentials
@@ -166,10 +166,10 @@ AUTH_TRUST_HOST=true
 NEXTAUTH_SECRET="your-super-secret-32-char-string-here"
 
 # Backend URL — server-side (internal)
-BACKEND_URL="http://localhost:8080/api"
+BACKEND_URL="http://localhost:8081/api"
 
 # Backend URL — client-side (browser)
-NEXT_PUBLIC_BACKEND_URL="http://localhost:8080/api"
+NEXT_PUBLIC_BACKEND_URL="http://localhost:8081/api"
 
 # AI Chatbot (optional)
 GEMINI_API_KEY="your-gemini-api-key-here"
@@ -235,8 +235,8 @@ npm run dev:all
 | Service | URL |
 |---------|-----|
 | **Frontend** | http://localhost:3000 |
-| **Backend API** | http://localhost:8080/api |
-| **API Health** | http://localhost:8080/api/health |
+| **Backend API** | http://localhost:8081/api |
+| **API Health** | http://localhost:8081/health or http://localhost:8081/api/health |
 
 Or run each separately in different terminals:
 
@@ -250,13 +250,14 @@ cd Frontend && npm run dev
 
 **Default seed accounts:**
 
-| Role | Email | Password |
-|------|-------|----------|
-| HC (Admin) | `hc@berijalan.id` | `admin123` |
-| Team Leader | `tl@berijalan.id` | `leader123` |
-| Mitra | `mitra@berijalan.id` | `mitra123` |
+| Role | Login |
+|------|-------|
+| HC (Admin) | NPK `12345` + `DEMO_PASSWORD` |
+| Team Leader | NPK `23456` + `DEMO_PASSWORD` |
+| Mitra | NPK `34567` + `DEMO_PASSWORD` |
 
-> Check `Backend/prisma/seed.ts` for the full seeded data.
+> Set `DEMO_PASSWORD` before running a development seed. Production seed uses
+> the separately managed `SEED_ADMIN_PASSWORD` variable.
 
 ---
 
@@ -279,7 +280,7 @@ docker compose logs -f frontend
 docker compose down
 ```
 
-Services will be available at the same ports (`3000`, `8080`).
+Services will be available at the documented ports (`3000`, `8081`).
 
 ---
 

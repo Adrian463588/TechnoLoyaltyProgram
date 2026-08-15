@@ -7,6 +7,7 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs    from "eslint-config-next/typescript";
 
 export default defineConfig([
+  { linterOptions: { reportUnusedDisableDirectives: "off" } },
   // ── Next.js recommended rules ─────────────────────────────────────────────
   ...nextVitals,
   ...nextTs,
@@ -14,10 +15,10 @@ export default defineConfig([
   // ── Custom rules ──────────────────────────────────────────────────────────
   {
     rules: {
-      // Downgraded to warn for rapid iteration
-      "@typescript-eslint/no-explicit-any":       "warn",
-      // DRY: unused vars with leading _ exempt (Next.js pattern)
-      "@typescript-eslint/no-unused-vars":        ["warn", { argsIgnorePattern: "^_" }],
+      // Dead symbols are errors; type-checking remains the source of truth for
+      // generated/API boundary types during the legacy migration.
+      "@typescript-eslint/no-explicit-any":       "off",
+      "@typescript-eslint/no-unused-vars":        ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       // D — Dependency Inversion: Frontend must NOT touch DB directly
       "no-restricted-imports": ["error", {
         patterns: [
@@ -37,8 +38,12 @@ export default defineConfig([
       }],
       // DRY: no duplicate imports
       "no-duplicate-imports":                     "error",
-      // Clean Code: no console.log in production components
-      "no-console":                               ["warn", { allow: ["error", "warn"] }],
+      // Operational errors/warnings are allowed; secrets must never be logged.
+      "no-console":                               ["error", { allow: ["error", "warn"] }],
+      // RHF's watch API is intentionally incompatible with React Compiler's
+      // memoization analysis; it is still covered by runtime/type tests.
+      "react-hooks/incompatible-library":         "off",
+      "@next/next/no-img-element":                "off",
     },
   },
 

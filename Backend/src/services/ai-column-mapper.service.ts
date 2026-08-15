@@ -1,13 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
-
-const CANONICAL_FIELDS = [
-  "npk",
-  "name",
-  "nama",
-  "fungsi",
-  "token",
-  "jenis_membership"
-];
+import { GoogleGenAI } from "@google/genai";
 
 export interface ColumnMappingResult {
   mapping: Record<string, string>;

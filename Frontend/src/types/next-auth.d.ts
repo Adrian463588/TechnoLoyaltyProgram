@@ -17,6 +17,8 @@ declare module "next-auth" {
       id: string;
       npk: string;
       role: "MITRA" | "TEAM_LEADER" | "HC_PM";
+      division?: string;
+      partnerStatus?: string;
       divisionId?: string;
     } & DefaultSession["user"];
   }
@@ -24,6 +26,8 @@ declare module "next-auth" {
   interface User extends DefaultUser {
     npk: string;
     role: "MITRA" | "TEAM_LEADER" | "HC_PM";
+    division?: string;
+    partnerStatus?: string;
     divisionId?: string;
   }
 }
@@ -33,6 +37,8 @@ declare module "next-auth/jwt" {
     id: string;
     npk: string;
     role: "MITRA" | "TEAM_LEADER" | "HC_PM";
+    division?: string;
+    partnerStatus?: string;
     divisionId?: string;
   }
 }

@@ -9,15 +9,20 @@
  */
 
 import { prisma } from "@/db/prisma";
-import { DivisionType, MemberTierType, PartnershipStatus, TokenEventType } from "@prisma/client";
+import { DivisionType, MemberTierType, PartnershipStatus, Prisma, TokenEventType } from "@prisma/client";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
 import { LOYALTY_POLICIES } from "@/policies/loyalty.policy";
 import { cacheInvalidationService } from "@/utils/cache/cache-invalidation.service";
+import { logAudit } from "./audit.service";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function buildPeriodKey(year: number, month: number): string {
   return `${String(year)}-${String(month + 1).padStart(2, "0")}`;
+}
+
+function buildDayKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 /**
@@ -34,10 +39,15 @@ async function acquireJobRun(
 
   if (existing) return null; // already run — skip
 
-  const run = await prisma.jobRun.create({
-    data: { jobName, periodKey, status: "RUNNING" },
-  });
-  return run.id;
+  try {
+    const run = await prisma.jobRun.create({
+      data: { jobName, periodKey, status: "RUNNING" },
+    });
+    return run.id;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return null;
+    throw error;
+  }
 }
 
 async function finishJobRun(
@@ -339,14 +349,14 @@ export class EvaluationService {
   }
 
   /**
-   * Processes token expiry based on a 5-year lifecycle.
-   * Tokens earned in Year N expire on Dec 31 of Year (N+4).
+   * Processes token expiry based on a four-calendar-year lifecycle.
+   * Tokens earned in Year N expire on Dec 31 of Year (N+3).
    *
    * AGENTS.md §8: Uses JobRun guard + tokenLedgerRepository for append-only writes.
    */
   async runTokenExpiryJob(forceYear?: number): Promise<{ skipped: boolean; message: string } | { processedUsers: number; expiredTokens: number; entriesCreated: number }> {
-    const today = new Date();
-    const targetYear = forceYear ?? today.getFullYear();
+    const now = new Date();
+    const targetYear = forceYear ?? now.getFullYear();
     const periodKey  = `${String(targetYear)}-token-expiry`;
     const JOB_NAME   = "token-expiry";
 
@@ -371,56 +381,21 @@ export class EvaluationService {
           by: ["earnedYear"],
           where: {
             userId:     user.id,
-            expiresAt:  { lte: today },
+            expiresAt:  { lte: forceYear ? new Date(Date.UTC(targetYear, 11, 31, 23, 59, 59, 999)) : now },
             earnedYear: { not: null },
           },
           _sum: { amount: true },
         });
 
         for (const cohort of expiredCohorts) {
-          if (!cohort.earnedYear || !cohort._sum.amount) continue;
+          if (cohort.earnedYear === null || !cohort._sum.amount || cohort._sum.amount <= 0) continue;
 
           const year               = cohort.earnedYear;
           const totalEarnedInCohort = cohort._sum.amount;
 
-          // Check if EXPIRED entry already exists for this cohort (idempotency within cohort)
-          const alreadyExpired = await prisma.tokenLedger.aggregate({
-            where: {
-              userId:    user.id,
-              eventType: TokenEventType.EXPIRED,
-              reason:    { contains: `Cohort ${String(year)}` },
-            },
-            _sum: { amount: true },
-          });
-
-          const previouslyExpiredAmount = Math.abs(alreadyExpired._sum.amount ?? 0);
-
-          // FIFO: calculate how many debits consumed tokens from earlier cohorts
-          const totalDebits = await prisma.tokenLedger.aggregate({
-            where: {
-              userId:    user.id,
-              amount:    { lt: 0 },
-              eventType: { not: TokenEventType.EXPIRED },
-            },
-            _sum: { amount: true },
-          });
-
-          const previousCredits = await prisma.tokenLedger.aggregate({
-            where: {
-              userId:    user.id,
-              amount:    { gt: 0 },
-              earnedYear: { lt: year },
-            },
-            _sum: { amount: true },
-          });
-
-          const totalDebitsAmount       = Math.abs(totalDebits._sum.amount ?? 0);
-          const previousCreditsAmount   = previousCredits._sum.amount ?? 0;
-          const debitsConsumedFromCohort = Math.max(0, totalDebitsAmount - previousCreditsAmount);
-          const remainingInCohort       = Math.max(
-            0,
-            totalEarnedInCohort - debitsConsumedFromCohort - previouslyExpiredAmount,
-          );
+          // The cohort aggregate already includes credits, redemption debits,
+          // penalties, and prior expiry events for that earned year.
+          const remainingInCohort = Math.max(0, totalEarnedInCohort);
 
           if (remainingInCohort > 0) {
             // AGENTS.md: use repository, not raw prisma.tokenLedger.create
@@ -431,16 +406,16 @@ export class EvaluationService {
               reason:      `Token expired (Cohort ${String(year)})`,
               performedBy: "SYSTEM",
               earnedYear:  year,
+              idempotencyKey: `token-expiry:${user.id}:${year}:${targetYear}`,
             });
 
-            await prisma.auditLog.create({
-              data: {
-                actorId:         "SYSTEM",
-                action:          "TOKEN_EXPIRED",
-                targetUserId:    user.id,
-                previousValue:   { cohort: year },
-                newValue:        { expired: remainingInCohort },
-              },
+            await logAudit({
+              action: "TOKEN_EXPIRED",
+              actorId: "SYSTEM",
+              targetType: "TokenLedger",
+              targetId: user.id,
+              previousValue: { cohort: year },
+              newValue: { expired: remainingInCohort },
             });
 
             // Post-commit cache invalidation (no transaction wrapped around the ledger insertion here directly except inside the repository)
@@ -450,6 +425,71 @@ export class EvaluationService {
             results.entriesCreated += 1;
           }
         }
+      }
+
+      await finishJobRun(runId, "SUCCESS", results);
+      return results;
+    } catch (err) {
+      await finishJobRun(runId, "FAILED", { error: String(err) });
+      throw err;
+    }
+  }
+
+  /**
+   * Creates an in-app reminder event for positive cohorts expiring within
+   * thirty days. The daily JobRun key prevents duplicate notifications when
+   * multiple worker instances or interval ticks overlap.
+   */
+  async runTokenExpiryReminderJob(forceDate?: Date): Promise<
+    { skipped: boolean; message: string }
+    | { evaluatedUsers: number; remindersCreated: number }
+  > {
+    const now = forceDate ?? new Date();
+    const periodKey = `${buildDayKey(now)}-token-expiry-reminder`;
+    const jobName = "token-expiry-reminder";
+    const runId = await acquireJobRun(jobName, periodKey);
+
+    if (!runId) {
+      return { skipped: true, message: `Already run for period ${periodKey}` };
+    }
+
+    const expiresBefore = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const results = { evaluatedUsers: 0, remindersCreated: 0 };
+
+    try {
+      const users = await prisma.user.findMany({
+        where: { partnerStatus: { in: [PartnershipStatus.ACTIVE, PartnershipStatus.INACTIVE] } },
+        select: { id: true },
+      });
+
+      for (const user of users) {
+        results.evaluatedUsers++;
+        const expiringCohorts = (await tokenLedgerRepository.getExpirySummary(user.id))
+          .filter((cohort) => (
+            cohort.expiresAt !== null
+            && cohort.expiresAt > now
+            && cohort.expiresAt <= expiresBefore
+            && cohort.amount > 0
+          ));
+
+        if (expiringCohorts.length === 0) continue;
+
+        await logAudit({
+          action: "TOKEN_EXPIRY_REMINDER",
+          actorId: "SYSTEM",
+          targetType: "User",
+          targetId: user.id,
+          newValue: {
+            periodKey,
+            totalTokens: expiringCohorts.reduce((total, cohort) => total + cohort.amount, 0),
+            cohorts: expiringCohorts.map((cohort) => ({
+              earnedYear: cohort.earnedYear,
+              expiresAt: cohort.expiresAt?.toISOString(),
+              amount: cohort.amount,
+            })),
+          },
+        });
+        results.remindersCreated++;
       }
 
       await finishJobRun(runId, "SUCCESS", results);

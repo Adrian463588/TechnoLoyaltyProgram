@@ -12,22 +12,20 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerToken } from "@/lib/auth";
+import { BACKEND_URL } from "@/lib/backend-url";
 
 export async function POST(req: NextRequest) {
   try {
     const token = await getServerToken();
     const body: unknown = await req.json();
 
-    const backendUrl =
-      process.env.BACKEND_URL ??
-      process.env.NEXT_PUBLIC_BACKEND_URL ??
-      "http://localhost:8080";
-
-    const res = await fetch(`${backendUrl}/api/admin/uploads/commit`, {
+    const idempotencyKey = req.headers.get("Idempotency-Key");
+    const res = await fetch(`${BACKEND_URL}/api/admin/uploads/commit`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
+        ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
       },
       body: JSON.stringify(body),
     });

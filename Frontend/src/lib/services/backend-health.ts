@@ -1,4 +1,4 @@
-const BACKEND_URL = process.env["NEXT_PUBLIC_BACKEND_URL"] ?? process.env["BACKEND_URL"] ?? "http://localhost:8080";
+import { BACKEND_URL } from "@/lib/backend-url";
 
 export async function checkBackendHealth(): Promise<boolean> {
   if (process.env.NODE_ENV === "production") return true;

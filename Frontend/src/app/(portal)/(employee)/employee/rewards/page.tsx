@@ -12,13 +12,13 @@ export default async function RewardsPage() {
 
   // Fetch token summary, dashboard (for user profile), and reward catalog in parallel
   const [dashboard, catalog] = await Promise.all([
-    employeeApi.getDashboard(token).catch(() => null),
-    employeeApi.getRewardCatalog(token).catch(() => []),
+    employeeApi.getDashboard(token),
+    employeeApi.getRewardCatalog(token),
   ]);
 
-  const userTokens = dashboard?.tokenSummary.totalTokens ?? 0;
-  const isEligible = dashboard?.tokenSummary.isEligibleForReward ?? false;
-  const userTier = dashboard?.user.membershipTier ?? "SAPHIRE";
+  const userTokens = dashboard.tokenSummary.totalTokens;
+  const isEligible = dashboard.tokenSummary.isEligibleForReward;
+  const userTier = dashboard.user.membershipTier;
 
   // Map backend DTO to the local RewardItem shape expected by RewardsClient
   const rewards = catalog.map((r) => ({
@@ -26,8 +26,7 @@ export default async function RewardsPage() {
     name: r.name,
     description: r.description,
     tokenCost: r.tokenCost,
-    // Backend does not yet expose category — default to "Voucher" until added
-    category: "Voucher" as const,
+    category: r.category,
     imageUrl: r.imageUrl,
     isAvailable: r.isActive,
     stock: r.stock,
@@ -61,6 +60,7 @@ export default async function RewardsPage() {
           rewards={rewards}
           userTokens={userTokens}
           isEligible={isEligible}
+          eligibilityReasons={dashboard.tokenSummary.eligibilityReasons}
           userTier={userTier}
           token={token}
         />

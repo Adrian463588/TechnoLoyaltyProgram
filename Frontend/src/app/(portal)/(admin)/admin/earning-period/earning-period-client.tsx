@@ -25,14 +25,12 @@ import {
   Sparkles,
   CheckCircle2
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 
 interface EarningPeriodClientProps {
@@ -104,7 +102,7 @@ export function EarningPeriodClient({ initialSettings, sessionToken }: EarningPe
     setShowConfirm(false);
     setIsUpdating(true);
     try {
-      const { id, updatedAt, ...payload } = settings as any;
+      const { id: _id, updatedAt: _updatedAt, ...payload } = settings as any;
       await adminApi.updateSystemSettings(sessionToken, payload);
       toast.success("Settings updated successfully. These will recur annually.");
     } catch (error) {

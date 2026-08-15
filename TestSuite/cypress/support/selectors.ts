@@ -15,12 +15,13 @@ export const sel = {
     npkError:      "#npk-error",
     passwordError: "#password-error",
     /** floating demo dock toggle (bottom-left UserCircle button) */
-    demoDockToggle: "button.fixed.bottom-6.left-6",
+    demoDockToggle: "[data-testid=demo-account-toggle]",
     errorAlert:    "[role=alert]",
   },
 
   // ── Shell / Navbar ───────────────────────────────────────────────────────
   shell: {
+    themeToggle:      "[data-testid=theme-toggle]",
     /** profile menu trigger wraps a <m.div> with data-testid */
     profileTrigger:  "[data-testid=profile-menu-trigger]",
     /** Radix DropdownMenuContent — no data-testid on content element,
@@ -38,6 +39,7 @@ export const sel = {
     tierProgress:     "[data-testid=employee-dashboard-tier-progress]",
     redeemButton:     "[data-testid=employee-dashboard-redeem-button]",
     activityRow:      "[data-testid^=employee-dashboard-activity-]",
+    rewardsReady:     "[data-testid=employee-rewards-ready]",
     rewardCard:       "[data-testid^=redeem-btn-]",
     confirmRedeemBtn: "[data-testid=confirm-redeem-btn]",
     doneBtn:          "[data-testid=done-btn]",

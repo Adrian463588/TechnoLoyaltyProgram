@@ -3,12 +3,11 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
-import { TierBadge, MembershipTier, EligibilityChip } from "@/components/shared/status-badge";
+import { MembershipTier, EligibilityChip } from "@/components/shared/status-badge";
 import { TokenCardSkeleton } from "@/components/shared/skeleton-card";
 import { AnimatedTokenCount } from "./animated-token-count";
-import { Coins, Info, Sparkles, X, ChevronRight } from "lucide-react";
+import { Coins, X, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
@@ -33,7 +32,6 @@ export function TokenHeroSection({
     return <TokenCardSkeleton />;
   }
 
-  // Tier-based accent colors for text
   const tierAccents = {
     SAPHIRE: { text: "text-blue-600" },
     EMERALD: { text: "text-emerald-600" },
@@ -61,17 +59,24 @@ export function TokenHeroSection({
           
           <div className="flex-1 flex flex-col justify-center mb-6">
             <div className="flex items-baseline gap-2">
-              <div className="text-7xl font-black text-[--color-accent] font-display tracking-tighter leading-none" data-testid="token-counter">
+              <div className={`text-7xl font-black ${tierAccents.text} font-display tracking-tighter leading-none`} data-testid="token-counter">
                 <AnimatedTokenCount value={tokenBalance ?? 0} />
               </div>
             </div>
           </div>
+
+          <EligibilityChip
+            eligible={eligibilityStatus.eligible}
+            reason={eligibilityStatus.reason ?? "eligibility requirements are not met"}
+            className="self-start"
+          />
 
           {/* CTA Link - No divider */}
           {canRedeem && (
             <div className="mt-auto pt-4">
               <Link 
                 href="/employee/rewards" 
+                data-testid="employee-dashboard-redeem-button"
                 className="group/link inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-[--color-text-secondary] hover:text-[--color-accent] transition-colors"
               >
                 Redeem Reward Now

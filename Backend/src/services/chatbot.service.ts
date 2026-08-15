@@ -1,5 +1,4 @@
 import { prisma } from "@/db/prisma";
-import { RedemptionStatus } from "@prisma/client";
 
 /**
  * ChatbotService
@@ -209,7 +208,7 @@ export class ChatbotService {
    */
   async getGlobalPendingActions() {
     const [pendingRedemptions, pendingClaims] = await Promise.all([
-      prisma.redemptionRequest.count({ where: { status: "REQUESTED" } }),
+      prisma.redemptionRequest.count({ where: { status: "PENDING_VERIFICATION" } }),
       prisma.shiftClaim.count({ where: { status: "PENDING" } })
     ]);
 

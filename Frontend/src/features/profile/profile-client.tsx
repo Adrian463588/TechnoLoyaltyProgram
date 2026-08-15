@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { User, Mail, Shield, Lock, Bell, Fingerprint, CreditCard, HelpCircle, ExternalLink } from "lucide-react";
+import { User, Mail, Shield, Lock, Fingerprint } from "lucide-react";
 import { BentoCard } from "@/components/ui/bento-card";
 import { ChangePasswordForm } from "./change-password-form";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 
 type Tab = "general" | "security";
 

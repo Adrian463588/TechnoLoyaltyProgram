@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, TrendingUp, ChevronRight, ArrowUpRight, Clock, Gift, Zap, Coins, ShieldCheck, MapPin, Calendar, Users, LayoutDashboard } from "lucide-react";
+import { ShoppingBag, TrendingUp, ChevronRight, Clock, Gift, Zap, Coins, ShieldCheck, MapPin, Calendar, Users, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { TokenHeroSection } from "@/components/dashboard/token-hero-section";
 import { DashboardClock } from "@/components/dashboard/dashboard-clock";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { BentoCard } from "@/components/ui/bento-card";
 import { cn } from "@/lib/utils";
 import { RedemptionQueueTable } from "@/features/admin/redemption-queue-table";
+import type { RewardRequestStatus } from "@/types";
 
 interface TokenLedgerEntry {
   id: string;
@@ -20,10 +21,20 @@ interface TokenLedgerEntry {
   createdAt: string;
 }
 
-interface DashboardData {
+export interface DashboardTeamRedemption {
+  id: string;
+  mitraName: string;
+  division: string;
+  rewardName: string;
+  tokenCost: number;
+  status: RewardRequestStatus;
+  submittedAt: string;
+}
+
+export interface DashboardData {
   tokenBalance: number;
   tier: "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
-  eligibilityStatus: { eligible: boolean; reason?: string };
+  eligibilityStatus: { eligible: boolean; reason?: string; reasons?: string[] };
   period: string;
   recentTransactions?: TokenLedgerEntry[];
   settings: import("@/lib/api-client").SystemSettingsResponse | null;
@@ -34,7 +45,7 @@ interface DashboardData {
     DIAMOND: number;
   };
   teamTotalTokens?: number;
-  teamRedemptions?: any[] | null;
+  teamRedemptions?: DashboardTeamRedemption[] | null;
 }
 
 // Animation variants
@@ -85,7 +96,6 @@ const formatDate = (dateStr: string) => {
 };
 
 export function DashboardContent({ data, userName, welcomeMessage }: { data: DashboardData; userName?: string; welcomeMessage?: string }) {
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const router = useRouter();
 
   const transactions = data.recentTransactions || [];
@@ -265,11 +275,7 @@ export function DashboardContent({ data, userName, welcomeMessage }: { data: Das
       <div className="bento-span-12 grid grid-cols-12 gap-4">
         {/* Token Balance Card */}
         <motion.div variants={itemVariants} className="col-span-12 lg:col-span-4 h-full">
-          <div
-            onMouseEnter={() => setHoveredCard("tokens")}
-            onMouseLeave={() => setHoveredCard(null)}
-            className="h-full"
-          >
+            <div className="h-full">
             <TokenHeroSection
               tokenBalance={data.teamTotalTokens !== undefined && data.teamTotalTokens !== null ? data.teamTotalTokens : data.tokenBalance}
               tier={data.tier}
@@ -281,7 +287,7 @@ export function DashboardContent({ data, userName, welcomeMessage }: { data: Das
         {/* Dynamic Tier Card / Team Tier Distribution */}
         <motion.div variants={itemVariants} className="col-span-12 lg:col-span-4 h-full">
           {data.teamTierDistribution ? (
-            <BentoCard className="h-full p-6 relative overflow-hidden bg-white border-[var(--color-border-subtle)] shadow-sm group">
+            <BentoCard data-testid="employee-dashboard-tier-progress" className="h-full p-6 relative overflow-hidden bg-white border-[var(--color-border-subtle)] shadow-sm group">
               <div className="relative z-10 flex flex-col h-full">
                 <div className="flex items-baseline justify-between mb-4">
                   <h3 className="text-[10px] font-black tracking-[0.2em] uppercase opacity-60 text-slate-400">
@@ -334,7 +340,7 @@ export function DashboardContent({ data, userName, welcomeMessage }: { data: Das
               }[tier] || { bg: "bg-slate-50", border: "border-slate-100", text: "text-slate-700", accent: "bg-slate-600", light: "bg-slate-100" };
 
               return (
-                <div className={cn("bento-card h-full p-6 relative overflow-hidden group transition-all duration-500", config.bg, config.border)}>
+                <div data-testid="employee-dashboard-tier-progress" className={cn("bento-card h-full p-6 relative overflow-hidden group transition-all duration-500", config.bg, config.border)}>
                   <div className="relative z-10 flex flex-col h-full">
                     <div className="flex items-baseline justify-between mb-4">
                       <h3 className={cn("text-[10px] font-black tracking-[0.2em] uppercase opacity-60", config.text)}>

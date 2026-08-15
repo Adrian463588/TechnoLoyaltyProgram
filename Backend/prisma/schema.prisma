@@ -63,10 +63,13 @@ enum UploadStatus {
 }
 
 enum RedemptionStatus {
-  REQUESTED
-  REVIEWED
-  ACCEPTED
+  DRAFT
+  PENDING_VERIFICATION
+  VERIFIED
   REJECTED
+  PURCHASED
+  PICKUP_SCHEDULED
+  COMPLETED
   CANCELLED
 }
 
@@ -114,6 +117,7 @@ model TokenLedger {
   reason       String? // required for MANUAL_ADJUSTMENT, penalties
   performedBy  String // actor ID
   createdAt    DateTime       @default(now())
+  idempotencyKey String?      @unique
 
   user User @relation(fields: [userId], references: [id])
 
@@ -190,7 +194,7 @@ model RedemptionRequest {
   mitraId                 String
   rewardItemId            String
   tokenCost               Int // snapshot
-  status                  RedemptionStatus @default(REQUESTED)
+  status                  RedemptionStatus @default(PENDING_VERIFICATION)
   submittedAt             DateTime         @default(now())
   verifiedBy              String? // actor ID
   verifiedAt              DateTime?
@@ -205,6 +209,7 @@ model RedemptionRequest {
   powerOfAttorneyUrl      String? // relative path to uploaded file
   powerOfAttorneyRequired Boolean          @default(false)
   powerOfAttorneyVerified Boolean?
+  idempotencyKey         String?          @unique
   createdAt               DateTime         @default(now())
   updatedAt               DateTime         @updatedAt
 
@@ -312,4 +317,30 @@ model SystemSetting {
   rewardPickupLocation String   @default("HC Office - Main Building")
   updatedBy           String?
   updatedAt           DateTime @updatedAt
+}
+
+// ── Versioned operational snapshots ──
+model PeriodSnapshot {
+  id         String        @id @default(uuid())
+  periodKey  String
+  division   DivisionType?
+  cutoffAt   DateTime
+  status     String        @default("COMPLETED")
+  sourceHash String?
+  payload    Json
+  createdBy  String
+  createdAt  DateTime      @default(now())
+
+  @@unique([periodKey, division])
+  @@index([cutoffAt(sort: Desc)])
+}
+
+// ── HC-managed token conversion rules ──
+model TokenRule {
+  id            String       @id @default(uuid())
+  division      DivisionType @unique
+  tokensPerUnit Int
+  effectiveFrom DateTime     @default(now())
+  updatedBy     String
+  updatedAt     DateTime     @updatedAt
 }

@@ -39,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${fontSyne.variable} ${fontDmSans.variable} ${fontJetBrainsMono.variable} h-full antialiased dark`} suppressHydrationWarning>
+    <html lang="en" className={`${fontSyne.variable} ${fontDmSans.variable} ${fontJetBrainsMono.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col hide-scrollbar" suppressHydrationWarning>
         <Providers>
           {children}

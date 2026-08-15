@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useDropzone } from "react-dropzone";
 import { RewardItem, MembershipTier } from "@/types";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Button } from "@/components/ui/button";
 import { SuccessAnimation } from "@/components/shared/success-animation";
-import { RedemptionPipeline } from "@/components/shared/redemption-pipeline";
 import { TierBadge } from "@/components/shared/status-badge";
 import { Coins, Lock, ShoppingBag, Loader2, FileText, Upload, Check, Trash2, AlertCircle, ArrowRight, X, Package } from "lucide-react";
 import { toast } from "sonner";
@@ -27,6 +26,7 @@ interface RewardsClientProps {
   rewards: RewardItem[];
   userTokens: number;
   isEligible: boolean;
+  eligibilityReasons?: string[];
   userTier: MembershipTier;
   token: string;
 }
@@ -44,8 +44,17 @@ const REQUIRED_DOCS = [
   { type: "NPWP", label: "NPWP (Tax ID)" },
 ];
 
-export default function RewardsClient({ rewards, userTokens, isEligible, userTier, token }: RewardsClientProps) {
+const subscribeToHydration = () => () => undefined;
+const getClientHydration = () => true;
+const getServerHydration = () => false;
+
+export default function RewardsClient({ rewards, userTokens, isEligible, eligibilityReasons = [], userTier, token }: RewardsClientProps) {
   const [selectedReward, setSelectedReward] = useState<RewardItem | null>(null);
+  const isHydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getClientHydration,
+    getServerHydration,
+  );
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [success, setSuccess] = useState(false);
   
@@ -134,7 +143,11 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
 
   if (!isEligible) {
     return (
-      <div className="space-y-4 animate-fade-up-in">
+      <div
+        className="space-y-4 animate-fade-up-in"
+        data-testid="employee-rewards-ready"
+        data-hydrated={isHydrated}
+      >
         <BentoCard className="p-12 flex flex-col items-center justify-center text-center space-y-5 border-dashed" glow={false}>
           <div className="p-5 bg-secondary/10 rounded-full text-secondary ring-2 ring-secondary/20 ring-offset-2 ring-offset-card">
             <Lock className="w-10 h-10" />
@@ -142,10 +155,9 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
           <div className="max-w-md space-y-2">
             <h2 className="text-xl font-bold text-foreground">Redemption Locked</h2>
             <p className="text-muted-foreground leading-relaxed">
-              You must have at least{" "}
-              <span className="font-semibold text-foreground">2,000 tokens</span> and an active
-              tier status to redeem rewards. Keep completing slots and sprints to unlock the
-              catalog!
+              {eligibilityReasons.length > 0
+                ? eligibilityReasons.join(" ")
+                : "Your account is not currently eligible to redeem rewards."}
             </p>
           </div>
         </BentoCard>
@@ -154,7 +166,11 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
   }
 
   return (
-    <div className="space-y-6 animate-fade-up-in">
+    <div
+      className="space-y-6 animate-fade-up-in"
+      data-testid="employee-rewards-ready"
+      data-hydrated={isHydrated}
+    >
       
       {/* Global Loader for Doc Checking */}
       {isCheckingDocs && (
@@ -201,7 +217,7 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
           const isAvailable = reward.isAvailable;
           const isOutOfStock = reward.stock !== null && reward.stock <= 0;
           const tierMet = TIER_RANK[userTier] >= TIER_RANK[reward.minTier];
-          const canRedeem = canAfford && isAvailable && tierMet && !isOutOfStock;
+          const canRedeem = isHydrated && canAfford && isAvailable && tierMet && !isOutOfStock;
 
           return (
             <BentoCard
@@ -280,9 +296,11 @@ export default function RewardsClient({ rewards, userTokens, isEligible, userTie
                 <div className="p-5 flex flex-col flex-1 space-y-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
-                        {reward.category}
-                      </span>
+                      {reward.category && (
+                        <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200">
+                          {reward.category}
+                        </span>
+                      )}
                       <TierBadge tier={reward.minTier} className="text-[10px] py-1 px-3 h-auto opacity-100" />
                     </div>
                     <h3 className="font-semibold text-foreground leading-tight mb-1">

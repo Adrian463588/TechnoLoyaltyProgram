@@ -41,6 +41,7 @@ export interface TokenSummary {
   pointsToNextTier: number | null;
   nextTier: TierStatus | null;
   isEligibleForReward: boolean;
+  eligibilityReasons: string[];
   memberStatus: PartnerStatus;
   cumulativeValue: number;
   periodEnd: string;

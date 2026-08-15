@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { RedemptionStatusChip, RedemptionStatus } from "@/components/shared/status-badge";
-import { ChevronLeft, ChevronRight, User, Calendar } from "lucide-react";
-import { DocumentVerificationDrawer } from "./document-verification-drawer";
+import { User, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
 
 type RedemptionRequest = {
   id: string;
@@ -18,7 +16,7 @@ type RedemptionRequest = {
   // Extra fields for drawer
   userId?: string;
   userNpk?: string;
-  userDocuments?: any[];
+  userDocuments?: Array<{ id: string; type: string; fileUrl: string }>;
   rewardId?: string;
   tokensSpent?: number;
   isRepresented?: boolean;

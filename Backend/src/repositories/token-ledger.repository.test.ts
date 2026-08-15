@@ -16,7 +16,8 @@ vi.mock("@/db/prisma", () => ({
     // Row-lock query used inside appendTokenEvent
     $queryRaw: vi.fn().mockResolvedValue([]),
     tokenLedger: {
-      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      aggregate: vi.fn(),
       create: vi.fn(),
     },
   },
@@ -29,7 +30,7 @@ describe("TokenLedgerRepository", () => {
 
   it("should calculate balanceAfter correctly on credit", async () => {
     // Mock previous balance of 100
-    vi.mocked(prisma.tokenLedger.findFirst).mockResolvedValue({ balanceAfter: 100 } as any);
+    vi.mocked(prisma.tokenLedger.aggregate).mockResolvedValue({ _sum: { amount: 100 } } as any);
     
     // Mock create to return the created entry
     vi.mocked(prisma.tokenLedger.create).mockImplementation(({ data }) => Promise.resolve({ ...data, id: "new-id" } as any) as any);
@@ -51,7 +52,7 @@ describe("TokenLedgerRepository", () => {
 
   it("should reject if balance becomes negative", async () => {
     // Mock previous balance of 30
-    vi.mocked(prisma.tokenLedger.findFirst).mockResolvedValue({ balanceAfter: 30 } as any);
+    vi.mocked(prisma.tokenLedger.aggregate).mockResolvedValue({ _sum: { amount: 30 } } as any);
 
     await expect(tokenLedgerRepository.appendTokenEvent({
       userId: "user-1",
@@ -62,7 +63,7 @@ describe("TokenLedgerRepository", () => {
   });
 
   it("should set expiresAt automatically for earned tokens", async () => {
-    vi.mocked(prisma.tokenLedger.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.tokenLedger.aggregate).mockResolvedValue({ _sum: { amount: 0 } } as any);
     vi.mocked(prisma.tokenLedger.create).mockImplementation(({ data }) => Promise.resolve({ ...data } as any) as any);
 
     const result = await tokenLedgerRepository.appendTokenEvent({
@@ -73,9 +74,9 @@ describe("TokenLedgerRepository", () => {
       performedBy: "SYSTEM",
     });
 
-    // 2023 + 4 = 2027, Dec 31
-    expect(result.expiresAt?.getFullYear()).toBe(2027);
-    expect(result.expiresAt?.getMonth()).toBe(11); // Dec
-    expect(result.expiresAt?.getDate()).toBe(31);
+    // Earned in 2023, expires on 31 December 2026.
+    expect(result.expiresAt?.getUTCFullYear()).toBe(2026);
+    expect(result.expiresAt?.getUTCMonth()).toBe(11); // Dec
+    expect(result.expiresAt?.getUTCDate()).toBe(31);
   });
 });

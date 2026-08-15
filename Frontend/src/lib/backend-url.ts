@@ -26,11 +26,11 @@ function sanitize(raw: string): string {
  * Used by NextAuth `authorize`, Server Actions, and Route Handlers.
  * Maps to the `BACKEND_URL` environment variable.
  *
- * If this falls back to localhost:8080, it means BACKEND_URL is missing
+ * If this falls back to localhost:8081, it means BACKEND_URL is missing
  * from the runtime environment — check Coolify → Frontend App → Env Vars.
  */
 export const BACKEND_URL = sanitize(
-  process.env["BACKEND_URL"] ?? "http://localhost:8080",
+  process.env["BACKEND_URL"] ?? "http://localhost:8081",
 );
 
 /**
@@ -39,5 +39,5 @@ export const BACKEND_URL = sanitize(
  * Maps to the `NEXT_PUBLIC_BACKEND_URL` environment variable.
  */
 export const PUBLIC_BACKEND_URL = sanitize(
-  process.env["NEXT_PUBLIC_BACKEND_URL"] ?? "http://localhost:8080",
+  process.env["NEXT_PUBLIC_BACKEND_URL"] ?? "http://localhost:8081",
 );

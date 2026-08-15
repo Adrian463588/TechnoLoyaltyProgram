@@ -16,14 +16,16 @@
 import { LoginPage } from "../pages/LoginPage";
 import { PortalShellPage } from "../pages/PortalShellPage";
 import { routes } from "../support/routes";
-import { getTestUser } from "../support/users";
+import { getDefaultNpk } from "../support/users";
 
 const login = new LoginPage();
 const shell = new PortalShellPage();
 
 // ── Login form ─────────────────────────────────────────────────────────────
 describe("Login page", () => {
-  beforeEach(() => login.visit());
+  beforeEach(() => {
+    login.visit();
+  });
 
   it("renders the NPK, password and submit fields", () => {
     login.assertLoaded();
@@ -38,9 +40,9 @@ describe("Login page", () => {
   });
 
   it("demo dock fills employee NPK when account is selected", () => {
-    const employee = getTestUser("MITRA");
+    const employeeNpk = getDefaultNpk("MITRA");
     login.openDemoDock().selectDemoAccount("Alice (Emerald)");
-    login.assertNpkValue(employee.npk);
+    login.assertNpkValue(employeeNpk);
   });
 });
 

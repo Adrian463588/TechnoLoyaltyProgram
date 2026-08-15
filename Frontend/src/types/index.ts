@@ -30,18 +30,21 @@ export interface RewardItem {
   name: string;
   description: string;
   tokenCost: number;
-  category: "Voucher" | "Merchandise" | "Experience" | "TimeOff";
+  category: string | null;
   imageUrl?: string;
   isAvailable: boolean;
   stock: number | null;
   minTier: "SAPHIRE" | "EMERALD" | "RUBY" | "DIAMOND";
 }
 
-export type RewardRequestStatus = 
-  | "REQUESTED"
-  | "REVIEWED" 
-  | "ACCEPTED" 
-  | "REJECTED" 
+export type RewardRequestStatus =
+  | "DRAFT"
+  | "PENDING_VERIFICATION"
+  | "VERIFIED"
+  | "REJECTED"
+  | "PURCHASED"
+  | "PICKUP_SCHEDULED"
+  | "COMPLETED"
   | "CANCELLED";
 
 export interface RewardRequest {

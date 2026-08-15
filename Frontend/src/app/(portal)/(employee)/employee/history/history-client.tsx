@@ -14,15 +14,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Pagination } from "@/components/shared/pagination";
-import { PipelineStep } from "@/components/shared/redemption-pipeline";
-import { Coins, History, Clock, TrendingUp, ShoppingBag, Gift, Zap, Info, X, ExternalLink, ShieldCheck, Check, Loader2, User, FileText, Eye, AlertCircle } from "lucide-react";
+import { Coins, History, Clock, TrendingUp, ShoppingBag, Gift, Zap, Info, X, ExternalLink, ShieldCheck, Check, Loader2, User, FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 
@@ -34,14 +31,6 @@ interface HistoryClientProps {
   redemptions: RedemptionResponse[];
   sessionToken: string;
 }
-
-const STATUS_TO_STEP: Record<string, PipelineStep> = {
-  REQUESTED: "submitted",
-  REVIEWED:  "review",
-  ACCEPTED:  "accepted",
-  REJECTED:  "submitted",
-  CANCELLED: "submitted",
-};
 
 export function HistoryClient({ entries, totalCount, currentPage, totalPages, redemptions, sessionToken }: HistoryClientProps) {
   const [selectedRedemption, setSelectedRedemption] = useState<RedemptionResponse | null>(null);
@@ -63,24 +52,6 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
       toast.error(err instanceof Error ? err.message : "Gagal membatalkan penukaran");
     } finally {
       setIsUpdating(false);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const base = "font-black text-[8px] tracking-[0.1em] uppercase px-2 py-0.5 rounded-lg border flex items-center w-fit gap-1 shadow-sm";
-    switch (status) {
-      case "REQUESTED":
-        return <span className={cn(base, "bg-orange-50 text-orange-600 border-orange-200")}>Requested</span>;
-      case "REVIEWED":
-        return <span className={cn(base, "bg-blue-50 text-blue-600 border-blue-200")}>Reviewed</span>;
-      case "ACCEPTED":
-        return <span className={cn(base, "bg-emerald-50 text-emerald-600 border-emerald-200")}>Accepted</span>;
-      case "REJECTED":
-        return <span className={cn(base, "bg-red-50 text-red-600 border-red-100")}>Rejected</span>;
-      case "CANCELLED":
-        return <span className={cn(base, "bg-slate-50 text-slate-400 border-slate-200")}>Cancelled</span>;
-      default:
-        return null;
     }
   };
 
@@ -116,7 +87,7 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
   };
 
   const getDocUrl = (url: string) => {
-    return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/${url}`;
+    return url.startsWith('http') ? url : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8081'}/${url}`;
   };
 
   return (
@@ -281,12 +252,12 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
                       let isDone = false;
                       let isActive = false;
                       
-                      if (selectedRedemption.status === "ACCEPTED") {
+                      if (["PURCHASED", "PICKUP_SCHEDULED", "COMPLETED"].includes(selectedRedemption.status)) {
                         isDone = true;
-                      } else if (selectedRedemption.status === "REVIEWED") {
+                      } else if (selectedRedemption.status === "VERIFIED") {
                         if (step.key === "submitted" || step.key === "review") isDone = true;
                         if (step.key === "accepted") isActive = true;
-                      } else if (selectedRedemption.status === "REQUESTED") {
+                      } else if (selectedRedemption.status === "PENDING_VERIFICATION") {
                         if (step.key === "submitted") isDone = true;
                         if (step.key === "review") isActive = true;
                       } else {
@@ -350,9 +321,11 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
 
                  {(() => {
                    const statusConfig: Record<string, { bg: string, text: string, label: string, pulse?: string }> = {
-                     REQUESTED: { bg: "bg-orange-50 border-orange-200", text: "text-orange-600", label: "Requested", pulse: "bg-orange-500" },
-                     REVIEWED: { bg: "bg-blue-50 border-blue-200", text: "text-blue-600", label: "Reviewed" },
-                     ACCEPTED: { bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-600", label: "Accepted" },
+                     PENDING_VERIFICATION: { bg: "bg-orange-50 border-orange-200", text: "text-orange-600", label: "Pending Verification", pulse: "bg-orange-500" },
+                     VERIFIED: { bg: "bg-blue-50 border-blue-200", text: "text-blue-600", label: "Verified" },
+                     PURCHASED: { bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-600", label: "Purchased" },
+                     PICKUP_SCHEDULED: { bg: "bg-indigo-50 border-indigo-200", text: "text-indigo-600", label: "Pickup Scheduled" },
+                     COMPLETED: { bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-600", label: "Completed" },
                      REJECTED: { bg: "bg-red-50 border-red-200", text: "text-red-600", label: "Rejected" },
                      CANCELLED: { bg: "bg-slate-50 border-slate-200", text: "text-slate-500", label: "Cancelled" },
                    };
@@ -370,7 +343,7 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
               </div>
 
               {/* PHASE 1: DOCUMENT REVIEW (Mirror Admin) */}
-              {selectedRedemption.status === "REQUESTED" && (
+              {selectedRedemption.status === "PENDING_VERIFICATION" && (
                   <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
                     <div className="flex items-center gap-3">
                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Identity Verification Status</h3>
@@ -452,11 +425,11 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
                           <span className="text-[11px] font-black uppercase tracking-widest">HC Admin Update</span>
                        </div>
                        <p className="text-lg font-bold text-slate-600 leading-relaxed italic">
-                          &quot;{selectedRedemption.status === "REQUESTED" 
+                          &quot;{selectedRedemption.status === "PENDING_VERIFICATION"
                             ? "Permintaan Anda telah kami terima. Tim HC sedang memproses verifikasi dokumen identitas untuk memastikan keaslian data. Mohon tunggu informasi selanjutnya."
-                            : selectedRedemption.status === "REVIEWED"
+                            : selectedRedemption.status === "VERIFIED"
                             ? "Dokumen Anda telah diverifikasi oleh tim HC. Saat ini kami sedang menyiapkan item hadiah fisik Anda untuk proses serah terima."
-                            : selectedRedemption.status === "ACCEPTED"
+                            : ["PURCHASED", "PICKUP_SCHEDULED", "COMPLETED"].includes(selectedRedemption.status)
                             ? "Selamat! Penukaran Anda telah selesai dan dikonfirmasi. Silakan datang ke meja layanan HC untuk pengambilan hadiah fisik Anda."
                             : selectedRedemption.status === "REJECTED"
                           ? `Mohon maaf, klaim ditolak: ${selectedRedemption.rejectReason}`
@@ -472,7 +445,7 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
 
                  {/* Buttons (Right 35%) */}
                  <div className="sm:col-span-4 flex flex-col gap-4 justify-center">
-                    {["REQUESTED", "REVIEWED"].includes(selectedRedemption.status) && (
+                    {["PENDING_VERIFICATION", "VERIFIED"].includes(selectedRedemption.status) && (
                       <Button 
                         onClick={(e) => handleCancel(selectedRedemption.id, e)}
                         disabled={isUpdating}
@@ -491,7 +464,7 @@ export function HistoryClient({ entries, totalCount, currentPage, totalPages, re
                       onClick={() => setSelectedRedemption(null)} 
                       className={cn(
                         "w-full h-16 rounded-[24px] bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-widest shadow-2xl shadow-slate-200 transition-all active:scale-95",
-                        ["REQUESTED", "REVIEWED"].includes(selectedRedemption.status) ? "sm:w-full" : "w-full"
+                        ["PENDING_VERIFICATION", "VERIFIED"].includes(selectedRedemption.status) ? "sm:w-full" : "w-full"
                       )}
                     >
                        Close Tracking

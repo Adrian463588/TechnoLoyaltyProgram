@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import React from "react";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
-import { FileUp, Users, Inbox, Coins, ChevronRight, UserCheck, Zap, LayoutDashboard, Clock, Gift, MapPin, Calendar } from "lucide-react";
+import { FileUp, Users, Inbox, ChevronRight, UserCheck, Zap, LayoutDashboard, Clock, Gift, MapPin, Calendar } from "lucide-react";
 import { RedemptionQueueTable } from "@/features/admin/redemption-queue-table";
 import { DashboardClock } from "@/components/dashboard/dashboard-clock";
 import { auth, getServerToken } from "@/lib/auth";
@@ -183,9 +183,10 @@ export default async function AdminDashboardPage() {
     rejectReason: r.rejectReason,
   }));
 
-  const requestedCount = requests.filter(r => r.status === "REQUESTED").length;
+  const requestedCount = requests.filter(r =>
+    r.status === "PENDING_VERIFICATION" || r.status === "VERIFIED"
+  ).length;
   const activePartnersCount = users.filter(u => u.partnerStatus === "ACTIVE").length;
-  const totalTokensIssued = users.reduce((sum, u) => sum + (u.tokens ?? 0), 0);
 
   // Calculate Tier Distribution
   const tierDistribution = users.reduce((acc, user) => {
@@ -195,12 +196,6 @@ export default async function AdminDashboardPage() {
   }, { SAPHIRE: 0, EMERALD: 0, RUBY: 0, DIAMOND: 0 });
 
   const totalUsersWithTier = Object.values(tierDistribution).reduce((a, b) => a + b, 0);
-
-  // Format tokens (e.g., 14200 -> 14.2k)
-  const formatTokens = (val: number) => {
-    if (val >= 1000) return (val / 1000).toFixed(1) + 'k';
-    return val.toString();
-  };
 
   return (
     <div className="flex flex-col min-h-screen">

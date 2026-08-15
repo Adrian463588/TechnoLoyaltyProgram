@@ -133,9 +133,9 @@ export function DocumentsClient({ initialDocuments, token }: { initialDocuments:
           </DialogHeader>
           <div className="p-4 flex items-center justify-center min-h-[400px]">
             {previewUrl && (
-              <img 
-                src={previewUrl.startsWith('http') ? previewUrl : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'}/${previewUrl}`} 
-                alt="Document Preview" 
+              <img
+                src={previewUrl.startsWith('http') ? previewUrl : `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8081'}/${previewUrl}`}
+                alt="Document Preview"
                 className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-md"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Preview+Not+Available';

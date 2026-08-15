@@ -9,12 +9,7 @@ export default async function TeamLeaderPage() {
   await auth()
   const token = await getServerToken()
   
-  let data = null
-  try {
-    data = await leaderApi.getTeamSummary(token)
-  } catch (error) {
-    console.warn("Failed to fetch leader team data. Using fallback:", error instanceof Error ? error.message : "Unknown error")
-  }
+  const data = await leaderApi.getTeamSummary(token)
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -24,7 +19,7 @@ export default async function TeamLeaderPage() {
         />
       </div>
       <main className="flex-1 p-4 md:p-6">
-        <LeaderTeamClient data={data} />
+        <LeaderTeamClient data={data} totalCount={data.count} />
       </main>
     </div>
   )

@@ -3,6 +3,13 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { TokenHeroSection } from '../components/dashboard/token-hero-section';
 
+vi.mock('next-auth/react', () => ({
+  useSession: () => ({
+    data: { user: { role: 'MITRA' } },
+    status: 'authenticated',
+  }),
+}));
+
 vi.mock('../components/dashboard/animated-token-count', () => ({
   AnimatedTokenCount: ({ value }: { value: number }) => <span data-testid="animated-count">{value}</span>
 }));

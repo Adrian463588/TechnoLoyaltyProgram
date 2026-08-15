@@ -73,6 +73,8 @@ export class EmployeeRewardsPage {
     cy.url().should("include", routes.employee.rewards);
     cy.assertNoServerError();
     cy.contains(/rewards|catalog|redemption|locked|token/i, { timeout: 10_000 }).should("exist");
+    cy.get(sel.employee.rewardsReady, { timeout: 10_000 })
+      .should("have.attr", "data-hydrated", "true");
     return this;
   }
 

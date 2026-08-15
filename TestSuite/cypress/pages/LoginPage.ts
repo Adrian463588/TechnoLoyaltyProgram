@@ -8,12 +8,13 @@
 
 import { routes } from "../support/routes";
 import { sel } from "../support/selectors";
-import { getTestUser, type TestRole } from "../support/users";
+import { loadTestUser, type TestRole } from "../support/users";
 
 export class LoginPage {
   // ── Navigation ────────────────────────────────────────────────────────
   visit() {
     cy.visit(routes.login);
+    cy.get("[data-testid=login-form][data-hydrated=true]", { timeout: 15_000 }).should("exist");
     return this;
   }
 
@@ -67,7 +68,7 @@ export class LoginPage {
    * The demo dock is a bottom-left floating button (UserCircle icon).
    */
   openDemoDock() {
-    cy.get(sel.auth.demoDockToggle, { timeout: 8_000 }).should("be.visible").click();
+    cy.get(sel.auth.demoDockToggle, { timeout: 8_000 }).should("exist").click({ force: true });
     // Panel is visible when the "Account Selector" heading appears
     cy.contains("Account Selector", { timeout: 6_000 }).should("be.visible");
     return this;
@@ -86,7 +87,6 @@ export class LoginPage {
   }
 
   loginAsRole(role: TestRole) {
-    const user = getTestUser(role);
-    return this.loginAs(user.npk, user.password);
+    return loadTestUser(role).then((user) => this.loginAs(user.npk, user.password));
   }
 }

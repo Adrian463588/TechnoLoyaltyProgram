@@ -5,7 +5,7 @@ import { X, Check, Shield, FileText, CreditCard, AlertCircle } from "lucide-reac
 import { toast } from "sonner";
 import { RedemptionStatusChip } from "@/components/shared/status-badge";
 import { motion } from "framer-motion";
-import { verifyRedemptionDocuments, updateRedemptionStatus } from "@/features/redemptions/actions";
+import { verifyRedemptionDocuments } from "@/features/redemptions/actions";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function DocumentVerificationDrawer({ request, onClose, onSuccess }: { request: any; onClose: () => void; onSuccess?: () => void }) {
@@ -52,7 +52,7 @@ export function DocumentVerificationDrawer({ request, onClose, onSuccess }: { re
   // BUG-002 FIX: Previously this was a fake setTimeout with no API call.
   // Now it:
   //   1. Calls verifyRedemptionDocuments to persist the doc verification flags
-  //   2. Calls updateRedemptionStatus to advance the FSM to REVIEWED
+  //   2. Calls updateRedemptionStatus to advance the FSM to VERIFIED
   //   3. Notifies parent (onSuccess) to refresh the redemption list
   const handleApprove = async () => {
     if (!isAllVerified) return;
@@ -72,13 +72,9 @@ export function DocumentVerificationDrawer({ request, onClose, onSuccess }: { re
         throw new Error(verifyResult.error ?? "Gagal memverifikasi dokumen");
       }
 
-      // Step 2: Transition redemption status REQUESTED → REVIEWED
-      const statusResult = await updateRedemptionStatus(request.id as string, "REVIEWED");
-      if (!statusResult.success) {
-        throw new Error(statusResult.error ?? "Gagal memperbarui status");
-      }
-
-      toast.success("Dokumen terverifikasi — status berubah ke REVIEWED");
+      // Step 2: The service transitions PENDING_VERIFICATION → VERIFIED
+      // only when all required documents are complete.
+      toast.success("Dokumen terverifikasi — status berubah ke VERIFIED");
       onSuccess?.();
       handleClose();
     } catch (err) {

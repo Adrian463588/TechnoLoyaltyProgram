@@ -2,6 +2,7 @@
  * Prisma Seed Script
  * Populates the database with demo data based on current schema.
  * Production safe: Uses upsert instead of create/delete, skips dummy data in production.
+ * Passwords are supplied through environment variables and are never stored in source.
  *
  * Run with: npm run prisma:seed
  */
@@ -21,7 +22,17 @@ async function main() {
   const isProd = process.env.NODE_ENV === "production";
   console.log(`🌱 Seeding database... (Environment: ${process.env.NODE_ENV || 'development'})`);
 
-  const passwordHash = await bcrypt.hash("password123", 10);
+  const seedPassword = isProd
+    ? process.env.SEED_ADMIN_PASSWORD
+    : process.env.DEMO_PASSWORD;
+  if (!seedPassword) {
+    throw new Error(
+      isProd
+        ? "SEED_ADMIN_PASSWORD is required for a production seed"
+        : "DEMO_PASSWORD is required for a development/test seed",
+    );
+  }
+  const passwordHash = await bcrypt.hash(seedPassword, 10);
 
   // ============================================================
   // SYSTEM ADMIN (Always seeded/verified)

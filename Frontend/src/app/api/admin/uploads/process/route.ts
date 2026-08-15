@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerToken } from "@/lib/auth";
+import { BACKEND_URL } from "@/lib/backend-url";
 
 export async function POST(req: NextRequest) {
   try {
     const token = await getServerToken();
     const formData = await req.formData();
     
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "http://localhost:8080";
-    
     // Forward the POST request to the Express backend
-    const res = await fetch(`${backendUrl}/api/admin/uploads/process`, {
+    const res = await fetch(`${BACKEND_URL}/api/admin/uploads/process`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`

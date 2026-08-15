@@ -10,7 +10,13 @@
 import { asyncHandler } from "@/middleware/asyncHandler";
 import { z } from "zod";
 import { redemptionService } from "@/services/redemption.service";
-import { redeemRequestSchema, updateStatusSchema, uuidSchema, redemptionVerificationSchema } from "@/types/validations";
+import {
+  redeemRequestSchema,
+  updateStatusSchema,
+  uuidSchema,
+  redemptionVerificationSchema,
+  RedemptionStatusEnum,
+} from "@/types/validations";
 import { ValidationError } from "@/errors/validation-error";
 import { NotFoundError } from "@/errors/not-found-error";
 
@@ -20,9 +26,14 @@ export const RedemptionController = {
   listAll: asyncHandler(async (req, res) => {
       const limit = Number(req.query["limit"]) || 100;
       const offset = Number(req.query["offset"]) || 0;
-      const status = req.query["status"] as any;
+      const statusResult = RedemptionStatusEnum.safeParse(req.query["status"]);
+      const status = statusResult.success ? statusResult.data : undefined;
 
-      const { requests, total } = await redemptionService.listAll({ status, limit, offset });
+      const { requests, total } = await redemptionService.listAll({
+        limit,
+        offset,
+        ...(status ? { status } : {}),
+      });
       const mapped = requests.map((r) => {
         // Use type-safe property access from prisma include results
         return {
@@ -48,6 +59,10 @@ export const RedemptionController = {
           },
           isRepresented: r.isRepresented,
           powerOfAttorneyUrl: r.powerOfAttorneyUrl,
+          idCardVerified: r.idCardVerified,
+          ktpVerified: r.ktpVerified,
+          npwpVerified: r.npwpVerified,
+          powerOfAttorneyVerified: r.powerOfAttorneyVerified,
           rejectReason: r.rejectionReason,
         };
       });
@@ -96,8 +111,8 @@ export const RedemptionController = {
         npwpVerified: r.npwpVerified,
         powerOfAttorneyVerified: r.powerOfAttorneyVerified,
         rejectReason: r.rejectionReason ?? "Alasan tidak disebutkan oleh HC.",
-        mitra: (r).mitra ? {
-          documents: (r).mitra.documents.map((d: any) => ({
+        mitra: r.mitra ? {
+          documents: r.mitra.documents.map((d) => ({
             id: d.id,
             type: d.type,
             fileUrl: d.fileUrl
@@ -117,14 +132,18 @@ export const RedemptionController = {
       }
 
       const powerOfAttorneyUrl = req.file ? req.file.path.replace(/\\/g, "/") : undefined;
+      const idempotencyKey = req.header("Idempotency-Key")?.trim() || undefined;
 
       const redemption = await redemptionService.submitRequest(
         user.id,
         parsed.data.rewardItemId,
         {
-          isRepresented: parsed.data.isRepresented,
-          powerOfAttorneyUrl,
-        } as any
+          ...(parsed.data.isRepresented !== undefined
+            ? { isRepresented: parsed.data.isRepresented }
+            : {}),
+          ...(powerOfAttorneyUrl ? { powerOfAttorneyUrl } : {}),
+        },
+        idempotencyKey,
       );
       res.status(201).json(redemption);
   }),
@@ -134,14 +153,19 @@ export const RedemptionController = {
       const { user } = req;
       const limit = Number(req.query["limit"]) || 100;
       const offset = Number(req.query["offset"]) || 0;
-      const status = req.query["status"] as any;
+      const statusResult = RedemptionStatusEnum.safeParse(req.query["status"]);
+      const status = statusResult.success ? statusResult.data : undefined;
 
       if (!user.division) {
         res.status(400).json({ error: "User division not found in session." });
         return;
       }
 
-      const { requests, total } = await redemptionService.listByDivision(user.division, { status, limit, offset });
+      const { requests, total } = await redemptionService.listByDivision(user.division, {
+        limit,
+        offset,
+        ...(status ? { status } : {}),
+      });
       const mapped = requests.map((r) => {
         return {
           id: r.id,
@@ -166,6 +190,10 @@ export const RedemptionController = {
           },
           isRepresented: r.isRepresented,
           powerOfAttorneyUrl: r.powerOfAttorneyUrl,
+          idCardVerified: r.idCardVerified,
+          ktpVerified: r.ktpVerified,
+          npwpVerified: r.npwpVerified,
+          powerOfAttorneyVerified: r.powerOfAttorneyVerified,
           rejectReason: r.rejectionReason,
         };
       });
@@ -258,8 +286,8 @@ export const RedemptionController = {
         throw new ValidationError("You can only cancel your own redemption requests.");
       }
 
-      if (!["REQUESTED", "REVIEWED"].includes(request.status)) {
-        throw new ValidationError("Only requests in 'REQUESTED' or 'REVIEWED' status can be cancelled by employee.");
+      if (!["DRAFT", "PENDING_VERIFICATION", "VERIFIED"].includes(request.status)) {
+        throw new ValidationError("Only requests before purchase can be cancelled by the employee.");
       }
 
       const result = await redemptionService.transitionStatus(

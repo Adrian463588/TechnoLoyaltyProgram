@@ -5,7 +5,6 @@ import { asyncHandler } from "@/middleware/asyncHandler";
  * Controller for handling user document uploads.
  */
 
-import { type RequestHandler } from "express";
 import multer, { type FileFilterCallback } from "multer";
 import path from "path";
 import fs from "fs";

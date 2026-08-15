@@ -6,7 +6,6 @@ export const dynamic = 'force-dynamic'
 import { auth, getServerToken } from "@/lib/auth";
 import { employeeApi, type UserDocumentResponse } from "@/lib/api-client";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
-import { BentoCard } from "@/components/ui/bento-card";
 import { FileText, Info } from "lucide-react";
 import { DocumentsClient } from "./documents-client";
 

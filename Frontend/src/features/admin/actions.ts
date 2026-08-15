@@ -8,6 +8,7 @@
 
 import { auth, getServerToken } from "@/lib/auth";
 import { adminApi } from "@/lib/api-client";
+import { randomUUID } from "node:crypto";
 
 export async function submitManualAdjustment(payload: {
   mitraId: string;
@@ -21,7 +22,10 @@ export async function submitManualAdjustment(payload: {
 
   const token = await getServerToken();
   try {
-    const result = await adminApi.createManualAdjustment(token, payload);
+    const result = await adminApi.createManualAdjustment(token, {
+      ...payload,
+      idempotencyKey: randomUUID(),
+    });
     return { success: true, ledgerEntryId: result.ledgerEntryId };
   } catch (err) {
     return {

@@ -4,7 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState, useEffect } from "react";
-import { X, Loader2, Trash2, ChevronDown } from "lucide-react";
+import { X, Loader2, Trash2 } from "lucide-react";
 import type { RewardCatalogItem } from "@/lib/api-client";
 import {
   Select,
@@ -46,7 +46,6 @@ export function RewardFormModal({ isOpen, onClose, onSubmit, onDelete, initialDa
     handleSubmit,
     reset,
     watch,
-    setValue,
     control,
     formState: { errors },
   } = useForm<RewardFormValues>({

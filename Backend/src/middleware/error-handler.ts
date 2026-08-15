@@ -9,8 +9,6 @@ import type { ErrorRequestHandler } from "express";
 import { AppError, ValidationError, NotFoundError } from "@/errors";
 
 export const errorHandler: ErrorRequestHandler = (err: unknown, _req, res, _next): void => {
-  const isDev = process.env.NODE_ENV !== "production";
-
   // ── Known error types ───────────────────────────────────────
   if (err instanceof ValidationError) {
     res.status(err.statusCode).json({
@@ -39,14 +37,10 @@ export const errorHandler: ErrorRequestHandler = (err: unknown, _req, res, _next
 
   // ── Unknown / unexpected error ──────────────────────────────
   const errorInstance = err instanceof Error ? err : new Error(String(err));
-  console.error(
-    "[ErrorHandler] Unhandled error:",
-    isDev ? errorInstance.stack : errorInstance.message,
-  );
+  console.error("[ErrorHandler] Unhandled error:", errorInstance.message);
 
   res.status(500).json({
     error: "Internal server error",
     code: "INTERNAL_ERROR",
-    ...(isDev && { stack: errorInstance.stack }),
   });
 };

@@ -46,6 +46,12 @@ interface ParsedRow {
   rowNumber: number;
   npk: string;
   name: string;
+  fungsi?: string;
+  division?: string;
+  tier?: string;
+  sourceUnits?: number | null;
+  sourceType?: string;
+  isResigned?: boolean;
   [key: string]: unknown;
 }
 
@@ -91,6 +97,7 @@ export default function UploadsClient() {
   const [apiError,      setApiError     ] = useState<string | null>(null);
   const [currentPage,   setCurrentPage  ] = useState<number>(1);
   const [showInvalidModal, setShowInvalidModal] = useState<boolean>(false);
+  const commitKeyRef = useRef<string | null>(null);
   const itemsPerPage = 10;
 
   // Ref tracks latest division value; updated via effect to avoid render-phase mutation
@@ -178,9 +185,14 @@ export default function UploadsClient() {
     setUploadStatus("committing");
 
     try {
+      const commitKey = commitKeyRef.current ?? crypto.randomUUID();
+      commitKeyRef.current = commitKey;
       const res = await fetch("/api/admin/uploads/commit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": commitKey,
+        },
         body: JSON.stringify({
           division: parseResult.division ?? division,
           rows:     parseResult.rows,
@@ -202,7 +214,7 @@ export default function UploadsClient() {
       toast.error(msg);
       setUploadStatus("preview");
     }
-  }, [parseResult, files, division]);
+  }, [parseResult, division]);
 
   const handleReset = useCallback(() => {
     setFiles([]);
@@ -211,6 +223,7 @@ export default function UploadsClient() {
     setApiError(null);
     setErrorRows([]);
     setCurrentPage(1);
+    commitKeyRef.current = null;
   }, []);
 
   // ── Render helpers ───────────────────────────────────────────
@@ -490,20 +503,20 @@ export default function UploadsClient() {
                             <TableCell className="py-4 px-6 text-center text-[var(--color-text-tertiary)] text-sm font-normal">{row.rowNumber}</TableCell>
                             <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] font-normal">{row.npk}</TableCell>
                             <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] font-normal group-hover:text-[var(--color-text-primary)] transition-colors">{row.name}</TableCell>
-                            <TableCell className="py-4 px-6 text-sm text-[var(--color-text-tertiary)] font-normal">{(row as any).fungsi || "-"}</TableCell>
-                            <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] font-normal">{(row as any).division || "-"}</TableCell>
+                            <TableCell className="py-4 px-6 text-sm text-[var(--color-text-tertiary)] font-normal">{row.fungsi || "-"}</TableCell>
+                            <TableCell className="py-4 px-6 text-sm text-[var(--color-text-secondary)] font-normal">{row.division || "-"}</TableCell>
                             <TableCell className="py-4 px-6">
                               <span className="font-bold text-[10px] tracking-wider uppercase px-2.5 py-0.5 rounded-full border shadow-sm flex items-center w-fit gap-1.5 bg-blue-500/10 text-blue-600 border-blue-200">
-                                {String((row as any).tier || "-")}
+                                {row.tier || "-"}
                               </span>
                             </TableCell>
                             <TableCell className="py-4 px-6 text-right text-sm text-[var(--color-text-secondary)] font-normal">
-                              {typeof (row as any).token === "number"
-                                ? (row as any).token.toLocaleString()
+                              {typeof row.sourceUnits === "number"
+                                ? row.sourceUnits.toLocaleString()
                                 : "-"}
                             </TableCell>
                             <TableCell className="py-4 px-6 text-center">
-                              {(row as any).isResigned ? (
+                              {row.isResigned ? (
                                 <Badge variant="destructive" className="text-[9px] font-bold rounded-md">Resigned</Badge>
                               ) : hasError ? (
                                 <Badge variant="destructive" className="text-[9px] font-bold rounded-md">Invalid</Badge>

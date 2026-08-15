@@ -12,7 +12,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  TierBadge,
   EmployeeStatusBadge,
   type MembershipTier,
   type PartnerStatus,
@@ -33,14 +32,6 @@ type TeamMember = {
   tier: MembershipTier;
   status: PartnerStatus;
 };
-
-const mockTeamData: TeamMember[] = [
-  { id: "1", npk: "EMP-001", name: "Alice Optel", division: "Optel", tokens: 5200, tier: "DIAMOND", status: "ACTIVE" },
-  { id: "2", npk: "EMP-005", name: "Bob Techno", division: "Techno", tokens: 1200, tier: "EMERALD", status: "DOWNGRADED" },
-  { id: "3", npk: "EMP-012", name: "Charlie Optel", division: "Optel", tokens: 0, tier: "SAPHIRE", status: "RESET" },
-  { id: "4", npk: "EMP-018", name: "Diana Techno", division: "Techno", tokens: 8500, tier: "DIAMOND", status: "ACTIVE" },
-  { id: "5", npk: "EMP-022", name: "Eve Optel", division: "Optel", tokens: 3000, tier: "RUBY", status: "ACTIVE" },
-];
 
 function toMembershipTier(value: string): MembershipTier {
   const normalized = value?.toUpperCase() || "";
@@ -65,7 +56,7 @@ function toPartnerStatus(value: string): PartnerStatus {
   ) {
     return normalized;
   }
-  return "ACTIVE";
+  return "INACTIVE";
 }
 
 export function LeaderTeamClient({ 
@@ -74,7 +65,7 @@ export function LeaderTeamClient({
   currentPage = 1,
   totalPages = 1,
 }: { 
-  data: TeamSummaryResult | null;
+  data: TeamSummaryResult;
   totalCount?: number;
   currentPage?: number;
   totalPages?: number;
@@ -83,15 +74,15 @@ export function LeaderTeamClient({
   const [statusFilter, setStatusFilter] = useState<"All" | PartnerStatus>("All");
 
   const teamData: TeamMember[] = useMemo(() => {
-    return data?.members ? data.members.map(m => ({
+    return data.members.map(m => ({
       id: m.id,
       name: m.name,
       npk: m.npk,
       division: m.division === "TECHNO" ? "Techno" : "Optel",
-      tokens: m.currentBalance ?? 0,
+      tokens: m.currentBalance,
       tier: toMembershipTier(m.membershipTier),
       status: toPartnerStatus(m.partnerStatus),
-    })) : mockTeamData;
+    }));
   }, [data]);
 
   const filteredData = useMemo(() => {
@@ -104,7 +95,7 @@ export function LeaderTeamClient({
   }, [teamData, searchQuery, statusFilter]);
 
   const totalTokens = teamData.reduce((acc, curr) => acc + curr.tokens, 0);
-  const eligibleMembers = teamData.filter((m) => m.tokens >= 2000).length;
+  const membersWithBalance = teamData.filter((m) => m.tokens > 0).length;
   const alertsCount = teamData.filter((m) => m.status !== "ACTIVE").length;
 
   const getTierStyles = (tier: string) => {
@@ -150,11 +141,11 @@ export function LeaderTeamClient({
         <BentoCard className="p-4 flex flex-col justify-between bg-white border-[var(--color-border-subtle)] shadow-sm animate-fade-up-in stagger-2">
           <h3 className="text-label flex items-center gap-2 mb-4">
             <Users className="h-[14px] w-[14px] text-emerald-500" />
-            Eligible for Rewards
+            Members with Tokens
           </h3>
           <div>
-            <p className="text-3xl font-black text-slate-700 leading-none">{eligibleMembers} Members</p>
-            <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-widest">Balance {'>'}= 2,000 tokens</p>
+            <p className="text-3xl font-black text-slate-700 leading-none">{membersWithBalance} Members</p>
+            <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-widest">Positive authoritative ledger balance</p>
           </div>
         </BentoCard>
 
@@ -271,7 +262,7 @@ export function LeaderTeamClient({
                     </TableCell>
                     <TableCell className="py-4 px-6 text-center">
                       <Link
-                        href={`/leader/team/${member.id}` as any}
+                        href={`/leader/team/${member.id}`}
                         className="inline-flex items-center justify-center h-9 w-9 text-primary hover:bg-primary/10 rounded-xl transition-all border border-transparent hover:border-primary/20 active:scale-95 mx-auto"
                         title="View Detail"
                       >

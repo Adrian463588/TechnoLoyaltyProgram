@@ -5,7 +5,7 @@
  * Accessible by MITRA, TEAM_LEADER, and HC_PM (all authenticated users).
  */
 
-import { Router, type RequestHandler } from "express";
+import { Router } from "express";
 import { authenticate }         from "@/middleware/authenticate";
 import { authorize }            from "@/middleware/authorize";
 import { RedemptionController }    from "@/controllers/redemption.controller";

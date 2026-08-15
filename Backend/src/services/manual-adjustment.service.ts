@@ -31,7 +31,13 @@ export class ManualAdjustmentService {
    * Adjusts tokens for a user manually.
    * Only HC Admin should be able to call this (enforced by route).
    */
-  async adjustTokens(identifier: string, amount: number, reason: string, performedBy: string): Promise<TokenLedger> {
+  async adjustTokens(
+    identifier: string,
+    amount: number,
+    reason: string,
+    performedBy: string,
+    idempotencyKey?: string,
+  ): Promise<TokenLedger> {
     if (amount === 0) {
       throw new ValidationError("Adjustment amount cannot be zero");
     }
@@ -40,6 +46,20 @@ export class ManualAdjustmentService {
     }
 
     const userId = await this.resolveUserId(identifier);
+
+    if (idempotencyKey) {
+      const existing = await prisma.tokenLedger.findFirst({
+        where: {
+          userId,
+          OR: [
+            { idempotencyKey },
+            { idempotencyKey: { startsWith: `${idempotencyKey}:` } },
+          ],
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      if (existing) return existing;
+    }
 
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { id: userId } });
@@ -61,6 +81,7 @@ export class ManualAdjustmentService {
           amount: Math.abs(amount),
           performedBy,
           reason,
+          ...(idempotencyKey ? { idempotencyKey } : {}),
         }, tx);
         const lastEntry = entries[entries.length - 1];
         if (!lastEntry) throw new Error("FIFO deduction produced no ledger entries");
@@ -77,6 +98,7 @@ export class ManualAdjustmentService {
           earnedYear,
           reason,
           performedBy,
+          ...(idempotencyKey ? { idempotencyKey } : {}),
         }, tx);
       }
 

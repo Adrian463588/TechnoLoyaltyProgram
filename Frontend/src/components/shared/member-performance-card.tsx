@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Coins, Shield, TrendingUp, User, ArrowUpRight } from "lucide-react";
+import { Coins, Shield } from "lucide-react";
 import { TierBadge, EmployeeStatusBadge, type MembershipTier, type PartnerStatus } from "@/components/shared/status-badge";
 import { cn } from "@/lib/utils";
 
@@ -14,12 +14,11 @@ interface MemberPerformanceCardProps {
     tokens: number;
     tier: MembershipTier;
     status: PartnerStatus;
-    trend?: number[]; // Mock data for sparkline
+    trend?: number[];
   };
-  onClick?: () => void;
 }
 
-export function MemberPerformanceCard({ member, onClick }: MemberPerformanceCardProps) {
+export function MemberPerformanceCard({ member }: MemberPerformanceCardProps) {
   return (
     <div 
       className={cn(

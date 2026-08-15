@@ -37,7 +37,7 @@ export default async function EarningPeriodPage() {
               </div>
               <div className="space-y-1">
                 <h1 className="text-2xl font-extrabold text-[--color-text-secondary] leading-none">
-                  System Configuration
+                  Earning Period Settings
                 </h1>
                 <p className="text-sm text-[--color-text-secondary]">
                   Manage annual loyalty cycles, redemption windows, and fulfillment logistics.

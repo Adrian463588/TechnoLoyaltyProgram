@@ -21,6 +21,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const PUBLIC_PREFIXES = [
   "/login",
   "/api/auth",
+  "/api/health",
   "/api/docs",
   "/_next",
   "/favicon.ico",
@@ -37,10 +38,6 @@ const ROUTE_ROLE_MAP: Array<{ prefix: string; roles: Role[] }> = [
   { prefix: "/employee/documents", roles: ["MITRA", "HC_PM"] },
   { prefix: "/employee",           roles: ["MITRA", "TEAM_LEADER", "HC_PM"] },
 ];
-
-const ROLE_HIERARCHY: Record<Role, number> = {
-  MITRA: 1, TEAM_LEADER: 2, HC_PM: 3,
-};
 
 // NextAuth v5: export auth as the middleware function directly
 export default auth((req) => {

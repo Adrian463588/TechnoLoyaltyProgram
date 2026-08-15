@@ -26,12 +26,28 @@ export const TokenEventTypeEnum = z.enum([
 export const ClaimStatusEnum = z.enum(["PENDING", "APPROVED", "REJECTED"]);
 export const UploadStatusEnum = z.enum(["STAGED", "VALIDATING", "PROCESSING", "COMPLETED", "FAILED"]);
 export const RedemptionStatusEnum = z.enum([
-  "REQUESTED",
-  "REVIEWED",
-  "ACCEPTED",
+  "DRAFT",
+  "PENDING_VERIFICATION",
+  "VERIFIED",
   "REJECTED",
+  "PURCHASED",
+  "PICKUP_SCHEDULED",
+  "COMPLETED",
   "CANCELLED",
 ]);
+
+/**
+ * Legacy claim payload validation retained for import/test compatibility.
+ * Claims are not an active UI workflow; production credit comes from the
+ * validated upload pipeline and append-only ledger events.
+ */
+export const claimSchema = z.object({
+  division: z.enum(["OPCENT", "TECHNO"], {
+    message: "Please select a division.",
+  }),
+  date: z.string().min(1, "Date is required"),
+  amount: z.number({ message: "Amount is required" }).min(1, "Amount must be at least 1"),
+});
 
 // ============================================================
 // AUTH

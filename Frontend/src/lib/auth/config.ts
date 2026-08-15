@@ -45,15 +45,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         // 1. Validate shape before hitting the network (fail-fast)
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) {
-          console.error("[NextAuth] Credential validation failed:", parsed.error.issues);
           return null;
         }
 
         const { npk, password } = parsed.data;
         const loginUrl = `${BACKEND_URL}/api/auth/login`;
-
-        // 2. Log the exact URL so we can detect BACKEND_URL misconfiguration
-        console.info(`[NextAuth] Login attempt — NPK: ${npk} → ${loginUrl}`);
 
         try {
           const res = await fetch(loginUrl, {
@@ -62,24 +58,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             body: JSON.stringify({ npk, password }),
           });
 
-          // 3. Log backend errors explicitly — never swallow silently
           if (!res.ok) {
-            const body = await res.json().catch(() => ({})) as Record<string, unknown>;
-            console.error(
-              `[NextAuth] Backend rejected login. Status: ${res.status}`,
-              JSON.stringify(body),
-            );
             return null;
           }
 
           const data = (await res.json()) as BackendLoginResponse;
 
-          // 4. Guard against malformed response body
           if (!data?.user) {
-            console.error(
-              "[NextAuth] Backend returned 200 but user is missing from response body:",
-              JSON.stringify(data),
-            );
             return null;
           }
 
@@ -92,12 +77,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             division:      data.user.division,
             partnerStatus: data.user.partnerStatus,
           };
-        } catch (error) {
-          // 5. Network/DNS failure — most commonly caused by a missing BACKEND_URL env var
-          console.error(
-            `[NextAuth] Network error — is BACKEND_URL reachable? URL attempted: ${loginUrl}`,
-            error,
-          );
+        } catch {
           return null;
         }
       },

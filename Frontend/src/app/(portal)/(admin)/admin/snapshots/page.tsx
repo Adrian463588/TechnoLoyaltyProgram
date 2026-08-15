@@ -1,185 +1,109 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
+import { auth, getServerToken } from "@/lib/auth";
+import { adminApi, type PeriodSnapshotResponse } from "@/lib/api-client";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/shared/stat-card";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { CalendarDays, Database, Info, Users } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-// Mock data — will be replaced by API call
-const mockSnapshots = [
-  {
-    id: "SNAP-P2-2025",
-    periodName: "P2 2025 (Jun 16 – Dec 15, 2025)",
-    cutOffDate: "2025-12-15T23:59:59Z",
-    totalTokensIssued: 450200,
-    totalUsersActive: 198,
-    status: "Finalized" as const,
-  },
-  {
-    id: "SNAP-P1-2025",
-    periodName: "P1 2025 (Dec 16, 2024 – Jun 15, 2025)",
-    cutOffDate: "2025-06-15T23:59:59Z",
-    totalTokensIssued: 382500,
-    totalUsersActive: 185,
-    status: "Finalized" as const,
-  },
-  {
-    id: "SNAP-P2-2024",
-    periodName: "P2 2024 (Jun 16 – Dec 15, 2024)",
-    cutOffDate: "2024-12-15T23:59:59Z",
-    totalTokensIssued: 315800,
-    totalUsersActive: 172,
-    status: "Finalized" as const,
-  },
-];
-
-const currentPeriod = {
-  name: "P1 2026 (Dec 16, 2025 – Jun 15, 2026)",
-  cutOff: "Jun 15, 2026",
-  daysUntilCutOff: Math.max(
-    0,
-    Math.ceil((new Date("2026-06-15").getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-  ),
-};
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
-export default function SnapshotsPage() {
+function numericMetric(snapshot: PeriodSnapshotResponse, key: string): number | null {
+  const value = snapshot.payload[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+export default async function SnapshotsPage() {
+  await auth();
+  const token = await getServerToken();
+
+  let snapshots: PeriodSnapshotResponse[] = [];
+  let loadError: string | null = null;
+  try {
+    snapshots = await adminApi.listSnapshots(token);
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : "Unable to load snapshots.";
+  }
+
+  const tokenValues = snapshots.map((snapshot) => numericMetric(snapshot, "totalTokensIssued")).filter((value): value is number => value !== null);
+  const activeUserValues = snapshots.map((snapshot) => numericMetric(snapshot, "totalUsersActive")).filter((value): value is number => value !== null);
+  const totalTokens = tokenValues.length === snapshots.length && tokenValues.length > 0
+    ? `${(tokenValues.reduce((sum, value) => sum + value, 0) / 1000).toFixed(1)}k`
+    : "—";
+  const peakUsers = activeUserValues.length === snapshots.length && activeUserValues.length > 0
+    ? Math.max(...activeUserValues)
+    : "—";
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <div className="glass-nav px-6">
+    <div className="flex min-h-screen flex-col">
+      <div className="px-6">
         <Breadcrumb className="py-4" />
       </div>
-
-      <main className="flex-1 p-6 max-w-[1600px] w-full mx-auto">
-        <div className="space-y-6">
-          {/* Header */}
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">
-              Period Snapshots
-            </h1>
-            <p className="text-[var(--color-text-secondary)] mt-1">
-              Historical cut-off snapshots used for redemption eligibility and audit.
-            </p>
-          </div>
-
-      {/* Active Period Banner */}
-      <BentoCard className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-secondary/5 border-secondary/20">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-secondary/15 rounded-full">
-            <CalendarDays className="w-6 h-6 text-secondary" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-secondary uppercase tracking-wider">Active Period</p>
-            <p className="font-bold text-foreground text-lg">{currentPeriod.name}</p>
-            <p className="text-sm text-muted-foreground">
-              Cut-off on <span className="font-medium text-foreground">{currentPeriod.cutOff}</span>
-            </p>
-          </div>
+      <main className="mx-auto w-full max-w-[1600px] flex-1 space-y-6 p-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">Period Snapshots</h1>
+          <p className="mt-1 text-[var(--color-text-secondary)]">Immutable cut-off snapshots produced by the backend.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Badge className="bg-secondary/15 text-secondary border-secondary/30 text-lg font-bold px-4 py-2">
-            {currentPeriod.daysUntilCutOff} days
-          </Badge>
-          <span className="text-sm text-muted-foreground">until cut-off</span>
-        </div>
-      </BentoCard>
 
-      {/* Aggregate Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard
-          label="Total Snapshots"
-          value={mockSnapshots.length}
-          icon={Database}
-          description="Historical finalized periods"
-          accent="primary"
-        />
-        <StatCard
-          label="Total Tokens Issued"
-          value={(mockSnapshots.reduce((s, x) => s + x.totalTokensIssued, 0) / 1000).toFixed(1) + "k"}
-          icon={Database}
-          description="Across all completed periods"
-          accent="secondary"
-        />
-        <StatCard
-          label="Peak Active Users"
-          value={Math.max(...mockSnapshots.map((s) => s.totalUsersActive))}
-          icon={Users}
-          description="Highest period participation"
-          accent="muted"
-        />
-      </div>
+        <BentoCard className="flex flex-col justify-between gap-4 p-6 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-4">
+            <div className="rounded-full bg-secondary/15 p-3"><CalendarDays className="h-6 w-6 text-secondary" /></div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-secondary">Operational period</p>
+              <p className="text-lg font-bold text-foreground">Configured by the active system settings</p>
+              <p className="text-sm text-muted-foreground">Today: {formatDate(new Date().toISOString())}</p>
+            </div>
+          </div>
+          <Badge className="w-fit border-secondary/30 bg-secondary/15 px-4 py-2 text-secondary">Source: API</Badge>
+        </BentoCard>
 
-      {/* Snapshots Table */}
-      <BentoCard className="overflow-hidden p-0">
-        <div className="p-6 border-b border-border">
-          <h3 className="font-semibold text-lg">Historical Snapshots</h3>
+        {loadError && (
+          <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            Unable to load snapshots: {loadError}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <StatCard label="Total Snapshots" value={snapshots.length} icon={Database} description="Persisted cut-off periods" accent="primary" />
+          <StatCard label="Total Tokens Issued" value={totalTokens} icon={Database} description="Only when source payload provides the metric" accent="secondary" />
+          <StatCard label="Peak Active Users" value={peakUsers} icon={Users} description="Only when source payload provides the metric" accent="muted" />
         </div>
-        <Table>
-          <TableHeader className="bg-muted/50">
-            <TableRow>
-              <TableHead className="w-[130px]">Snapshot ID</TableHead>
-              <TableHead>Period</TableHead>
-              <TableHead>Cut-Off Date</TableHead>
-              <TableHead>Tokens Issued</TableHead>
-              <TableHead>Active Users</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mockSnapshots.map((snap) => (
-              <TableRow key={snap.id}>
-                <TableCell className="font-mono text-xs text-muted-foreground">
-                  {snap.id}
-                </TableCell>
-                <TableCell className="font-medium text-foreground">
-                  {snap.periodName}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {formatDate(snap.cutOffDate)}
-                </TableCell>
-                <TableCell className="font-semibold text-foreground">
-                  {snap.totalTokensIssued.toLocaleString()}
-                </TableCell>
-                <TableCell className="text-foreground">
-                  {snap.totalUsersActive}
-                </TableCell>
-                <TableCell>
-                  <Badge className="bg-primary/10 text-primary border-primary/30">
-                    {snap.status}
-                  </Badge>
-                </TableCell>
+
+        <BentoCard className="overflow-hidden p-0">
+          <div className="border-b border-border p-6"><h2 className="text-lg font-semibold">Historical Snapshots</h2></div>
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead>Snapshot ID</TableHead><TableHead>Period</TableHead><TableHead>Cut-off Date</TableHead>
+                <TableHead>Tokens Issued</TableHead><TableHead>Active Users</TableHead><TableHead>Status</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </BentoCard>
+            </TableHeader>
+            <TableBody>
+              {snapshots.length === 0 ? (
+                <TableRow><TableCell colSpan={6} className="py-12 text-center text-muted-foreground">No snapshots have been committed.</TableCell></TableRow>
+              ) : snapshots.map((snapshot) => (
+                <TableRow key={snapshot.id}>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{snapshot.id}</TableCell>
+                  <TableCell className="font-medium text-foreground">{snapshot.periodKey}{snapshot.division ? ` · ${snapshot.division}` : ""}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{formatDate(snapshot.cutoffAt)}</TableCell>
+                  <TableCell className="font-semibold text-foreground">{numericMetric(snapshot, "totalTokensIssued")?.toLocaleString() ?? "—"}</TableCell>
+                  <TableCell className="text-foreground">{numericMetric(snapshot, "totalUsersActive")?.toLocaleString() ?? "—"}</TableCell>
+                  <TableCell><Badge className="border-primary/30 bg-primary/10 text-primary">{snapshot.status}</Badge></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </BentoCard>
 
-      {/* Info banner */}
-      <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border border-border">
-        <Info className="w-4 h-4 mt-0.5 shrink-0" />
-        <span>
-          Snapshots are generated automatically at each cut-off date (Jun 15 and Dec 15).
-          They are immutable once finalized and serve as the source of truth for all
-          redemption eligibility calculations.
-        </span>
-      </div>
-      </div>
+        <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-4 text-xs text-muted-foreground">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>Snapshots are immutable records created by the admin API. The payload is shown only through typed metrics when those metrics were present in the committed source.</span>
+        </div>
       </main>
     </div>
   );

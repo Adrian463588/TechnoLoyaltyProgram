@@ -1,14 +1,14 @@
 /**
- * Backend/src/services/redemption.service.ts
+ * Redemption lifecycle service.
  *
- * Redemption domain service — FSM-based status transitions,
- * token deductions, and audit logging.
- *
- * SOLID — SRP: manages redemption lifecycle only.
+ * The request is created without a debit. HC approval (`PURCHASED`) is the
+ * only redemption transition that debits the append-only token ledger, and
+ * the stock update, debit, status update, history, and audit event share one
+ * database transaction.
  */
 
 import { prisma } from "@/db/prisma";
-import { Prisma, RedemptionStatus, TokenEventType, type RedemptionRequest } from "@prisma/client";
+import { Prisma, DivisionType, RedemptionStatus, TokenEventType, type RedemptionRequest } from "@prisma/client";
 import { tokenLedgerRepository } from "@/repositories/token-ledger.repository";
 import { checkRedemptionEligibility } from "./loyalty.service";
 import { logAudit } from "./audit.service";
@@ -17,170 +17,142 @@ import { CacheService } from "./cache.service";
 import { cacheInvalidationService } from "../utils/cache/cache-invalidation.service";
 import { CacheKeys } from "../utils/cache/cache-key.registry";
 
-/**
- * Valid transitions for redemption request status.
- * Section 13 - Redemption Status Workflow.
- */
+const listInclude = {
+  mitra: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      npk: true,
+      division: true,
+      partnerStatus: true,
+      documents: true,
+    },
+  },
+  rewardItem: { select: { id: true, name: true, tokenCost: true } },
+} as const;
+
+const detailInclude = {
+  mitra: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      npk: true,
+      division: true,
+      partnerStatus: true,
+      documents: true,
+    },
+  },
+  rewardItem: {
+    select: { id: true, name: true, tokenCost: true, description: true, imageUrl: true, stock: true },
+  },
+  history: { orderBy: { createdAt: "asc" as const } },
+  partnerConfirmations: { orderBy: { createdAt: "desc" as const } },
+} as const;
+
+type RedemptionListItem = Prisma.RedemptionRequestGetPayload<{ include: typeof listInclude }>;
+type RedemptionDetail = Prisma.RedemptionRequestGetPayload<{ include: typeof detailInclude }>;
+
 const VALID_TRANSITIONS: Record<RedemptionStatus, RedemptionStatus[]> = {
-  REQUESTED: ["REVIEWED", "REJECTED", "CANCELLED"],
-  REVIEWED:  ["ACCEPTED", "REJECTED", "CANCELLED"],
-  ACCEPTED:  [],
-  REJECTED:  [],
+  DRAFT: [RedemptionStatus.PENDING_VERIFICATION, RedemptionStatus.CANCELLED],
+  PENDING_VERIFICATION: [RedemptionStatus.VERIFIED, RedemptionStatus.REJECTED, RedemptionStatus.CANCELLED],
+  VERIFIED: [RedemptionStatus.PURCHASED, RedemptionStatus.REJECTED, RedemptionStatus.CANCELLED],
+  REJECTED: [],
+  PURCHASED: [RedemptionStatus.PICKUP_SCHEDULED],
+  PICKUP_SCHEDULED: [RedemptionStatus.COMPLETED],
+  COMPLETED: [],
   CANCELLED: [],
 };
 
+function documentsComplete(request: Pick<RedemptionRequest, "idCardVerified" | "ktpVerified" | "npwpVerified" | "powerOfAttorneyRequired"> & { powerOfAttorneyVerified: boolean | null | undefined }): boolean {
+  return request.idCardVerified &&
+    request.ktpVerified &&
+    request.npwpVerified &&
+    (!request.powerOfAttorneyRequired || request.powerOfAttorneyVerified === true);
+}
+
 export class RedemptionService {
-  /**
-   * Team Leader: List all redemption requests in their division.
-   */
-  async listByDivision(division: string, params: { status?: RedemptionStatus; limit?: number; offset?: number } = {}) {
+  async listByDivision(
+    division: string,
+    params: { status?: RedemptionStatus; limit?: number; offset?: number } = {},
+  ): Promise<{ requests: RedemptionListItem[]; total: number }> {
     const { status, limit = 100, offset = 0 } = params;
-    const where: any = {
-      mitra: { division }
+    const where: Prisma.RedemptionRequestWhereInput = {
+      mitra: { division: division as DivisionType },
+      ...(status ? { status } : {}),
     };
-    if (status) where.status = status;
-
     const [requests, total] = await Promise.all([
-      prisma.redemptionRequest.findMany({
-        where,
-        include: {
-          mitra: { 
-            select: { 
-              id: true, 
-              name: true, 
-              email: true, 
-              npk: true,
-              division: true,
-              documents: true
-            } 
-          },
-          rewardItem: { select: { id: true, name: true, tokenCost: true } },
-        },
-        orderBy: { submittedAt: "desc" },
-        take: limit,
-        skip: offset,
-      }),
-      prisma.redemptionRequest.count({ where })
+      prisma.redemptionRequest.findMany({ where, include: listInclude, orderBy: { submittedAt: "desc" }, take: limit, skip: offset }),
+      prisma.redemptionRequest.count({ where }),
     ]);
-
     return { requests, total };
   }
 
-  /**
-   * HC Admin: List all redemption requests with filtering and pagination.
-   */
-  async listAll(params: { status?: RedemptionStatus; limit?: number; offset?: number } = {}) {
+  async listAll(
+    params: { status?: RedemptionStatus; limit?: number; offset?: number } = {},
+  ): Promise<{ requests: RedemptionListItem[]; total: number }> {
     const { status, limit = 100, offset = 0 } = params;
-    const where = status ? { status } : {};
-
+    const where: Prisma.RedemptionRequestWhereInput = status ? { status } : {};
     const [requests, total] = await Promise.all([
-      prisma.redemptionRequest.findMany({
-        where,
-        include: {
-          mitra: { 
-            select: { 
-              id: true, 
-              name: true, 
-              email: true, 
-              npk: true,
-              division: true,
-              documents: true
-            } 
-          },
-          rewardItem: { select: { id: true, name: true, tokenCost: true } },
-        },
-        orderBy: { submittedAt: "desc" },
-        take: limit,
-        skip: offset,
-      }),
-      prisma.redemptionRequest.count({ where })
+      prisma.redemptionRequest.findMany({ where, include: listInclude, orderBy: { submittedAt: "desc" }, take: limit, skip: offset }),
+      prisma.redemptionRequest.count({ where }),
     ]);
-
     return { requests, total };
   }
 
-  /**
-   * HC Admin: Get detail of a specific request.
-   */
-  async getById(id: string) {
-    return prisma.redemptionRequest.findUnique({
-      where: { id },
-      include: {
-        mitra: { 
-          select: { 
-            id: true, 
-            name: true, 
-            email: true, 
-            npk: true,
-            documents: true
-          } 
-        },
-        rewardItem: { select: { id: true, name: true, tokenCost: true, description: true, imageUrl: true } },
-        history: { orderBy: { createdAt: "asc" } },
-      },
-    });
+  async getById(id: string): Promise<RedemptionDetail | null> {
+    return prisma.redemptionRequest.findUnique({ where: { id }, include: detailInclude });
   }
 
-  /**
-   * Mitra: List own redemption requests.
-   */
-  async listByMitra(userId: string): Promise<any[]> {
+  async listByMitra(userId: string): Promise<Array<RedemptionListItem>> {
     return prisma.redemptionRequest.findMany({
       where: { mitraId: userId },
-      include: {
-        rewardItem: { select: { id: true, name: true, tokenCost: true } },
-        mitra: { select: { documents: true } },
-      },
+      include: listInclude,
       orderBy: { submittedAt: "desc" },
     });
   }
 
-  /**
-   * Gets UX-only eligibility preview.
-   * Requirement 12.1, 12.3: UX-only cache. Server revalidates on submit.
-   */
   async getEligibilityPreview(userId: string): Promise<{ isEligible: boolean; reasons: string[] }> {
     const cacheKey = CacheKeys.redemptionEligibility(userId);
-    return CacheService.getWithFallback<{ isEligible: boolean; reasons: string[] }>(
-      cacheKey,
-      async () => {
-        const user = await prisma.user.findUnique({ where: { id: userId } });
-        if (!user) throw new NotFoundError("User", userId);
+    return CacheService.getWithFallback(cacheKey, async () => {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) throw new NotFoundError("User", userId);
 
-        const tokenBalance = await tokenLedgerRepository.getBalance(userId);
-
-        // Simplified general guard: must be ACTIVE partner and have enough for the cheapest reward or an arbitrary threshold (e.g. 2000).
-        // The exact check depends on the catalog, but generally we check if partnerStatus is ACTIVE.
-        const reasons: string[] = [];
-        if (user.partnerStatus !== "ACTIVE") {
-          reasons.push("Only active partners are eligible for redemption.");
-        }
-        
-        // As a simple generic check, assume a base threshold of 2000 tokens for the dashboard preview
-        if (tokenBalance < 2000) {
-          reasons.push(`Earn ${(2000 - tokenBalance).toLocaleString()} more tokens to unlock rewards.`);
-        }
-
-        return { isEligible: reasons.length === 0, reasons };
-      },
-      120 // 2 minutes TTL
-    );
+      const [tokenBalance, cheapestReward] = await Promise.all([
+        tokenLedgerRepository.getBalance(userId),
+        prisma.rewardItem.findFirst({ where: { isActive: true }, orderBy: { tokenCost: "asc" } }),
+      ]);
+      const reasons: string[] = [];
+      if (user.partnerStatus !== "ACTIVE") reasons.push("Only active partners are eligible for redemption.");
+      if (!cheapestReward) reasons.push("No active rewards are currently available.");
+      if (cheapestReward && tokenBalance < cheapestReward.tokenCost) {
+        reasons.push(`Earn ${(cheapestReward.tokenCost - tokenBalance).toLocaleString()} more tokens to unlock the least expensive reward.`);
+      }
+      return { isEligible: reasons.length === 0, reasons };
+    }, 120);
   }
 
-  /**
-   * Submits a new redemption request.
-
-   * Section 13 - Redemption Guard.
-   */
-  async submitRequest(userId: string, rewardItemId: string, options?: { isRepresented?: boolean, powerOfAttorneyUrl?: string }): Promise<RedemptionRequest> {
+  async submitRequest(
+    userId: string,
+    rewardItemId: string,
+    options?: { isRepresented?: boolean; powerOfAttorneyUrl?: string },
+    idempotencyKey?: string,
+  ): Promise<RedemptionRequest> {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundError("User", userId);
-
     const item = await prisma.rewardItem.findUnique({ where: { id: rewardItemId } });
     if (!item) throw new NotFoundError("RewardItem", rewardItemId);
 
-    const tokenBalance = await tokenLedgerRepository.getBalance(userId);
+    if (idempotencyKey) {
+      const existing = await prisma.redemptionRequest.findUnique({ where: { idempotencyKey } });
+      if (existing) {
+        if (existing.mitraId !== userId) throw new ValidationError("Idempotency key belongs to another user.");
+        return existing;
+      }
+    }
 
+    const tokenBalance = await tokenLedgerRepository.getBalance(userId);
     const eligibility = checkRedemptionEligibility({
       tokenBalance,
       rewardTokenCost: item.tokenCost,
@@ -188,94 +160,79 @@ export class RedemptionService {
       isItemActive: item.isActive,
       stock: item.stock,
     });
-
-    if (!eligibility.isEligible) {
-      throw new ValidationError(eligibility.reasons.join(", "));
-    }
-
-    if (options?.isRepresented && !options?.powerOfAttorneyUrl) {
+    if (!eligibility.isEligible) throw new ValidationError(eligibility.reasons.join(" "));
+    if (options?.isRepresented && !options.powerOfAttorneyUrl) {
       throw new ValidationError("Power of Attorney document is required when using a representative.");
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Create request
+      if (idempotencyKey) {
+        const existing = await tx.redemptionRequest.findUnique({ where: { idempotencyKey } });
+        if (existing) return existing;
+      }
+
       const request = await tx.redemptionRequest.create({
         data: {
           mitraId: userId,
           rewardItemId,
           tokenCost: item.tokenCost,
-          status: "REQUESTED",
+          status: RedemptionStatus.PENDING_VERIFICATION,
           isRepresented: options?.isRepresented ?? false,
           powerOfAttorneyUrl: options?.powerOfAttorneyUrl ?? null,
           powerOfAttorneyRequired: options?.isRepresented ?? false,
+          idempotencyKey: idempotencyKey ?? null,
         },
       });
 
-      // 2. Deduct tokens using FIFO across cohorts
-      await tokenLedgerRepository.deductTokensFIFO({
-        userId,
-        eventType: TokenEventType.REDEEMED,
-        amount: item.tokenCost,
-        referenceId: request.id,
-        performedBy: userId,
-        reason: `Redemption: ${item.name}`,
-      }, tx);
-
-      // 3. Append status history
       await tx.redemptionStatusHistory.create({
         data: {
           redemptionRequestId: request.id,
-          previousStatus: "REQUESTED",
-          newStatus: "REQUESTED",
+          previousStatus: RedemptionStatus.PENDING_VERIFICATION,
+          newStatus: RedemptionStatus.PENDING_VERIFICATION,
           changedBy: userId,
-          note: options?.isRepresented ? "Initial submission (Representative pickup)" : "Initial submission",
+          note: options?.isRepresented ? "Initial submission (representative pickup)" : "Initial submission",
         },
       });
-
-      // 4. Audit — PRD §5.6 REDEMPTION_SUBMITTED required
       await logAudit({
         action: "REDEMPTION_SUBMITTED",
         actorId: userId,
         targetType: "RedemptionRequest",
         targetId: request.id,
-        newValue: { rewardItemId, tokenCost: item.tokenCost, status: "REQUESTED" },
+        newValue: { rewardItemId, tokenCost: item.tokenCost, status: request.status },
         tx,
       });
-
       return request;
     });
 
     await cacheInvalidationService.invalidateAfterCommit({ type: "REDEMPTION_MUTATED", userId });
-    await cacheInvalidationService.invalidateAfterCommit({ type: "TOKEN_MUTATED", userId });
     return result;
   }
 
-  /**
-   * HC Admin: Verify documents for a redemption request.
-   */
-  async verifyDocuments(requestId: string, input: {
-    idCardVerified: boolean; 
-    ktpVerified: boolean; 
-    npwpVerified: boolean;
-    powerOfAttorneyVerified?: boolean | undefined; 
-  }, actorId: string): Promise<RedemptionRequest> {
-    const request = await prisma.redemptionRequest.findUnique({ where: { id: requestId } });
-    if (!request) throw new NotFoundError("RedemptionRequest", requestId);
-
-    const updateData: Prisma.RedemptionRequestUpdateInput = {
-      idCardVerified: input.idCardVerified,
-      ktpVerified: input.ktpVerified,
-      npwpVerified: input.npwpVerified,
-      updatedAt: new Date(),
-    };
-    if (input.powerOfAttorneyVerified !== undefined) {
-      updateData.powerOfAttorneyVerified = input.powerOfAttorneyVerified;
-    }
-
+  async verifyDocuments(
+    requestId: string,
+    input: { idCardVerified: boolean; ktpVerified: boolean; npwpVerified: boolean; powerOfAttorneyVerified?: boolean | undefined },
+    actorId: string,
+  ): Promise<RedemptionRequest> {
     const result = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "RedemptionRequest" WHERE id = ${requestId} FOR UPDATE`;
+      const request = await tx.redemptionRequest.findUnique({ where: { id: requestId } });
+      if (!request) throw new NotFoundError("RedemptionRequest", requestId);
+      const verifiableStatuses: RedemptionStatus[] = [RedemptionStatus.PENDING_VERIFICATION, RedemptionStatus.VERIFIED];
+      if (!verifiableStatuses.includes(request.status)) {
+        throw new ValidationError(`Documents cannot be updated from ${request.status}.`);
+      }
+
+      const complete = documentsComplete({ ...request, ...input });
+      const nextStatus = complete ? RedemptionStatus.VERIFIED : request.status;
       const updated = await tx.redemptionRequest.update({
         where: { id: requestId },
-        data: updateData,
+        data: {
+          idCardVerified: input.idCardVerified,
+          ktpVerified: input.ktpVerified,
+          npwpVerified: input.npwpVerified,
+          ...(input.powerOfAttorneyVerified !== undefined ? { powerOfAttorneyVerified: input.powerOfAttorneyVerified } : {}),
+          ...(complete ? { status: nextStatus, verifiedBy: actorId, verifiedAt: new Date() } : {}),
+        },
       });
 
       await logAudit({
@@ -283,152 +240,134 @@ export class RedemptionService {
         actorId,
         targetType: "RedemptionRequest",
         targetId: requestId,
-        previousValue: {
-          idCardVerified: request.idCardVerified,
-          ktpVerified: request.ktpVerified,
-          npwpVerified: request.npwpVerified,
-          powerOfAttorneyVerified: request.powerOfAttorneyVerified,
-        },
-        newValue: input,
+        previousValue: { idCardVerified: request.idCardVerified, ktpVerified: request.ktpVerified, npwpVerified: request.npwpVerified, status: request.status },
+        newValue: { ...input, status: nextStatus },
         tx,
       });
-
+      if (request.status !== nextStatus) {
+        await tx.redemptionStatusHistory.create({
+          data: { redemptionRequestId: requestId, previousStatus: request.status, newStatus: nextStatus, changedBy: actorId, note: "All required documents verified" },
+        });
+        await logAudit({
+          action: "REDEMPTION_STATUS_CHANGED",
+          actorId,
+          targetType: "RedemptionRequest",
+          targetId: requestId,
+          previousValue: { status: request.status },
+          newValue: { status: nextStatus },
+          tx,
+        });
+      }
       return updated;
     });
 
-    await cacheInvalidationService.invalidateAfterCommit({ type: "REDEMPTION_MUTATED", userId: request.mitraId });
+    await cacheInvalidationService.invalidateAfterCommit({ type: "REDEMPTION_MUTATED", userId: result.mitraId });
     return result;
   }
 
-  /**
-   * HC Admin updates redemption status.
-   */
   async transitionStatus(
     requestId: string,
     newStatus: RedemptionStatus,
     actorId: string,
     note?: string,
   ): Promise<RedemptionRequest> {
-    const request = await prisma.redemptionRequest.findUnique({
-      where: { id: requestId },
-      include: { rewardItem: true }
-    });
-
-    if (!request) throw new NotFoundError("RedemptionRequest", requestId);
-
-    const currentStatus = request.status;
-    const allowed = VALID_TRANSITIONS[currentStatus];
-
-    if (!allowed.includes(newStatus)) {
-      throw new ValidationError(`Invalid transition from ${currentStatus} to ${newStatus}`);
-    }
-
     const result = await prisma.$transaction(async (tx) => {
-      // Refund tokens if REJECTED or CANCELLED from a state that already deducted them
-      if (["REJECTED", "CANCELLED"].includes(newStatus)) {
-        // Find original deductions for this request to restore cohorts accurately
-        const deductions = await tx.tokenLedger.findMany({
-          where: { 
-            referenceId: requestId,
-            amount: { lt: 0 },
-            eventType: TokenEventType.REDEEMED
-          }
+      await tx.$queryRaw`SELECT id FROM "RedemptionRequest" WHERE id = ${requestId} FOR UPDATE`;
+      const request = await tx.redemptionRequest.findUnique({
+        where: { id: requestId },
+        include: { rewardItem: true, mitra: { select: { partnerStatus: true } } },
+      });
+      if (!request) throw new NotFoundError("RedemptionRequest", requestId);
+
+      const allowed = VALID_TRANSITIONS[request.status];
+      if (!allowed.includes(newStatus)) throw new ValidationError(`Invalid transition from ${request.status} to ${newStatus}`);
+      if (newStatus === RedemptionStatus.REJECTED && !note?.trim()) {
+        throw new ValidationError("A rejection reason is required.");
+      }
+      if (newStatus === RedemptionStatus.VERIFIED && !documentsComplete(request)) {
+        throw new ValidationError("All required documents must be verified before approval.");
+      }
+
+      let debitCreated = false;
+      if (newStatus === RedemptionStatus.PURCHASED) {
+        if (!documentsComplete(request)) throw new ValidationError("All required documents must be verified before purchase.");
+        if (request.mitra.partnerStatus !== "ACTIVE") throw new ValidationError("Mitra is not active.");
+
+        const confirmation = await tx.partnerStatusConfirmation.findFirst({
+          where: { redemptionRequestId: requestId, status: "CONFIRMED_ACTIVE" },
+          orderBy: { confirmedAt: "desc" },
         });
+        if (!confirmation) throw new ValidationError("Active Team Leader confirmation is required before purchase.");
 
-        for (const d of deductions) {
-          await tokenLedgerRepository.appendTokenEvent({
+        await tx.$queryRaw`SELECT id FROM "RewardItem" WHERE id = ${request.rewardItemId} FOR UPDATE`;
+        const reward = await tx.rewardItem.findUnique({ where: { id: request.rewardItemId } });
+        if (!reward) throw new NotFoundError("RewardItem", request.rewardItemId);
+        if (reward.stock !== null) {
+          const stockUpdate = await tx.rewardItem.updateMany({
+            where: { id: reward.id, stock: { gt: 0 } },
+            data: { stock: { decrement: 1 } },
+          });
+          if (stockUpdate.count !== 1) throw new ValidationError(`Reward item "${reward.name}" is out of stock.`);
+        }
+
+        const existingDebit = await tx.tokenLedger.findFirst({
+          where: { userId: request.mitraId, referenceId: requestId, eventType: TokenEventType.REDEEMED, amount: { lt: 0 } },
+        });
+        if (!existingDebit) {
+          await tokenLedgerRepository.deductTokensFIFO({
             userId: request.mitraId,
-            eventType: TokenEventType.MANUAL_ADJUSTMENT,
-            amount: Math.abs(d.amount),
+            eventType: TokenEventType.REDEEMED,
+            amount: request.tokenCost,
             referenceId: requestId,
-            ...(d.earnedYear != null ? { earnedYear: d.earnedYear } : {}),
-            ...(d.expiresAt != null ? { expiresAt: d.expiresAt } : {}),
             performedBy: actorId,
-            reason: `Refund: Redemption ${newStatus.toLowerCase()} (${request.rewardItem.name}) - Restoring cohort ${d.earnedYear || 'Unknown'}`,
+            reason: `Redemption approval: ${reward.name}`,
+            idempotencyKey: `redemption:${requestId}:debit`,
           }, tx);
+          debitCreated = true;
+          await logAudit({
+            action: "TOKEN_DEBITED",
+            actorId,
+            targetType: "TokenLedger",
+            targetId: requestId,
+            newValue: { amount: request.tokenCost, referenceId: requestId, reason: "redemption approval" },
+            tx,
+          });
         }
       }
 
-      // ── New Simplification Logic ──
-      // If moving from REQUESTED to REVIEWED, we assume the HC admin has verified the documents
-      // as part of the "Konfirmasi" action in the Document Review phase.
-      const updateData: Prisma.RedemptionRequestUpdateInput = { 
-        status: newStatus 
-      };
-
-      if (newStatus === "REJECTED") {
-        updateData.rejectionReason = note && note.trim() !== "" ? note : "Dokumen tidak sesuai standar atau data tidak valid.";
+      const updateData: Prisma.RedemptionRequestUpdateInput = { status: newStatus };
+      if (newStatus === RedemptionStatus.REJECTED) updateData.rejectionReason = note?.trim() ?? null;
+      if (newStatus === RedemptionStatus.PURCHASED) {
+        updateData.verifiedBy = actorId;
+        updateData.verifiedAt = new Date();
       }
-      
-      if (currentStatus === "REQUESTED" && newStatus === "REVIEWED") {
-        updateData.idCardVerified = true;
-        updateData.ktpVerified = true;
-        updateData.npwpVerified = true;
-        if (request.powerOfAttorneyRequired) {
-          updateData.powerOfAttorneyVerified = true;
-        }
-      }
+      if (newStatus === RedemptionStatus.PICKUP_SCHEDULED) updateData.pickupScheduledAt = new Date();
+      if (newStatus === RedemptionStatus.COMPLETED) updateData.completedAt = new Date();
 
       const updated = await tx.redemptionRequest.update({
         where: { id: requestId },
         data: updateData,
       });
-
       await tx.redemptionStatusHistory.create({
-        data: {
-          redemptionRequestId: requestId,
-          previousStatus: currentStatus,
-          newStatus,
-          changedBy: actorId,
-          note: note ?? null,
-        },
+        data: { redemptionRequestId: requestId, previousStatus: request.status, newStatus, changedBy: actorId, note: note ?? null },
       });
-
-      // ── Reward Stock Reduction ──
-      // Requirement 13.2: Decrease stock ONLY when status becomes ACCEPTED.
-      if (newStatus === "ACCEPTED") {
-        // Fetch fresh item with lock inside transaction to prevent race conditions
-        const item = await tx.rewardItem.findUnique({
-          where: { id: request.rewardItemId },
-        });
-
-        if (!item) throw new NotFoundError("RewardItem", request.rewardItemId);
-
-        if (item.stock !== null) {
-          if (item.stock <= 0) {
-            throw new ValidationError(`Reward item "${item.name}" is out of stock.`);
-          }
-          await tx.rewardItem.update({
-            where: { id: item.id },
-            data: { stock: { decrement: 1 } },
-          });
-        }
-      }
-
-      // Audit — PRD §5.6 REDEMPTION_STATUS_CHANGED required
       await logAudit({
-        action: "REDEMPTION_STATUS_CHANGED",
+        action: newStatus === RedemptionStatus.PURCHASED ? "REDEMPTION_APPROVED" : "REDEMPTION_STATUS_CHANGED",
         actorId,
         targetType: "RedemptionRequest",
         targetId: requestId,
-        previousValue: { status: currentStatus },
-        newValue: { status: newStatus, note: note ?? null },
+        previousValue: { status: request.status },
+        newValue: { status: newStatus, note: note ?? null, debitCreated },
         tx,
       });
-
       return updated;
     });
 
-    await cacheInvalidationService.invalidateAfterCommit({ type: "REDEMPTION_MUTATED", userId: request.mitraId });
-    
-    if (newStatus === "ACCEPTED") {
+    await cacheInvalidationService.invalidateAfterCommit({ type: "REDEMPTION_MUTATED", userId: result.mitraId });
+    if (newStatus === RedemptionStatus.PURCHASED) {
+      await cacheInvalidationService.invalidateAfterCommit({ type: "TOKEN_MUTATED", userId: result.mitraId });
       await cacheInvalidationService.invalidateAfterCommit({ type: "REWARD_STOCK_MUTATED" });
     }
-
-    if (["REJECTED", "CANCELLED"].includes(newStatus)) {
-      await cacheInvalidationService.invalidateAfterCommit({ type: "TOKEN_MUTATED", userId: request.mitraId });
-    }
-
     return result;
   }
 }

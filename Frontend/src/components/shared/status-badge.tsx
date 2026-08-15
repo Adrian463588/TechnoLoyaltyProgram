@@ -1,24 +1,23 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import type { RewardRequestStatus } from "@/types";
 
 // Mapping Redemption Status
-export type RedemptionStatus =
-  | "REQUESTED"
-  | "REVIEWED"
-  | "ACCEPTED"
-  | "REJECTED"
-  | "CANCELLED";
+export type RedemptionStatus = RewardRequestStatus;
 
 const statusConfig: Record<RedemptionStatus, { bg: string; color: string; label: string }> = {
-  REQUESTED: { bg: "#FEF3C7", color: "#D97706", label: "REQUESTED" },
-  REVIEWED:  { bg: "#DBEAFE", color: "#2563EB", label: "REVIEWED" },
-  ACCEPTED:  { bg: "#DCFCE7", color: "#16A34A", label: "ACCEPTED" },
+  DRAFT: { bg: "#F1F5F9", color: "#475569", label: "DRAFT" },
+  PENDING_VERIFICATION: { bg: "#FEF3C7", color: "#D97706", label: "PENDING VERIFICATION" },
+  VERIFIED:  { bg: "#DBEAFE", color: "#2563EB", label: "VERIFIED" },
+  PURCHASED:  { bg: "#DCFCE7", color: "#16A34A", label: "PURCHASED" },
+  PICKUP_SCHEDULED: { bg: "#E0E7FF", color: "#4338CA", label: "PICKUP SCHEDULED" },
+  COMPLETED: { bg: "#D1FAE5", color: "#047857", label: "COMPLETED" },
   REJECTED:  { bg: "#FEE2E2", color: "#DC2626", label: "REJECTED" },
   CANCELLED: { bg: "#F1F5F9", color: "#475569", label: "CANCELLED" },
 };
 
 export function RedemptionStatusChip({ status, className }: { status: RedemptionStatus; className?: string }) {
-  const config = statusConfig[status] || statusConfig.REQUESTED;
+  const config = statusConfig[status] || statusConfig.PENDING_VERIFICATION;
   return (
     <span
       role="status"

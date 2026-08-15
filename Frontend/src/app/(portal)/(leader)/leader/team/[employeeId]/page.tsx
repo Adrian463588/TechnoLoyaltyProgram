@@ -8,8 +8,6 @@ export const dynamic = 'force-dynamic'
  */
 import { auth, getServerToken } from "@/lib/auth";
 import { leaderApi } from "@/lib/api-client";
-import { BentoCard } from "@/components/ui/bento-card";
-import { TierBadge, EmployeeStatusBadge } from "@/components/shared/status-badge";
 import {
   Table,
   TableBody,
@@ -18,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Coins, User, History, Shield } from "lucide-react";
+import { History } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/shared/breadcrumb";
 import { MemberPerformanceCard } from "@/components/shared/member-performance-card";

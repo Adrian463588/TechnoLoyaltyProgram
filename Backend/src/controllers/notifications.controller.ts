@@ -1,15 +1,8 @@
-/**
- * Backend/src/controllers/notifications.controller.ts
- *
- * Stub controller — returns empty notifications list.
- * TODO(OQ-NOTIF-001): implement real notification system when backend events are defined.
- */
-
 import { asyncHandler } from "@/middleware/asyncHandler";
+import { notificationService } from "@/services/notification.service";
 
 export const NotificationsController = {
-  // GET /api/employee/notifications
-  list: asyncHandler((_req, res) => {
-    res.json({ notifications: [], total: 0 });
+  list: asyncHandler(async (req, res) => {
+    res.json(await notificationService.listForUser(req.user.id));
   }),
 };
