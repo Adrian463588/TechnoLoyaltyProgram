@@ -1,0 +1,28 @@
+# TruffleHog exclusion list for DevSecOps secret scanning
+# Exclude third-party dependencies, generated bundles, caches, and test artifacts
+
+node_modules/
+**/node_modules/**
+package-lock.json
+**/package-lock.json
+pnpm-lock.yaml
+**/pnpm-lock.yaml
+
+# Build & compiled outputs
+.next/
+**/.next/**
+dist/
+**/dist/**
+build/
+**/build/**
+coverage/
+**/coverage/**
+*-sbom.json
+
+# Tooling caches & logs
+.cache/
+**/.cache/**
+.turbo/
+**/.turbo/**
+*.log
+**/test-results/**
